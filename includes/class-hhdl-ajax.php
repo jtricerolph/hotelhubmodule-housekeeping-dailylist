@@ -102,14 +102,14 @@ class HHDL_Ajax {
             wp_send_json_error(array('message' => __('Room not found', 'hhdl')));
         }
 
-        // Get default tasks for this location
-        $default_tasks = HHDL_Settings::get_default_tasks($location_id);
+        // Get task type mappings for this location
+        $task_type_mappings = HHDL_Settings::get_task_type_mappings($location_id);
 
         // Build response with permission-based data
         $response = array(
             'room_number' => $room_details['room_number'],
             'booking'     => $this->filter_booking_data($room_details['booking']),
-            'tasks'       => $this->build_tasks_list($room_details, $default_tasks, $date),
+            'tasks'       => $this->build_tasks_list($room_details, $task_type_mappings, $date),
             'site_status' => $room_details['site_status']
         );
 
@@ -216,30 +216,96 @@ class HHDL_Ajax {
      * Fetch room details from NewBook
      */
     private function fetch_room_details($location_id, $room_id, $date) {
-        // TODO: Implement NewBook API integration
-        // For now, return mock data
+        // Get NewBook API client
+        $api = $this->get_newbook_api($location_id);
+        if (!$api) {
+            return null;
+        }
+
+        // Get site details
+        $sites_response = $api->get_sites(true);
+        $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+
+        $site_name = $room_id;
+        $site_status = 'Unknown';
+        foreach ($sites as $site) {
+            if ($site['site_id'] === $room_id) {
+                $site_name = $site['site_name'];
+                $site_status = isset($site['site_status']) ? $site['site_status'] : 'Unknown';
+                break;
+            }
+        }
+
+        // Get booking for this room/date
+        $bookings_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), 'staying', true);
+        $bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
+
+        $booking_data = null;
+        foreach ($bookings as $booking) {
+            if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
+                $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
+                $departure = date('Y-m-d', strtotime($booking['booking_departure']));
+
+                // Check if booking covers this date
+                if ($arrival <= $date && $departure > $date) {
+                    $total_nights = (strtotime($departure) - strtotime($arrival)) / 86400;
+                    $current_night = (strtotime($date) - strtotime($arrival)) / 86400 + 1;
+
+                    $booking_data = array(
+                        'reference'     => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
+                        'guest_name'    => isset($booking['guest_name']) ? $booking['guest_name'] : '',
+                        'email'         => isset($booking['guest_email']) ? $booking['guest_email'] : '',
+                        'phone'         => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
+                        'checkin_date'  => $arrival,
+                        'checkout_date' => $departure,
+                        'checkin_time'  => isset($booking['booking_eta']) ? date('H:i', strtotime($booking['booking_eta'])) : '',
+                        'checkout_time' => '10:00', // Default checkout
+                        'pax'           => isset($booking['pax']) ? $booking['pax'] : 0,
+                        'nights'        => $total_nights,
+                        'current_night' => $current_night,
+                        'room_type'     => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
+                        'rate_plan'     => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
+                        'rate_amount'   => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
+                        'notes'         => isset($booking['notes']) ? $this->format_notes($booking['notes']) : ''
+                    );
+                    break;
+                }
+            }
+        }
+
+        // Get tasks for this room/date
+        $tasks_response = $api->get_tasks($date, date('Y-m-d', strtotime($date . ' +1 day')), array(), true, null, true);
+        $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
+
+        $newbook_tasks = array();
+        foreach ($all_tasks as $task) {
+            // Get site ID from task
+            $task_site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
+                            (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+
+            if ($task_site_id !== $room_id) {
+                continue;
+            }
+
+            // Check if task is for this date
+            $task_dates = $this->get_task_dates($task);
+            if (!in_array($date, $task_dates)) {
+                continue;
+            }
+
+            $newbook_tasks[] = array(
+                'id'          => $task['task_id'],
+                'task_type_id' => isset($task['task_type_id']) ? $task['task_type_id'] : '',
+                'name'        => isset($task['task_description']) ? $task['task_description'] : '',
+                'completed'   => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
+            );
+        }
 
         return array(
-            'room_number' => $room_id,
-            'site_status' => 'Clean',
-            'booking'     => array(
-                'reference'    => 'NB123456',
-                'guest_name'   => 'John Smith',
-                'email'        => 'john@example.com',
-                'phone'        => '555-0123',
-                'checkin_date' => $date,
-                'checkout_date' => date('Y-m-d', strtotime($date . ' +3 days')),
-                'checkin_time' => '14:00',
-                'checkout_time' => '10:00',
-                'pax'          => 2,
-                'nights'       => 3,
-                'current_night' => 1,
-                'room_type'    => 'Standard Room',
-                'rate_plan'    => 'Best Available Rate',
-                'rate_amount'  => 150.00,
-                'notes'        => 'Guest requested early check-in'
-            ),
-            'newbook_tasks' => array()
+            'room_number'   => $site_name,
+            'site_status'   => $site_status,
+            'booking'       => $booking_data,
+            'newbook_tasks' => $newbook_tasks
         );
     }
 
@@ -291,32 +357,31 @@ class HHDL_Ajax {
     }
 
     /**
-     * Build tasks list combining NewBook tasks and default tasks
+     * Build tasks list from NewBook tasks filtered by task type mappings
      */
-    private function build_tasks_list($room_details, $default_tasks, $date) {
+    private function build_tasks_list($room_details, $task_type_mappings, $date) {
         $tasks = array();
 
-        // Add default tasks
-        foreach ($default_tasks as $task) {
-            $tasks[] = array(
-                'id'        => $task['id'],
-                'name'      => $task['name'],
-                'color'     => $task['color'],
-                'completed' => $this->is_task_completed($room_details['room_number'], $task['name'], $date),
-                'source'    => 'default'
-            );
-        }
-
-        // Add NewBook tasks
+        // Only show NewBook tasks that match configured task type mappings
         if (!empty($room_details['newbook_tasks'])) {
             foreach ($room_details['newbook_tasks'] as $nb_task) {
-                $tasks[] = array(
-                    'id'        => $nb_task['id'],
-                    'name'      => $nb_task['name'],
-                    'color'     => '#6b7280', // Gray for NewBook tasks
-                    'completed' => $nb_task['completed'],
-                    'source'    => 'newbook'
-                );
+                $task_type_id = $nb_task['task_type_id'];
+
+                // Only show if this task type is in our mappings
+                if (isset($task_type_mappings[$task_type_id])) {
+                    $mapping = $task_type_mappings[$task_type_id];
+
+                    // Check if already completed locally (for user attribution)
+                    $locally_completed = $this->is_task_completed($room_details['room_number'], $nb_task['name'], $date);
+
+                    $tasks[] = array(
+                        'id'        => $nb_task['id'],
+                        'name'      => $mapping['name'], // Use mapping name
+                        'color'     => $mapping['color'],
+                        'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
+                        'source'    => 'newbook'
+                    );
+                }
             }
         }
 
@@ -345,9 +410,28 @@ class HHDL_Ajax {
      * Update NewBook task status
      */
     private function update_newbook_task($task_id) {
-        // TODO: Implement NewBook API call to mark task complete
-        // For now, return success
-        return true;
+        // Note: For task completion, we're storing in local DB first
+        // Then calling NewBook API. If NewBook fails, transaction rolls back
+
+        // Get current location from context
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        if (!$location_id) {
+            return false;
+        }
+
+        // Get NewBook API client
+        $api = $this->get_newbook_api($location_id);
+        if (!$api) {
+            return false;
+        }
+
+        // Call tasks_update endpoint
+        $response = $api->call_api('tasks_update', array(
+            'task_id' => $task_id,
+            'completed_on' => current_time('mysql')
+        ));
+
+        return isset($response['success']) && $response['success'];
     }
 
     /**
@@ -413,5 +497,75 @@ class HHDL_Ajax {
             return wfa_user_has_permission('hhdl_view_all_notes');
         }
         return current_user_can('edit_posts');
+    }
+
+    /**
+     * Get NewBook API client for a location
+     */
+    private function get_newbook_api($location_id) {
+        if (!function_exists('hha')) {
+            return null;
+        }
+
+        $hotel = hha()->hotels->get($location_id);
+        if (!$hotel) {
+            return null;
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return null;
+        }
+
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
+        return new HHA_NewBook_API($integration);
+    }
+
+    /**
+     * Get dates covered by a task
+     */
+    private function get_task_dates($task) {
+        $dates = array();
+
+        // Single-day task
+        if (!empty($task['task_when_date'])) {
+            $dates[] = date('Y-m-d', strtotime($task['task_when_date']));
+            return $dates;
+        }
+
+        // Multi-day task
+        if (!empty($task['task_period_from']) && !empty($task['task_period_to'])) {
+            $start = strtotime($task['task_period_from']);
+            $end = strtotime($task['task_period_to']);
+
+            // Period_to is exclusive, so subtract one day
+            $end = strtotime('-1 day', $end);
+
+            $current = $start;
+            while ($current <= $end) {
+                $dates[] = date('Y-m-d', $current);
+                $current = strtotime('+1 day', $current);
+            }
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Format notes array from NewBook into string
+     */
+    private function format_notes($notes) {
+        if (empty($notes) || !is_array($notes)) {
+            return '';
+        }
+
+        $formatted = array();
+        foreach ($notes as $note) {
+            if (isset($note['content']) && !empty($note['content'])) {
+                $formatted[] = $note['content'];
+            }
+        }
+
+        return implode("\n", $formatted);
     }
 }

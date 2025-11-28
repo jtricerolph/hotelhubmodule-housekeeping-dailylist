@@ -43,29 +43,21 @@ if (!defined('ABSPATH')) {
                     $is_enabled = $location_settings['enabled'];
                     $tasks = $location_settings['default_tasks'];
 
-                    // Ensure tasks have default structure
+                    // Ensure tasks have default structure (task type mappings)
                     if (empty($tasks)) {
                         $tasks = array(
                             array(
-                                'id'    => uniqid('task_'),
-                                'name'  => __('Clean Room', 'hhdl'),
-                                'color' => '#10b981',
-                                'order' => 0
-                            ),
-                            array(
-                                'id'    => uniqid('task_'),
-                                'name'  => __('Change Linen', 'hhdl'),
-                                'color' => '#3b82f6',
-                                'order' => 1
-                            ),
-                            array(
-                                'id'    => uniqid('task_'),
-                                'name'  => __('Restock Amenities', 'hhdl'),
-                                'color' => '#f59e0b',
-                                'order' => 2
+                                'id'           => uniqid('task_'),
+                                'task_type_id' => '-1',
+                                'name'         => __('Housekeeping', 'hhdl'),
+                                'color'        => '#10b981',
+                                'order'        => 0
                             )
                         );
                     }
+
+                    // Get available task types for this location
+                    $available_task_types = isset($task_types_by_location[$location_id]) ? $task_types_by_location[$location_id] : array();
                     ?>
                     <tr class="hhdl-location-row">
                         <td class="location-name">
@@ -87,10 +79,16 @@ if (!defined('ABSPATH')) {
                                     <?php foreach ($tasks as $index => $task): ?>
                                         <div class="hhdl-task-item" data-task-id="<?php echo esc_attr($task['id']); ?>">
                                             <span class="hhdl-task-handle">☰</span>
-                                            <input type="text"
-                                                   class="hhdl-task-name"
-                                                   placeholder="<?php esc_attr_e('Task name', 'hhdl'); ?>"
-                                                   value="<?php echo esc_attr($task['name']); ?>">
+                                            <select class="hhdl-task-type-select">
+                                                <option value=""><?php _e('Select task type...', 'hhdl'); ?></option>
+                                                <?php foreach ($available_task_types as $task_type): ?>
+                                                    <option value="<?php echo esc_attr($task_type['id']); ?>"
+                                                            data-name="<?php echo esc_attr($task_type['name']); ?>"
+                                                            <?php selected(isset($task['task_type_id']) ? $task['task_type_id'] : '', $task_type['id']); ?>>
+                                                        <?php echo esc_html($task_type['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
                                             <input type="color"
                                                    class="hhdl-task-color"
                                                    value="<?php echo esc_attr($task['color']); ?>">
@@ -226,11 +224,12 @@ input:checked + .hhdl-slider:before {
     user-select: none;
 }
 
-.hhdl-task-name {
+.hhdl-task-type-select {
     flex: 1;
     padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
+    background: white;
 }
 
 .hhdl-task-color {
@@ -262,6 +261,9 @@ input:checked + .hhdl-slider:before {
 
 <script>
 jQuery(document).ready(function($) {
+    // Store task types data for each location
+    const taskTypesByLocation = <?php echo json_encode($task_types_by_location); ?>;
+
     // Initialize sortable for each task list
     $('.hhdl-task-list').sortable({
         handle: '.hhdl-task-handle',
@@ -276,11 +278,19 @@ jQuery(document).ready(function($) {
         const manager = $(this).closest('.hhdl-task-manager');
         const taskList = manager.find('.hhdl-task-list');
         const taskId = 'task_' + Date.now();
+        const locationId = manager.data('location-id');
+        const taskTypes = taskTypesByLocation[locationId] || [];
+
+        // Build task type options
+        let optionsHtml = '<option value=""><?php esc_attr_e('Select task type...', 'hhdl'); ?></option>';
+        taskTypes.forEach(function(taskType) {
+            optionsHtml += `<option value="${taskType.id}" data-name="${taskType.name}">${taskType.name}</option>`;
+        });
 
         const taskHtml = `
             <div class="hhdl-task-item" data-task-id="${taskId}">
                 <span class="hhdl-task-handle">☰</span>
-                <input type="text" class="hhdl-task-name" placeholder="<?php esc_attr_e('Task name', 'hhdl'); ?>" value="">
+                <select class="hhdl-task-type-select">${optionsHtml}</select>
                 <input type="color" class="hhdl-task-color" value="#10b981">
                 <button type="button" class="hhdl-task-remove button">×</button>
             </div>
@@ -297,8 +307,8 @@ jQuery(document).ready(function($) {
         updateTasksJSON(manager);
     });
 
-    // Update JSON when task name or color changes
-    $(document).on('change', '.hhdl-task-name, .hhdl-task-color', function() {
+    // Update JSON when task type or color changes
+    $(document).on('change', '.hhdl-task-type-select, .hhdl-task-color', function() {
         const manager = $(this).closest('.hhdl-task-manager');
         updateTasksJSON(manager);
     });
@@ -308,12 +318,20 @@ jQuery(document).ready(function($) {
         const tasks = [];
         manager.find('.hhdl-task-item').each(function(index) {
             const item = $(this);
-            tasks.push({
-                id: item.data('task-id'),
-                name: item.find('.hhdl-task-name').val(),
-                color: item.find('.hhdl-task-color').val(),
-                order: index
-            });
+            const taskTypeSelect = item.find('.hhdl-task-type-select');
+            const taskTypeId = taskTypeSelect.val();
+            const taskTypeName = taskTypeSelect.find('option:selected').data('name') || taskTypeSelect.find('option:selected').text();
+
+            // Only add if task type is selected
+            if (taskTypeId) {
+                tasks.push({
+                    id: item.data('task-id'),
+                    task_type_id: taskTypeId,
+                    name: taskTypeName,
+                    color: item.find('.hhdl-task-color').val(),
+                    order: index
+                });
+            }
         });
         manager.find('.hhdl-tasks-json').val(JSON.stringify(tasks));
     }

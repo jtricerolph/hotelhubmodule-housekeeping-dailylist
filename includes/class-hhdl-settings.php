@@ -65,6 +65,12 @@ class HHDL_Settings {
         // Get current settings
         $settings = get_option(self::OPTION_NAME, array());
 
+        // Get available task types from NewBook for each location
+        $task_types_by_location = array();
+        foreach ($locations as $location) {
+            $task_types_by_location[$location['id']] = self::get_task_types($location['id']);
+        }
+
         // Load template
         include HHDL_PLUGIN_DIR . 'admin/views/settings.php';
     }
@@ -130,15 +136,17 @@ class HHDL_Settings {
         $sanitized = array();
 
         foreach ($tasks as $task) {
-            if (!isset($task['name']) || empty($task['name'])) {
+            // Task type ID is required (NewBook task type mapping)
+            if (!isset($task['task_type_id'])) {
                 continue;
             }
 
             $sanitized[] = array(
-                'id'    => isset($task['id']) ? sanitize_text_field($task['id']) : uniqid('task_'),
-                'name'  => sanitize_text_field($task['name']),
-                'color' => isset($task['color']) ? sanitize_hex_color($task['color']) : '#10b981',
-                'order' => isset($task['order']) ? intval($task['order']) : 0
+                'id'           => isset($task['id']) ? sanitize_text_field($task['id']) : uniqid('task_'),
+                'task_type_id' => sanitize_text_field($task['task_type_id']),
+                'name'         => isset($task['name']) ? sanitize_text_field($task['name']) : '',
+                'color'        => isset($task['color']) ? sanitize_hex_color($task['color']) : '#10b981',
+                'order'        => isset($task['order']) ? intval($task['order']) : 0
             );
         }
 
@@ -212,30 +220,101 @@ class HHDL_Settings {
     }
 
     /**
-     * Get default tasks template
+     * Get default tasks template (task type mappings)
      *
-     * @return array Default tasks structure
+     * @return array Default task type mappings structure
      */
     private static function get_default_tasks_template() {
         return array(
             array(
-                'id'    => uniqid('task_'),
-                'name'  => __('Clean Room', 'hhdl'),
-                'color' => '#10b981',
-                'order' => 0
-            ),
-            array(
-                'id'    => uniqid('task_'),
-                'name'  => __('Change Linen', 'hhdl'),
-                'color' => '#3b82f6',
-                'order' => 1
-            ),
-            array(
-                'id'    => uniqid('task_'),
-                'name'  => __('Restock Amenities', 'hhdl'),
-                'color' => '#f59e0b',
-                'order' => 2
+                'id'           => uniqid('task_'),
+                'task_type_id' => '-1',  // NewBook standard housekeeping task
+                'name'         => __('Housekeeping', 'hhdl'),
+                'color'        => '#10b981',
+                'order'        => 0
             )
         );
+    }
+
+    /**
+     * Get task type mappings for a location
+     *
+     * @param int $location_id Location ID
+     * @return array Array of task type ID => color mappings
+     */
+    public static function get_task_type_mappings($location_id) {
+        $tasks = self::get_default_tasks($location_id);
+        $mappings = array();
+
+        foreach ($tasks as $task) {
+            if (isset($task['task_type_id'])) {
+                $mappings[$task['task_type_id']] = array(
+                    'name'  => isset($task['name']) ? $task['name'] : '',
+                    'color' => isset($task['color']) ? $task['color'] : '#10b981'
+                );
+            }
+        }
+
+        return $mappings;
+    }
+
+    /**
+     * Get task types from NewBook for a location
+     *
+     * @param int $location_id Location ID
+     * @return array Task types array
+     */
+    public static function get_task_types($location_id) {
+        // Check if Hotel Hub App integration is available
+        if (!function_exists('hha')) {
+            return array();
+        }
+
+        // Get hotel from location
+        $hotel = self::get_hotel_from_location($location_id);
+        if (!$hotel) {
+            return array();
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return array();
+        }
+
+        // Check if task types are already configured
+        if (isset($integration['task_types']) && !empty($integration['task_types'])) {
+            return $integration['task_types'];
+        }
+
+        // Fetch from NewBook API
+        try {
+            require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
+            $api = new HHA_NewBook_API($integration);
+            $response = $api->get_task_types(true); // force_refresh
+
+            if ($response['success'] && isset($response['data'])) {
+                return $response['data'];
+            }
+        } catch (Exception $e) {
+            // Silent fail - return empty array
+        }
+
+        return array();
+    }
+
+    /**
+     * Get hotel object from location ID
+     *
+     * @param int $location_id Location ID
+     * @return object|null Hotel object or null
+     */
+    private static function get_hotel_from_location($location_id) {
+        if (!function_exists('hha')) {
+            return null;
+        }
+
+        // In Hotel Hub App, location_id is the same as hotel_id
+        return hha()->hotels->get($location_id);
     }
 }

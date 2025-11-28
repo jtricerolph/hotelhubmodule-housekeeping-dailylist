@@ -289,48 +289,192 @@ class HHDL_Display {
      * Fetch rooms data from NewBook (3-day period)
      */
     private function fetch_rooms_data($location_id, $date) {
-        // TODO: Implement NewBook API integration
-        // For now, return mock data for development
+        // Get NewBook API client
+        $api = $this->get_newbook_api($location_id);
+        if (!$api) {
+            return array();
+        }
 
-        return array(
-            array(
-                'room_id'              => '101',
-                'room_number'          => '101',
-                'site_status'          => 'Clean',
-                'booking_status'       => 'confirmed',
-                'is_arriving'          => true,
-                'is_departing'         => false,
-                'is_stopover'          => false,
-                'has_twin'             => false,
-                'spans_previous'       => false,
-                'spans_next'           => true,
-                'next_booking_status'  => 'confirmed',
-                'prev_booking_status'  => '',
-                'booking'              => array(
-                    'reference'    => 'NB123456',
-                    'guest_name'   => 'John Smith',
-                    'checkin_time' => '14:00',
-                    'pax'          => 2,
-                    'night_info'   => '1/3 nights',
-                    'occupancy'    => '2/2'
-                )
-            ),
-            array(
-                'room_id'              => '102',
-                'room_number'          => '102',
-                'site_status'          => 'Dirty',
-                'booking_status'       => '',
-                'is_arriving'          => false,
-                'is_departing'         => false,
-                'is_stopover'          => false,
-                'has_twin'             => false,
-                'spans_previous'       => false,
-                'spans_next'           => false,
-                'next_booking_status'  => '',
-                'prev_booking_status'  => '',
-                'booking'              => null
-            )
-        );
+        // Get Hotel Hub settings for this location
+        $hotel = $this->get_hotel_from_location($location_id);
+        if (!$hotel) {
+            return array();
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        $categories_sort = isset($integration['categories_sort']) ? $integration['categories_sort'] : array();
+
+        // Calculate 3-day period
+        $yesterday = date('Y-m-d', strtotime($date . ' -1 day'));
+        $tomorrow = date('Y-m-d', strtotime($date . ' +1 day'));
+        $tomorrow_end = date('Y-m-d', strtotime($date . ' +2 days')); // Period is exclusive
+
+        // Fetch data from NewBook
+        $sites_response = $api->get_sites(true);
+        $bookings_response = $api->get_bookings($yesterday, $tomorrow_end, 'staying', true);
+        $tasks_response = $api->get_tasks($yesterday, $tomorrow_end, array(), true, null, true);
+
+        // Process responses
+        $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+        $bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
+        $tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
+
+        // Build site-to-category map and exclusion lists
+        list($site_to_category, $excluded_sites, $site_order_map) = $this->build_category_maps($categories_sort);
+
+        // Build rooms array with all site data
+        $rooms_by_id = array();
+        foreach ($sites as $site) {
+            $site_id = $site['site_id'];
+
+            // Skip excluded sites
+            if (in_array($site_id, $excluded_sites)) {
+                continue;
+            }
+
+            $rooms_by_id[$site_id] = array(
+                'room_id'     => $site_id,
+                'room_number' => $site['site_name'],
+                'site_status' => isset($site['site_status']) ? $site['site_status'] : 'Unknown',
+                'category'    => isset($site_to_category[$site_id]) ? $site_to_category[$site_id] : array(),
+                'order'       => isset($site_order_map[$site_id]) ? $site_order_map[$site_id] : array('category_order' => 999, 'site_order' => 999),
+                'bookings'    => array('yesterday' => null, 'today' => null, 'tomorrow' => null),
+                'has_twin'    => false
+            );
+        }
+
+        // Process bookings and assign to dates
+        foreach ($bookings as $booking) {
+            $site_id = isset($booking['site_id']) ? $booking['site_id'] : '';
+            if (empty($site_id) || !isset($rooms_by_id[$site_id])) {
+                continue;
+            }
+
+            $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
+            $departure = date('Y-m-d', strtotime($booking['booking_departure']));
+
+            // Check which dates this booking overlaps
+            if ($arrival <= $yesterday && $departure > $yesterday) {
+                $rooms_by_id[$site_id]['bookings']['yesterday'] = $booking;
+            }
+            if ($arrival <= $date && $departure > $date) {
+                $rooms_by_id[$site_id]['bookings']['today'] = $booking;
+            }
+            if ($arrival <= $tomorrow && $departure > $tomorrow) {
+                $rooms_by_id[$site_id]['bookings']['tomorrow'] = $booking;
+            }
+
+            // Check for twin/sofabed indicators
+            if ($rooms_by_id[$site_id]['bookings']['today'] === $booking) {
+                $rooms_by_id[$site_id]['has_twin'] = $this->detect_twin($booking);
+            }
+        }
+
+        // Process occupy tasks (blocked rooms)
+        foreach ($tasks as $task) {
+            if (empty($task['task_location_occupy']) || $task['task_location_occupy'] != 1) {
+                continue;
+            }
+
+            // Get site ID
+            $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
+                       (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+
+            if (empty($site_id)) {
+                continue;
+            }
+
+            // If site doesn't exist in rooms, add it
+            if (!isset($rooms_by_id[$site_id])) {
+                // This might be a blocked site not in our visible list
+                continue;
+            }
+
+            // Determine task dates
+            $task_dates = $this->get_task_dates($task);
+
+            // Check if task blocks any of our 3 days
+            foreach ($task_dates as $task_date) {
+                if ($task_date === $yesterday) {
+                    $rooms_by_id[$site_id]['bookings']['yesterday'] = 'blocked';
+                } elseif ($task_date === $date) {
+                    $rooms_by_id[$site_id]['bookings']['today'] = 'blocked';
+                } elseif ($task_date === $tomorrow) {
+                    $rooms_by_id[$site_id]['bookings']['tomorrow'] = 'blocked';
+                }
+            }
+        }
+
+        // Build final room cards array for the selected date
+        $room_cards = array();
+        foreach ($rooms_by_id as $room) {
+            $today_booking = $room['bookings']['today'];
+            $yesterday_booking = $room['bookings']['yesterday'];
+            $tomorrow_booking = $room['bookings']['tomorrow'];
+
+            // Determine today's booking status
+            $booking_data = null;
+            $booking_status = '';
+            if ($today_booking && is_array($today_booking)) {
+                $booking_data = $this->format_booking_data($today_booking, $date);
+                $booking_status = $this->get_booking_status($today_booking);
+            } elseif ($today_booking === 'blocked') {
+                $booking_status = 'blocked';
+            }
+
+            // Determine arrival/departure/stopover
+            $is_arriving = $today_booking && is_array($today_booking) &&
+                          date('Y-m-d', strtotime($today_booking['booking_arrival'])) === $date;
+            $is_departing = $today_booking && is_array($today_booking) &&
+                           date('Y-m-d', strtotime($today_booking['booking_departure'])) === $date;
+            $is_stopover = $today_booking && is_array($today_booking) && !$is_arriving && !$is_departing;
+
+            // Determine spanning
+            $spans_previous = !empty($yesterday_booking);
+            $spans_next = !empty($tomorrow_booking);
+
+            // Get adjacent booking statuses
+            $prev_booking_status = '';
+            if ($yesterday_booking && is_array($yesterday_booking)) {
+                $prev_booking_status = $this->get_booking_status($yesterday_booking);
+            } elseif ($yesterday_booking === 'blocked') {
+                $prev_booking_status = 'blocked';
+            }
+
+            $next_booking_status = '';
+            if ($tomorrow_booking && is_array($tomorrow_booking)) {
+                $next_booking_status = $this->get_booking_status($tomorrow_booking);
+            } elseif ($tomorrow_booking === 'blocked') {
+                $next_booking_status = 'blocked';
+            }
+
+            $room_cards[] = array(
+                'room_id'              => $room['room_id'],
+                'room_number'          => $room['room_number'],
+                'site_status'          => $room['site_status'],
+                'booking_status'       => $booking_status,
+                'is_arriving'          => $is_arriving,
+                'is_departing'         => $is_departing,
+                'is_stopover'          => $is_stopover,
+                'has_twin'             => $room['has_twin'],
+                'spans_previous'       => $spans_previous,
+                'spans_next'           => $spans_next,
+                'prev_booking_status'  => $prev_booking_status,
+                'next_booking_status'  => $next_booking_status,
+                'booking'              => $booking_data,
+                'order'                => $room['order']
+            );
+        }
+
+        // Sort by category and site order
+        usort($room_cards, function($a, $b) {
+            if ($a['order']['category_order'] !== $b['order']['category_order']) {
+                return $a['order']['category_order'] - $b['order']['category_order'];
+            }
+            return $a['order']['site_order'] - $b['order']['site_order'];
+        });
+
+        return $room_cards;
     }
 
     /**
@@ -404,5 +548,178 @@ class HHDL_Display {
             return wfa_user_has_permission('hhdl_view_guest_details');
         }
         return current_user_can('edit_posts');
+    }
+
+    /**
+     * Get NewBook API client for a location
+     */
+    private function get_newbook_api($location_id) {
+        if (!function_exists('hha')) {
+            return null;
+        }
+
+        $hotel = $this->get_hotel_from_location($location_id);
+        if (!$hotel) {
+            return null;
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return null;
+        }
+
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
+        return new HHA_NewBook_API($integration);
+    }
+
+    /**
+     * Get hotel from location ID
+     */
+    private function get_hotel_from_location($location_id) {
+        if (!function_exists('hha')) {
+            return null;
+        }
+
+        return hha()->hotels->get($location_id);
+    }
+
+    /**
+     * Build category maps for sorting and exclusion
+     */
+    private function build_category_maps($categories_sort) {
+        $site_to_category = array();
+        $excluded_sites = array();
+        $site_order_map = array();
+
+        foreach ($categories_sort as $cat_index => $category) {
+            if (!empty($category['excluded'])) {
+                continue; // Skip excluded categories
+            }
+
+            foreach ($category['sites'] as $site_index => $site) {
+                $site_id = $site['site_id'];
+
+                $site_to_category[$site_id] = array(
+                    'category_id' => $category['id'],
+                    'category_name' => $category['name']
+                );
+
+                $site_order_map[$site_id] = array(
+                    'category_order' => $cat_index,
+                    'site_order' => $site_index
+                );
+
+                if (!empty($site['excluded'])) {
+                    $excluded_sites[] = $site_id;
+                }
+            }
+        }
+
+        return array($site_to_category, $excluded_sites, $site_order_map);
+    }
+
+    /**
+     * Detect twin/sofabed from booking
+     */
+    private function detect_twin($booking) {
+        // Check custom fields
+        if (!empty($booking['custom_fields'])) {
+            foreach ($booking['custom_fields'] as $field) {
+                if (stripos($field, 'twin') !== false || stripos($field, 'sofabed') !== false) {
+                    return true;
+                }
+            }
+        }
+
+        // Check booking custom fields
+        if (!empty($booking['booking_custom_fields'])) {
+            foreach ($booking['booking_custom_fields'] as $field) {
+                if (isset($field['value'])) {
+                    if (stripos($field['value'], 'twin') !== false || stripos($field['value'], 'sofabed') !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Check notes
+        if (!empty($booking['notes'])) {
+            foreach ($booking['notes'] as $note) {
+                if (isset($note['content'])) {
+                    if (stripos($note['content'], 'twin') !== false || stripos($note['content'], 'sofabed') !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get dates covered by a task
+     */
+    private function get_task_dates($task) {
+        $dates = array();
+
+        // Single-day task
+        if (!empty($task['task_when_date'])) {
+            $dates[] = date('Y-m-d', strtotime($task['task_when_date']));
+            return $dates;
+        }
+
+        // Multi-day task
+        if (!empty($task['task_period_from']) && !empty($task['task_period_to'])) {
+            $start = strtotime($task['task_period_from']);
+            $end = strtotime($task['task_period_to']);
+
+            // Period_to is exclusive, so subtract one day
+            $end = strtotime('-1 day', $end);
+
+            $current = $start;
+            while ($current <= $end) {
+                $dates[] = date('Y-m-d', $current);
+                $current = strtotime('+1 day', $current);
+            }
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Format booking data for display
+     */
+    private function format_booking_data($booking, $date) {
+        $arrival_date = date('Y-m-d', strtotime($booking['booking_arrival']));
+        $departure_date = date('Y-m-d', strtotime($booking['booking_departure']));
+
+        // Calculate nights
+        $total_nights = (strtotime($departure_date) - strtotime($arrival_date)) / 86400;
+        $current_night = (strtotime($date) - strtotime($arrival_date)) / 86400 + 1;
+
+        return array(
+            'reference'    => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
+            'guest_name'   => isset($booking['guest_name']) ? $booking['guest_name'] : '',
+            'checkin_time' => isset($booking['booking_eta']) ? date('H:i', strtotime($booking['booking_eta'])) : '',
+            'pax'          => isset($booking['pax']) ? $booking['pax'] : 0,
+            'night_info'   => $current_night . '/' . $total_nights . ' nights',
+            'occupancy'    => isset($booking['occupancy']) ? $booking['occupancy'] : ''
+        );
+    }
+
+    /**
+     * Get booking status from booking data
+     */
+    private function get_booking_status($booking) {
+        if (isset($booking['booking_status'])) {
+            return strtolower($booking['booking_status']);
+        }
+
+        // Fallback to determining status from other fields
+        if (isset($booking['booking_locked']) && $booking['booking_locked'] == '1') {
+            return 'confirmed';
+        }
+
+        return 'unconfirmed';
     }
 }
