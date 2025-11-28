@@ -312,11 +312,55 @@
         }, 3000);
     }
 
-    // Initialize when document is ready
-    $(document).ready(function() {
+    // Initialize when document is ready OR when module content is dynamically loaded
+    var initialized = false;
+
+    function checkAndInit() {
+        if (initialized) return true;
+
         if ($('#hhdl-room-list').length) {
+            console.log('[HHDL] Daily List module content found, initializing...');
             initDailyList();
+            initialized = true;
+            return true;
+        }
+        return false;
+    }
+
+    // Try on document ready
+    $(document).ready(function() {
+        console.log('[HHDL] Document ready, checking for module...');
+        checkAndInit();
+    });
+
+    // Listen for HHA custom module load event
+    $(document).on('hha-module-loaded', function(e, moduleId) {
+        if (moduleId === 'daily_list') {
+            console.log('[HHDL] Received HHA module-loaded event');
+            setTimeout(checkAndInit, 100); // Small delay to ensure DOM is ready
         }
     });
+
+    // Also watch for dynamic content changes (for HHA SPA loading)
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                if (checkAndInit()) {
+                    observer.disconnect(); // Stop observing once initialized
+                }
+            }
+        });
+    });
+
+    // Start observing after a short delay to let HHA set up
+    setTimeout(function() {
+        if (!initialized && document.body) {
+            console.log('[HHDL] Starting MutationObserver...');
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }, 100);
 
 })(jQuery);
