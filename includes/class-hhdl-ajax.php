@@ -102,14 +102,14 @@ class HHDL_Ajax {
             wp_send_json_error(array('message' => __('Room not found', 'hhdl')));
         }
 
-        // Get task type mappings for this location
-        $task_type_mappings = HHDL_Settings::get_task_type_mappings($location_id);
+        // Get task description mappings for this location
+        $task_description_mappings = HHDL_Settings::get_task_description_mappings($location_id);
 
         // Build response with permission-based data
         $response = array(
             'room_number' => $room_details['room_number'],
             'booking'     => $this->filter_booking_data($room_details['booking']),
-            'tasks'       => $this->build_tasks_list($room_details, $task_type_mappings, $date),
+            'tasks'       => $this->build_tasks_list($room_details, $task_description_mappings, $date),
             'site_status' => $room_details['site_status']
         );
 
@@ -294,10 +294,9 @@ class HHDL_Ajax {
             }
 
             $newbook_tasks[] = array(
-                'id'          => $task['task_id'],
-                'task_type_id' => isset($task['task_type_id']) ? $task['task_type_id'] : '',
-                'name'        => isset($task['task_description']) ? $task['task_description'] : '',
-                'completed'   => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
+                'id'               => $task['task_id'],
+                'task_description' => isset($task['task_description']) ? $task['task_description'] : '',
+                'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
         }
 
@@ -357,26 +356,26 @@ class HHDL_Ajax {
     }
 
     /**
-     * Build tasks list from NewBook tasks filtered by task type mappings
+     * Build tasks list from NewBook tasks filtered by task description mappings
      */
-    private function build_tasks_list($room_details, $task_type_mappings, $date) {
+    private function build_tasks_list($room_details, $task_description_mappings, $date) {
         $tasks = array();
 
-        // Only show NewBook tasks that match configured task type mappings
+        // Only show NewBook tasks that match configured task description filters
         if (!empty($room_details['newbook_tasks'])) {
             foreach ($room_details['newbook_tasks'] as $nb_task) {
-                $task_type_id = $nb_task['task_type_id'];
+                $task_description = $nb_task['task_description'];
 
-                // Only show if this task type is in our mappings
-                if (isset($task_type_mappings[$task_type_id])) {
-                    $mapping = $task_type_mappings[$task_type_id];
+                // Only show if this task description matches one of our filters
+                if (isset($task_description_mappings[$task_description])) {
+                    $mapping = $task_description_mappings[$task_description];
 
                     // Check if already completed locally (for user attribution)
-                    $locally_completed = $this->is_task_completed($room_details['room_number'], $nb_task['name'], $date);
+                    $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
 
                     $tasks[] = array(
                         'id'        => $nb_task['id'],
-                        'name'      => $mapping['name'], // Use mapping name
+                        'name'      => $mapping['name'], // Use mapping display name
                         'color'     => $mapping['color'],
                         'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
                         'source'    => 'newbook'
