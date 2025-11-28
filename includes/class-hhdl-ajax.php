@@ -71,7 +71,7 @@ class HHDL_Ajax {
         $display->render_room_cards($location_id, $date);
         $html = ob_get_clean();
 
-        wp_send_json_success(array('html' => $html));
+        wp_send_json_success($html);
     }
 
     /**
@@ -105,15 +105,16 @@ class HHDL_Ajax {
         // Get task description mappings for this location
         $task_description_mappings = HHDL_Settings::get_task_description_mappings($location_id);
 
-        // Build response with permission-based data
-        $response = array(
-            'room_number' => $room_details['room_number'],
-            'booking'     => $this->filter_booking_data($room_details['booking']),
-            'tasks'       => $this->build_tasks_list($room_details, $task_description_mappings, $date),
-            'site_status' => $room_details['site_status']
-        );
+        // Prepare data
+        $booking_data = $this->filter_booking_data($room_details['booking']);
+        $tasks = $this->build_tasks_list($room_details, $task_description_mappings, $date);
 
-        wp_send_json_success($response);
+        // Render modal body HTML
+        ob_start();
+        $this->render_room_modal_body($room_details, $booking_data, $tasks);
+        $html = ob_get_clean();
+
+        wp_send_json_success($html);
     }
 
     /**
@@ -591,5 +592,69 @@ class HHDL_Ajax {
         }
 
         return implode("\n", $formatted);
+    }
+
+    /**
+     * Render room modal body HTML
+     */
+    private function render_room_modal_body($room_details, $booking_data, $tasks) {
+        ?>
+        <!-- Booking Details Section -->
+        <?php if ($booking_data): ?>
+        <section class="hhdl-booking-section">
+            <h3><?php _e('Booking Details', 'hhdl'); ?></h3>
+            <div class="hhdl-booking-details">
+                <?php if (isset($booking_data['guest_name'])): ?>
+                    <p><strong><?php _e('Guest:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['guest_name']); ?></p>
+                <?php endif; ?>
+                <?php if (isset($booking_data['reference'])): ?>
+                    <p><strong><?php _e('Reference:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['reference']); ?></p>
+                <?php endif; ?>
+                <?php if (isset($booking_data['nights'])): ?>
+                    <p><strong><?php _e('Nights:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['nights']); ?></p>
+                <?php endif; ?>
+                <?php if (isset($booking_data['pax'])): ?>
+                    <p><strong><?php _e('Guests:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['pax']); ?></p>
+                <?php endif; ?>
+            </div>
+        </section>
+        <?php endif; ?>
+
+        <!-- Tasks Section -->
+        <section class="hhdl-tasks-section">
+            <h3><?php _e('Tasks', 'hhdl'); ?></h3>
+            <?php if (!empty($tasks)): ?>
+            <div class="hhdl-task-list">
+                <?php foreach ($tasks as $task): ?>
+                <div class="hhdl-task-item <?php echo $task['completed'] ? 'completed' : ''; ?>"
+                     style="border-left-color: <?php echo esc_attr($task['color']); ?>;">
+                    <input type="checkbox"
+                           class="hhdl-task-checkbox"
+                           <?php checked($task['completed']); ?>
+                           <?php disabled($task['completed']); ?>
+                           data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
+                           data-task-id="<?php echo esc_attr($task['id']); ?>"
+                           data-task-type="<?php echo esc_attr($task['name']); ?>"
+                           data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>">
+                    <span class="hhdl-task-name"><?php echo esc_html($task['name']); ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+            <p><?php _e('No tasks configured for this room.', 'hhdl'); ?></p>
+            <?php endif; ?>
+        </section>
+
+        <!-- Placeholder Sections -->
+        <section class="hhdl-placeholder">
+            <h3><?php _e('Recurring Tasks', 'hhdl'); ?></h3>
+            <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
+        </section>
+
+        <section class="hhdl-placeholder">
+            <h3><?php _e('Spoilt Linen Tracking', 'hhdl'); ?></h3>
+            <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
+        </section>
+        <?php
     }
 }
