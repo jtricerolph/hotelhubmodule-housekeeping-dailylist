@@ -1,37 +1,84 @@
 /**
- * Admin Styles
- * Settings page styling (most styles are inline in settings.php template)
+ * Daily List Module - Admin/Settings Page Styles
  */
 
-/* Additional admin styles can be added here */
-
-/* Settings page wrapper */
-.hhdl-settings-wrap {
-    background: #fff;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* Success notice styling */
-.hhdl-settings-wrap .notice {
-    margin: 20px 0;
-}
-
-/* Form styling */
-.hhdl-settings-form {
+.hhdl-settings-table {
+    width: 100%;
+    border-collapse: collapse;
     margin-top: 20px;
 }
 
-/* Responsive table */
-@media (max-width: 782px) {
-    .hhdl-locations-table {
-        display: block;
-        overflow-x: auto;
-    }
+.hhdl-settings-table th,
+.hhdl-settings-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
 
-    .hhdl-task-manager {
-        min-width: 300px;
-    }
+.hhdl-settings-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.hhdl-task-manager {
+    margin-top: 12px;
+}
+
+.hhdl-task-items {
+    margin-bottom: 12px;
+}
+
+.hhdl-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.hhdl-drag-handle {
+    cursor: move;
+    color: #666;
+}
+
+.hhdl-task-type-select {
+    flex: 1;
+    min-width: 200px;
+}
+
+.hhdl-task-description-filter {
+    flex: 1;
+    min-width: 200px;
+}
+
+.hhdl-task-color {
+    width: 60px;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.hhdl-remove-task {
+    color: #dc3232;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+}
+
+.hhdl-remove-task:hover {
+    color: #a00;
+}
+
+.hhdl-add-task-btn {
+    margin-top: 8px;
+}
+
+.hhdl-settings-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
 }
