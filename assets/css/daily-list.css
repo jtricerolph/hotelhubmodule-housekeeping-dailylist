@@ -1,0 +1,587 @@
+/**
+ * Daily List Styles
+ * Mobile-first design matching Chrome extension patterns
+ */
+
+/* ====================================
+   Color Variables (from Chrome Extension)
+   ==================================== */
+:root {
+    /* Booking Status Colors */
+    --status-departed: #8b5cf6;
+    --status-confirmed: #10b981;
+    --status-unconfirmed: #f59e0b;
+    --status-arrived: #fb923c;
+    --status-seated: #dc2626;
+    --status-waitlist: #eab308;
+    --status-cancelled: #94a3b8;
+
+    /* Typography Colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+
+    /* Backgrounds */
+    --bg-white: #ffffff;
+    --bg-gray-light: #f9fafb;
+    --bg-gray: #f3f4f6;
+
+    /* Borders */
+    --border-gray: #d1d5db;
+    --border-gray-light: #e5e7eb;
+
+    /* Spacing */
+    --timeline-width: 15px;
+    --timeline-gap: 8px;
+    --card-margin: 0 23px 5px 23px; /* 23px = 15px timeline + 8px gap */
+}
+
+/* ====================================
+   Header & Date Picker
+   ==================================== */
+.hhdl-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-white);
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--border-gray);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.hhdl-date-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hhdl-date-selector label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.hhdl-date-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-gray);
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.hhdl-viewing-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ====================================
+   Filters
+   ==================================== */
+.hhdl-filters {
+    padding: 12px 20px;
+    background: var(--bg-gray-light);
+    border-bottom: 1px solid var(--border-gray-light);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 69px; /* Below header */
+    z-index: 99;
+}
+
+.hhdl-filter-btn {
+    padding: 6px 14px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-filter-btn:hover {
+    border-color: var(--status-confirmed);
+    color: var(--status-confirmed);
+}
+
+.hhdl-filter-btn.active {
+    background: var(--status-confirmed);
+    border-color: var(--status-confirmed);
+    color: white;
+}
+
+/* ====================================
+   Room List
+   ==================================== */
+.hhdl-room-list {
+    padding: 16px 0;
+    background: var(--bg-gray-light);
+    min-height: 400px;
+}
+
+.hhdl-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.hhdl-no-rooms {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+/* ====================================
+   Room Cards
+   ==================================== */
+.hhdl-room-card {
+    background: var(--bg-white);
+    border: 2px solid var(--border-gray);
+    border-left: 4px solid var(--border-gray);
+    border-radius: 8px;
+    margin: var(--card-margin);
+    padding: 8px;
+    position: relative;
+    overflow: visible;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.hhdl-room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Vacant room styling */
+.hhdl-room-card.hhdl-vacant {
+    opacity: 0.7;
+    border-left-color: var(--border-gray);
+}
+
+.hhdl-room-card.hhdl-vacant:hover {
+    opacity: 1;
+}
+
+/* Border slivers for stayovers */
+.hhdl-room-card[data-spans-previous="true"] {
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Timeline indicator - absolute positioned outside card */
+.hhdl-room-card[data-spans-previous="true"]::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--timeline-width));
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--previous-status-color, var(--border-gray));
+    border-radius: 2px 0 0 2px;
+}
+
+/* Spans to next day */
+.hhdl-room-card[data-spans-next="true"] {
+    border-right: 4px solid var(--next-status-color, var(--border-gray));
+    border-radius: 8px 0 0 8px;
+}
+
+/* Spans both directions */
+.hhdl-room-card[data-spans-previous="true"][data-spans-next="true"] {
+    border-left: none;
+    border-right: 4px solid var(--next-status-color, var(--border-gray));
+    border-radius: 0;
+}
+
+/* ====================================
+   Room Card Content
+   ==================================== */
+.hhdl-room-content,
+.hhdl-room-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.hhdl-room-number {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 40px;
+}
+
+.hhdl-vacant-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.hhdl-site-status {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.hhdl-site-status.clean {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.hhdl-site-status.dirty {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.hhdl-arrival-icon,
+.hhdl-departure-icon {
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.hhdl-arrival-icon {
+    color: var(--status-confirmed);
+}
+
+.hhdl-departure-icon {
+    color: var(--status-departed);
+}
+
+/* Booking Info */
+.hhdl-booking-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-bottom: 6px;
+    align-items: center;
+}
+
+.hhdl-guest-name,
+.hhdl-ref-number {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1 1 100%;
+}
+
+.hhdl-ref-number {
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.hhdl-checkin-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.hhdl-pax-badge {
+    font-size: 12px;
+    background: var(--bg-gray);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+/* Booking Meta */
+.hhdl-booking-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.hhdl-nights {
+    font-size: 11px;
+}
+
+.hhdl-occupancy-badge {
+    font-size: 11px;
+}
+
+.hhdl-twin-icon {
+    font-size: 14px;
+}
+
+/* ====================================
+   Modal
+   ==================================== */
+.hhdl-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.hhdl-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.hhdl-modal {
+    background: var(--bg-white);
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s;
+}
+
+.hhdl-modal-overlay.active .hhdl-modal {
+    transform: scale(1);
+}
+
+.hhdl-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg-white);
+    z-index: 10;
+}
+
+.hhdl-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hhdl-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-modal-close:hover {
+    background: var(--bg-gray);
+    color: var(--text-primary);
+}
+
+.hhdl-modal-body {
+    padding: 24px;
+}
+
+/* Modal Sections */
+.hhdl-booking-section,
+.hhdl-tasks-section,
+.hhdl-placeholder {
+    margin-bottom: 24px;
+}
+
+.hhdl-booking-section h3,
+.hhdl-tasks-section h3,
+.hhdl-placeholder h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+}
+
+/* Task List in Modal */
+.hhdl-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hhdl-task-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border-gray-light);
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.hhdl-task-checkbox-wrapper:hover {
+    background: var(--bg-gray-light);
+}
+
+.hhdl-task-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.hhdl-task-label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.hhdl-task-color-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.hhdl-task-checkbox:checked + .hhdl-task-label {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+/* Placeholder sections */
+.hhdl-placeholder-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* ====================================
+   Toast Notifications
+   ==================================== */
+.hhdl-toast {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    transition: bottom 0.3s;
+}
+
+.hhdl-toast.hhdl-toast-show {
+    bottom: 24px;
+}
+
+.hhdl-toast.hhdl-toast-error {
+    background: var(--status-seated);
+}
+
+.hhdl-toast.hhdl-toast-success {
+    background: var(--status-confirmed);
+}
+
+/* ====================================
+   Notices
+   ==================================== */
+.hhdl-notice {
+    padding: 16px 20px;
+    margin: 20px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.hhdl-notice-error {
+    background: #fee2e2;
+    border-left-color: var(--status-seated);
+    color: #991b1b;
+}
+
+.hhdl-notice-warning {
+    background: #fef3c7;
+    border-left-color: var(--status-unconfirmed);
+    color: #92400e;
+}
+
+/* ====================================
+   Responsive Design
+   ==================================== */
+
+/* Mobile landscape / Tablet */
+@media (min-width: 600px) {
+    .hhdl-header {
+        padding: 20px 32px;
+    }
+
+    .hhdl-filters {
+        padding: 16px 32px;
+    }
+
+    .hhdl-room-card {
+        margin: 0 32px 6px 32px;
+    }
+
+    .hhdl-modal {
+        max-width: 700px;
+    }
+}
+
+/* Desktop */
+@media (min-width: 900px) {
+    .hhdl-room-list {
+        padding: 20px 0;
+    }
+
+    .hhdl-room-card {
+        margin: 0 40px 6px 40px;
+        padding: 10px;
+    }
+
+    .hhdl-modal {
+        max-width: 800px;
+    }
+
+    .hhdl-booking-info {
+        flex-wrap: nowrap;
+    }
+
+    .hhdl-guest-name,
+    .hhdl-ref-number {
+        flex: 0 0 auto;
+    }
+}
+
+/* Print styles */
+@media print {
+    .hhdl-filters,
+    .hhdl-modal-close {
+        display: none;
+    }
+
+    .hhdl-room-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+}

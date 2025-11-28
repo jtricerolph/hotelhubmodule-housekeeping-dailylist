@@ -1,0 +1,37 @@
+/**
+ * Admin Styles
+ * Settings page styling (most styles are inline in settings.php template)
+ */
+
+/* Additional admin styles can be added here */
+
+/* Settings page wrapper */
+.hhdl-settings-wrap {
+    background: #fff;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Success notice styling */
+.hhdl-settings-wrap .notice {
+    margin: 20px 0;
+}
+
+/* Form styling */
+.hhdl-settings-form {
+    margin-top: 20px;
+}
+
+/* Responsive table */
+@media (max-width: 782px) {
+    .hhdl-locations-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .hhdl-task-manager {
+        min-width: 300px;
+    }
+}
