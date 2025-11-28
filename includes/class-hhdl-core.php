@@ -100,39 +100,44 @@ class HHDL_Core {
     /**
      * Register permissions with Workforce Authentication
      *
-     * @param array $permissions Existing permissions
-     * @return array Modified permissions array
+     * @param WFA_Permissions $permissions_manager WFA Permissions object
      */
-    public function register_permissions($permissions) {
-        $permissions['hhdl_access_module'] = array(
-            'name'        => __('Access Daily List Module', 'hhdl'),
-            'description' => __('View and use the Daily List module', 'hhdl'),
-            'module'      => 'daily_list',
-            'department'  => 'housekeeping'
+    public function register_permissions($permissions_manager) {
+        // Register permission: Access module
+        $permissions_manager->register(
+            'hhdl_access_module',
+            __('Access Daily List Module', 'hhdl'),
+            __('View and use the Daily List module', 'hhdl'),
+            'daily_list',
+            'housekeeping'
         );
 
-        $permissions['hhdl_view_guest_details'] = array(
-            'name'        => __('View Guest Details', 'hhdl'),
-            'description' => __('View guest names and personal information', 'hhdl'),
-            'module'      => 'daily_list',
-            'department'  => 'housekeeping'
+        // Register permission: View guest details
+        $permissions_manager->register(
+            'hhdl_view_guest_details',
+            __('View Guest Details', 'hhdl'),
+            __('View guest names and personal information', 'hhdl'),
+            'daily_list',
+            'housekeeping'
         );
 
-        $permissions['hhdl_view_rate_details'] = array(
-            'name'        => __('View Rate Details', 'hhdl'),
-            'description' => __('View pricing and rate information', 'hhdl'),
-            'module'      => 'daily_list',
-            'department'  => 'housekeeping'
+        // Register permission: View rate details
+        $permissions_manager->register(
+            'hhdl_view_rate_details',
+            __('View Rate Details', 'hhdl'),
+            __('View pricing and rate information', 'hhdl'),
+            'daily_list',
+            'housekeeping'
         );
 
-        $permissions['hhdl_view_all_notes'] = array(
-            'name'        => __('View All Notes', 'hhdl'),
-            'description' => __('View all booking notes (not just housekeeping)', 'hhdl'),
-            'module'      => 'daily_list',
-            'department'  => 'housekeeping'
+        // Register permission: View all notes
+        $permissions_manager->register(
+            'hhdl_view_all_notes',
+            __('View All Notes', 'hhdl'),
+            __('View all booking notes (not just housekeeping)', 'hhdl'),
+            'daily_list',
+            'housekeeping'
         );
-
-        return $permissions;
     }
 
     /**
