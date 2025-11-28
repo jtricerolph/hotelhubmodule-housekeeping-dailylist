@@ -104,39 +104,35 @@ class HHDL_Core {
      */
     public function register_permissions($permissions_manager) {
         // Register permission: Access module
-        $permissions_manager->register(
+        $permissions_manager->register_permission(
             'hhdl_access_module',
             __('Access Daily List Module', 'hhdl'),
             __('View and use the Daily List module', 'hhdl'),
-            'daily_list',
-            'housekeeping'
+            'daily_list'
         );
 
         // Register permission: View guest details
-        $permissions_manager->register(
+        $permissions_manager->register_permission(
             'hhdl_view_guest_details',
             __('View Guest Details', 'hhdl'),
             __('View guest names and personal information', 'hhdl'),
-            'daily_list',
-            'housekeeping'
+            'daily_list'
         );
 
         // Register permission: View rate details
-        $permissions_manager->register(
+        $permissions_manager->register_permission(
             'hhdl_view_rate_details',
             __('View Rate Details', 'hhdl'),
             __('View pricing and rate information', 'hhdl'),
-            'daily_list',
-            'housekeeping'
+            'daily_list'
         );
 
         // Register permission: View all notes
-        $permissions_manager->register(
+        $permissions_manager->register_permission(
             'hhdl_view_all_notes',
             __('View All Notes', 'hhdl'),
             __('View all booking notes (not just housekeeping)', 'hhdl'),
-            'daily_list',
-            'housekeeping'
+            'daily_list'
         );
     }
 
