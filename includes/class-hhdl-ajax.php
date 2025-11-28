@@ -356,7 +356,7 @@ class HHDL_Ajax {
     }
 
     /**
-     * Build tasks list from NewBook tasks filtered by task description mappings
+     * Build tasks list from NewBook tasks filtered by task description
      */
     private function build_tasks_list($room_details, $task_description_mappings, $date) {
         $tasks = array();
@@ -366,16 +366,19 @@ class HHDL_Ajax {
             foreach ($room_details['newbook_tasks'] as $nb_task) {
                 $task_description = $nb_task['task_description'];
 
-                // Only show if this task description matches one of our filters
+                // Check if this task description matches any of our filters
                 if (isset($task_description_mappings[$task_description])) {
                     $mapping = $task_description_mappings[$task_description];
+
+                    // Get task type name from NewBook task types
+                    $task_type_name = $this->get_task_type_name($mapping['task_type_id']);
 
                     // Check if already completed locally (for user attribution)
                     $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
 
                     $tasks[] = array(
                         'id'        => $nb_task['id'],
-                        'name'      => $mapping['name'], // Use mapping display name
+                        'name'      => $task_type_name ?: $task_description, // Use task type name or fall back to description
                         'color'     => $mapping['color'],
                         'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
                         'source'    => 'newbook'
@@ -385,6 +388,28 @@ class HHDL_Ajax {
         }
 
         return $tasks;
+    }
+
+    /**
+     * Get task type name by ID
+     *
+     * @param string $task_type_id Task type ID
+     * @return string Task type name or empty string
+     */
+    private function get_task_type_name($task_type_id) {
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        if (!$location_id) {
+            return '';
+        }
+
+        $task_types = HHDL_Settings::get_task_types($location_id);
+        foreach ($task_types as $task_type) {
+            if ($task_type['id'] === $task_type_id) {
+                return isset($task_type['name']) ? $task_type['name'] : '';
+            }
+        }
+
+        return '';
     }
 
     /**

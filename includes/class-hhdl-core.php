@@ -128,7 +128,7 @@ class HHDL_Core {
             'hhdl_access_module',
             __('Access Daily List Module', 'hhdl'),
             __('View and use the Daily List module', 'hhdl'),
-            'daily_list'
+            'Housekeeping - Daily List'
         );
 
         // Register permission: View guest details
@@ -136,7 +136,7 @@ class HHDL_Core {
             'hhdl_view_guest_details',
             __('View Guest Details', 'hhdl'),
             __('View guest names and personal information', 'hhdl'),
-            'daily_list'
+            'Housekeeping - Daily List'
         );
 
         // Register permission: View rate details
@@ -144,7 +144,7 @@ class HHDL_Core {
             'hhdl_view_rate_details',
             __('View Rate Details', 'hhdl'),
             __('View pricing and rate information', 'hhdl'),
-            'daily_list'
+            'Housekeeping - Daily List'
         );
 
         // Register permission: View all notes
@@ -152,7 +152,7 @@ class HHDL_Core {
             'hhdl_view_all_notes',
             __('View All Notes', 'hhdl'),
             __('View all booking notes (not just housekeeping)', 'hhdl'),
-            'daily_list'
+            'Housekeeping - Daily List'
         );
     }
 
