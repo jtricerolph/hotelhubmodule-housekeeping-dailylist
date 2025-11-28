@@ -38,6 +38,15 @@ class HHDL_Display {
     }
 
     /**
+     * Render module (entry point from HHA_Modules)
+     *
+     * @param array $params Optional parameters
+     */
+    public function render($params = array()) {
+        $this->render_daily_list();
+    }
+
+    /**
      * Render daily list view
      */
     public function render_daily_list() {

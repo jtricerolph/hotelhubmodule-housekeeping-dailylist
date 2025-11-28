@@ -66,11 +66,21 @@ class HHDL_Core {
     /**
      * Register module with Hotel Hub App
      *
-     * @param array $modules Existing modules
-     * @return array Modified modules array
+     * @param HHA_Modules $modules_manager HHA Modules manager object
      */
-    public function register_module($modules) {
-        $modules['daily_list'] = array(
+    public function register_module($modules_manager) {
+        $modules_manager->register_module($this);
+    }
+
+    /**
+     * Get module configuration
+     *
+     * Required by HHA_Modules
+     *
+     * @return array Module configuration
+     */
+    public function get_config() {
+        return array(
             'id'             => 'daily_list',
             'name'           => __('Daily List', 'hhdl'),
             'description'    => __('Daily housekeeping task management', 'hhdl'),
@@ -93,8 +103,18 @@ class HHDL_Core {
                 )
             )
         );
+    }
 
-        return $modules;
+    /**
+     * Render module content
+     *
+     * Called by HHA_Modules when module is displayed
+     *
+     * @param array $params Optional parameters
+     */
+    public function render($params = array()) {
+        // Delegate to Display class
+        HHDL_Display::instance()->render($params);
     }
 
     /**
