@@ -258,8 +258,8 @@ class HHDL_Core {
      */
     private function user_can_access() {
         // Check if Workforce Authentication function exists
-        if (function_exists('wfa_user_has_permission')) {
-            return wfa_user_has_permission('hhdl_access_module');
+        if (function_exists('wfa_user_can')) {
+            return wfa_user_can('hhdl_access_module');
         }
 
         // Fallback to WordPress capability

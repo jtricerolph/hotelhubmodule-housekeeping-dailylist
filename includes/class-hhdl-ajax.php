@@ -487,8 +487,8 @@ class HHDL_Ajax {
      * Check if user can access module
      */
     private function user_can_access() {
-        if (function_exists('wfa_user_has_permission')) {
-            return wfa_user_has_permission('hhdl_access_module');
+        if (function_exists('wfa_user_can')) {
+            return wfa_user_can('hhdl_access_module');
         }
         return current_user_can('edit_posts');
     }
@@ -497,8 +497,8 @@ class HHDL_Ajax {
      * Check if user can view guest details
      */
     private function user_can_view_guest_details() {
-        if (function_exists('wfa_user_has_permission')) {
-            return wfa_user_has_permission('hhdl_view_guest_details');
+        if (function_exists('wfa_user_can')) {
+            return wfa_user_can('hhdl_view_guest_details');
         }
         return current_user_can('edit_posts');
     }
@@ -507,8 +507,8 @@ class HHDL_Ajax {
      * Check if user can view rate details
      */
     private function user_can_view_rate_details() {
-        if (function_exists('wfa_user_has_permission')) {
-            return wfa_user_has_permission('hhdl_view_rate_details');
+        if (function_exists('wfa_user_can')) {
+            return wfa_user_can('hhdl_view_rate_details');
         }
         return current_user_can('edit_posts');
     }
@@ -517,8 +517,8 @@ class HHDL_Ajax {
      * Check if user can view all notes
      */
     private function user_can_view_all_notes() {
-        if (function_exists('wfa_user_has_permission')) {
-            return wfa_user_has_permission('hhdl_view_all_notes');
+        if (function_exists('wfa_user_can')) {
+            return wfa_user_can('hhdl_view_all_notes');
         }
         return current_user_can('edit_posts');
     }
