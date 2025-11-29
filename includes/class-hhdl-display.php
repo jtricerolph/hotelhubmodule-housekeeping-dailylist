@@ -510,11 +510,22 @@ class HHDL_Display {
             }
 
             // Determine arrival/departure/stopover (only for bookings, not blocking tasks)
+            // Arrivals: today's booking arriving today
             $is_arriving = $booking_data && isset($today_booking['booking_arrival']) &&
                           date('Y-m-d', strtotime($today_booking['booking_arrival'])) === $date;
-            $is_departing = $booking_data && isset($today_booking['booking_departure']) &&
-                           date('Y-m-d', strtotime($today_booking['booking_departure'])) === $date;
-            $is_stopover = $booking_data && !$is_arriving && !$is_departing;
+
+            // Departures: yesterday's booking departing today (room needs cleaning after guest left)
+            $is_departing = false;
+            if ($yesterday_booking && is_array($yesterday_booking) && !isset($yesterday_booking['description'])) {
+                // It's a regular booking (not a blocking task)
+                if (isset($yesterday_booking['booking_departure']) &&
+                    date('Y-m-d', strtotime($yesterday_booking['booking_departure'])) === $date) {
+                    $is_departing = true;
+                }
+            }
+
+            // Stopovers: today's booking that's not arriving (and not departing from yesterday's perspective)
+            $is_stopover = $booking_data && !$is_arriving;
 
             // Determine spanning
             $spans_previous = !empty($yesterday_booking);
