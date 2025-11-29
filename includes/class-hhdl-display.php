@@ -322,12 +322,22 @@ class HHDL_Display {
                 $matched_term = $twin_info['matched_term'];
                 $source = $twin_info['source'];
 
+                // Convert source to user-friendly name
+                $source_labels = array(
+                    'custom_field' => 'custom field',
+                    'legacy_field' => 'bed type field',
+                    'universal_fallback' => 'custom field',
+                    'booking_notes' => 'booking notes',
+                    'notes_fallback' => 'booking notes'
+                );
+                $source_display = isset($source_labels[$source]) ? $source_labels[$source] : $source;
+
                 if ($twin_type === 'confirmed'):
-                    $title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source);
+                    $title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source_display);
                     $icon = '👥';
                     $class = 'hhdl-twin-icon hhdl-twin-confirmed';
                 elseif ($twin_type === 'potential'):
-                    $title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source);
+                    $title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source_display);
                     $icon = '👥';
                     $class = 'hhdl-twin-icon hhdl-twin-potential';
                 else:
@@ -793,6 +803,9 @@ class HHDL_Display {
             $twin_settings = HHTM_Settings::get_location_settings($location_id);
         }
 
+        // Debug: Log Twin Optimizer settings
+        error_log('HHDL Twin Detection - Twin Optimizer settings: ' . json_encode($twin_settings));
+
         // Parse settings into arrays
         $custom_field_names = !empty($twin_settings['custom_field_names']) ?
             array_map('trim', explode(',', $twin_settings['custom_field_names'])) : array();
@@ -800,6 +813,11 @@ class HHDL_Display {
             array_map('trim', explode(',', $twin_settings['custom_field_values'])) : array();
         $notes_search_terms = !empty($twin_settings['notes_search_terms']) ?
             array_map('trim', explode(',', $twin_settings['notes_search_terms'])) : array();
+
+        // Debug: Log booking custom fields structure
+        if (!empty($booking['booking_custom_fields'])) {
+            error_log('HHDL Twin Detection - Booking custom fields: ' . json_encode($booking['booking_custom_fields']));
+        }
 
         // PRIMARY DETECTION: Check booking custom fields with configured field names and values
         if (!empty($booking['booking_custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
@@ -831,8 +849,11 @@ class HHDL_Display {
             $legacy_field_name = !empty($twin_settings['custom_field']) ? $twin_settings['custom_field'] : 'Bed Type';
 
             foreach ($booking['booking_custom_fields'] as $custom_field) {
-                // Check by label (legacy method)
-                if (isset($custom_field['label']) && $custom_field['label'] === $legacy_field_name) {
+                // Check by both 'name' and 'label' for legacy field
+                $field_name = isset($custom_field['name']) ? $custom_field['name'] : '';
+                $field_label = isset($custom_field['label']) ? $custom_field['label'] : '';
+
+                if ($field_name === $legacy_field_name || $field_label === $legacy_field_name) {
                     $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
 
                     // Check for "twin"
@@ -856,6 +877,42 @@ class HHDL_Display {
             }
         }
 
+        // UNIVERSAL FALLBACK: Check ANY custom field for common twin keywords (if Twin Optimizer not configured)
+        if (!empty($booking['booking_custom_fields'])) {
+            foreach ($booking['booking_custom_fields'] as $custom_field) {
+                $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+
+                if (empty($field_value)) {
+                    continue;
+                }
+
+                // Check for common twin indicators
+                if (strpos($field_value, 'twin') !== false) {
+                    return array(
+                        'type' => 'confirmed',
+                        'matched_term' => 'twin',
+                        'source' => 'universal_fallback'
+                    );
+                }
+
+                if (strpos($field_value, 'sofabed') !== false || strpos($field_value, 'sofa bed') !== false) {
+                    return array(
+                        'type' => 'confirmed',
+                        'matched_term' => 'sofabed',
+                        'source' => 'universal_fallback'
+                    );
+                }
+
+                if (preg_match('/2\s*x?\s*single/i', $field_value)) {
+                    return array(
+                        'type' => 'confirmed',
+                        'matched_term' => '2 x single',
+                        'source' => 'universal_fallback'
+                    );
+                }
+            }
+        }
+
         // POTENTIAL DETECTION: Check booking notes for configured search terms
         if (!empty($booking['notes']) && !empty($notes_search_terms)) {
             foreach ($booking['notes'] as $note) {
@@ -872,6 +929,28 @@ class HHDL_Display {
                             'type' => 'potential',
                             'matched_term' => $search_term,
                             'source' => 'booking_notes'
+                        );
+                    }
+                }
+            }
+        }
+
+        // FINAL FALLBACK: Check booking notes for common twin keywords (even without Twin Optimizer config)
+        if (!empty($booking['notes'])) {
+            $common_keywords = array('twin', 'sofabed', 'sofa bed', '2 x single', 'two single');
+
+            foreach ($booking['notes'] as $note) {
+                $note_content = isset($note['content']) ? strtolower($note['content']) : '';
+                if (empty($note_content)) {
+                    continue;
+                }
+
+                foreach ($common_keywords as $keyword) {
+                    if (strpos($note_content, $keyword) !== false) {
+                        return array(
+                            'type' => 'potential',
+                            'matched_term' => $keyword,
+                            'source' => 'notes_fallback'
                         );
                     }
                 }
