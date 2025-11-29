@@ -277,8 +277,10 @@ class HHDL_Ajax {
         // Get tasks for this room/date
         $from_datetime = $date . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
+        error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime);
         $tasks_response = $api->get_tasks($from_datetime, $to_datetime, array(), true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
+        error_log('HHDL Debug - Total tasks returned: ' . count($all_tasks));
 
         $newbook_tasks = array();
         foreach ($all_tasks as $task) {
@@ -294,22 +296,30 @@ class HHDL_Ajax {
                 $task_site_id = '';
             }
 
+            error_log('HHDL Debug - Task ' . $task['task_id'] . ': site_id=' . $task_site_id . ', room_id=' . $room_id . ', desc=' . $task['task_description']);
+
             if ($task_site_id !== $room_id) {
+                error_log('HHDL Debug - Task ' . $task['task_id'] . ' SKIPPED: site_id mismatch');
                 continue;
             }
 
             // Check if task is for this date
             $task_dates = $this->get_task_dates($task);
+            error_log('HHDL Debug - Task ' . $task['task_id'] . ' dates: ' . implode(', ', $task_dates) . ' (checking for ' . $date . ')');
             if (!in_array($date, $task_dates)) {
+                error_log('HHDL Debug - Task ' . $task['task_id'] . ' SKIPPED: date mismatch');
                 continue;
             }
 
+            error_log('HHDL Debug - Task ' . $task['task_id'] . ' MATCHED');
             $newbook_tasks[] = array(
                 'id'               => $task['task_id'],
                 'task_description' => isset($task['task_description']) ? $task['task_description'] : '',
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
         }
+
+        error_log('HHDL Debug - Matched tasks for room: ' . count($newbook_tasks));
 
         return array(
             'room_number'   => $site_name,
