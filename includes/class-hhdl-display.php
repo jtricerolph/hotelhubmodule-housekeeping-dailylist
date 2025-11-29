@@ -804,15 +804,14 @@ class HHDL_Display {
             array_map('trim', explode(',', $settings['twin_excluded_terms'])) : array();
 
         // PRIMARY DETECTION: Check booking custom fields with configured field names and values
-        if (!empty($booking['booking_custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
-            foreach ($booking['booking_custom_fields'] as $custom_field) {
-                // Get field name from both 'name' and 'label' keys
-                $field_name_actual = isset($custom_field['name']) ? $custom_field['name'] : '';
-                $field_label_actual = isset($custom_field['label']) ? $custom_field['label'] : '';
+        if (!empty($booking['custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            foreach ($booking['custom_fields'] as $custom_field) {
+                // Get field label (NewBook uses 'label' for field name)
+                $field_label = isset($custom_field['label']) ? $custom_field['label'] : '';
 
-                // Check if this field name/label matches any configured names
+                // Check if this field label matches any configured names
                 foreach ($custom_field_names as $field_name) {
-                    if ($field_name_actual === $field_name || $field_label_actual === $field_name) {
+                    if ($field_label === $field_name) {
                         // Check if field value contains any configured search values
                         $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
                         foreach ($custom_field_values as $search_value) {
