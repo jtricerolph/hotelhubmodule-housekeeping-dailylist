@@ -158,8 +158,9 @@ class HHDL_Display {
      * Render individual room card
      */
     private function render_room_card($room) {
-        $is_vacant = empty($room['booking']);
-        $card_class = $is_vacant ? 'hhdl-vacant' : 'hhdl-booked';
+        $is_vacant = empty($room['booking']) && $room['booking_status'] !== 'blocked';
+        $is_blocked = $room['booking_status'] === 'blocked';
+        $card_class = $is_blocked ? 'hhdl-blocked' : ($is_vacant ? 'hhdl-vacant' : 'hhdl-booked');
 
         // Data attributes for filtering
         $data_attrs = array(
@@ -175,7 +176,7 @@ class HHDL_Display {
 
         // Build inline styles for status colors
         $inline_style = '';
-        if (!$is_vacant) {
+        if (!$is_vacant || $is_blocked) {
             $status_color = $this->get_status_color($room['booking_status']);
             $inline_style = sprintf('border-left-color: %s;', $status_color);
 
@@ -195,7 +196,9 @@ class HHDL_Display {
              <?php foreach ($data_attrs as $key => $value) { echo $key . '="' . esc_attr($value) . '" '; } ?>
              style="<?php echo esc_attr($inline_style); ?>">
 
-            <?php if ($is_vacant): ?>
+            <?php if ($is_blocked): ?>
+                <?php $this->render_blocked_room($room); ?>
+            <?php elseif ($is_vacant): ?>
                 <?php $this->render_vacant_room($room); ?>
             <?php else: ?>
                 <?php $this->render_booked_room($room); ?>
@@ -212,6 +215,21 @@ class HHDL_Display {
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
             <span class="hhdl-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
+            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                <?php echo esc_html($room['site_status']); ?>
+            </span>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render blocked room content
+     */
+    private function render_blocked_room($room) {
+        ?>
+        <div class="hhdl-room-content">
+            <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
+            <span class="hhdl-blocked-label"><?php _e('Out of service', 'hhdl'); ?></span>
             <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                 <?php echo esc_html($room['site_status']); ?>
             </span>
@@ -522,7 +540,8 @@ class HHDL_Display {
             'arrived'     => '#fb923c',
             'seated'      => '#dc2626',
             'waitlist'    => '#eab308',
-            'cancelled'   => '#94a3b8'
+            'cancelled'   => '#94a3b8',
+            'blocked'     => '#ef4444'  // Red for blocked/out of service
         );
 
         return isset($colors[strtolower($status)]) ? $colors[strtolower($status)] : '#d1d5db';
