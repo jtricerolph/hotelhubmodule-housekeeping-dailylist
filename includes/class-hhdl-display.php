@@ -276,13 +276,13 @@ class HHDL_Display {
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
             <span class="hhdl-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
-            <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
-                <div class="hhdl-status-wrapper">
+            <div class="hhdl-status-wrapper">
+                <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
                     </span>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <?php
     }
@@ -302,13 +302,13 @@ class HHDL_Display {
                 <?php echo esc_html($task_icon); ?>
             </span>
             <span class="hhdl-task-label"><?php echo esc_html($task_description); ?></span>
-            <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
-                <div class="hhdl-status-wrapper">
+            <div class="hhdl-status-wrapper">
+                <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
                     </span>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <?php
     }
@@ -334,25 +334,27 @@ class HHDL_Display {
                     <?php echo esc_html(preg_replace('/\s*nights?$/i', '', $booking['night_info'])); ?>
                 </span>
             <?php endif; ?>
-            <?php
-            // Show status if:
-            // - Viewing today AND arriving today, OR
-            // - Booking is already arrived (checked in) - show on all dates
-            // - But never show "unknown" status
-            $show_status = (($is_viewing_today && $room['is_arriving']) || $room['booking_status'] === 'arrived')
-                && strtolower($room['site_status']) !== 'unknown';
-            if ($show_status):
-            ?>
             <div class="hhdl-status-wrapper">
-                <?php if ($room['booking_status'] === 'arrived'): ?>
+                <?php
+                // Show status if:
+                // - Viewing today AND arriving today, OR
+                // - Booking is already arrived (checked in) - show on all dates
+                // - But never show "unknown" status
+                $show_status = (($is_viewing_today && $room['is_arriving']) || $room['booking_status'] === 'arrived')
+                    && strtolower($room['site_status']) !== 'unknown';
+                if ($show_status):
+                    if ($room['booking_status'] === 'arrived'):
+                ?>
                     <span class="hhdl-site-status arrived">ARRIVED</span>
                 <?php else: ?>
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
                     </span>
-                <?php endif; ?>
+                <?php
+                    endif;
+                endif;
+                ?>
             </div>
-            <?php endif; ?>
         </div>
 
         <div class="hhdl-booking-info">
