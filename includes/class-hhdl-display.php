@@ -174,9 +174,12 @@ class HHDL_Display {
             if ($room['has_twin']) $counts['twins']++;
         }
 
+        // Check if viewing today's date
+        $is_viewing_today = ($date === date('Y-m-d'));
+
         // Render each room card
         foreach ($rooms_data as $room) {
-            $this->render_room_card($room);
+            $this->render_room_card($room, $is_viewing_today);
         }
 
         return $counts;
@@ -185,7 +188,7 @@ class HHDL_Display {
     /**
      * Render individual room card
      */
-    private function render_room_card($room) {
+    private function render_room_card($room, $is_viewing_today = true) {
         $is_vacant = empty($room['booking']) && $room['booking_status'] !== 'blocked';
         $is_blocked = $room['booking_status'] === 'blocked';
         $card_class = $is_blocked ? 'hhdl-blocked' : ($is_vacant ? 'hhdl-vacant' : 'hhdl-booked');
@@ -259,7 +262,7 @@ class HHDL_Display {
             <?php elseif ($is_vacant): ?>
                 <?php $this->render_vacant_room($room); ?>
             <?php else: ?>
-                <?php $this->render_booked_room($room); ?>
+                <?php $this->render_booked_room($room, $is_viewing_today); ?>
             <?php endif; ?>
         </div>
         <?php
@@ -309,7 +312,7 @@ class HHDL_Display {
     /**
      * Render booked room content
      */
-    private function render_booked_room($room) {
+    private function render_booked_room($room, $is_viewing_today = true) {
         $booking = $room['booking'];
         $can_view_guest = $this->user_can_view_guest_details();
 
@@ -328,8 +331,10 @@ class HHDL_Display {
                 </span>
             <?php endif; ?>
             <?php
-            // Only show status for current/arriving bookings (not future bookings)
-            $show_status = $room['is_arriving'] || $room['booking_status'] === 'arrived';
+            // Show status if:
+            // - Viewing today AND arriving today, OR
+            // - Booking is already arrived (checked in) - show on all dates
+            $show_status = ($is_viewing_today && $room['is_arriving']) || $room['booking_status'] === 'arrived';
             if ($show_status):
             ?>
             <div class="hhdl-status-wrapper">
@@ -356,7 +361,7 @@ class HHDL_Display {
                 </span>
             <?php endif; ?>
 
-            <?php $this->render_booking_type_indicator($room); ?>
+            <?php $this->render_booking_type_indicator($room, $is_viewing_today); ?>
         </div>
 
         <div class="hhdl-booking-meta">
@@ -405,7 +410,12 @@ class HHDL_Display {
     /**
      * Render booking type indicator badge
      */
-    private function render_booking_type_indicator($room) {
+    private function render_booking_type_indicator($room, $is_viewing_today = true) {
+        // Only show booking type badges when viewing today's date
+        if (!$is_viewing_today) {
+            return;
+        }
+
         $booking_type = isset($room['booking_type']) ? $room['booking_type'] : 'vacant';
 
         // Only show indicator for arrive and depart (not stopover or back-to-back)
