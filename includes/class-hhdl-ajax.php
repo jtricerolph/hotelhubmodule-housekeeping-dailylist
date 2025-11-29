@@ -275,11 +275,11 @@ class HHDL_Ajax {
         }
 
         // Get tasks for this room/date
-        // Note: NewBook API period_to is EXCLUSIVE, so we query from date to date+1
-        $from_date = $date;
-        $to_date = date('Y-m-d', strtotime($date . ' +1 day'));
-        error_log('HHDL Debug - Querying tasks from ' . $from_date . ' to ' . $to_date . ' (exclusive)');
-        $tasks_response = $api->get_tasks($from_date, $to_date, array(), true, null, true);
+        // NewBook API requires datetime format and task_type=[-1] for all tasks
+        $from_datetime = $date . ' 00:00:00';
+        $to_datetime = $date . ' 23:59:59';
+        error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime . ' with task_type=[-1]');
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, array(-1), true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
         error_log('HHDL Debug - Total tasks returned: ' . count($all_tasks));
 
