@@ -226,10 +226,19 @@ class HHDL_Display {
      * Render blocked room content
      */
     private function render_blocked_room($room) {
+        $task = $room['blocking_task'];
+        $task_color = isset($task['color']) ? $task['color'] : '#ef4444';
+        $task_description = isset($task['description']) ? $task['description'] : 'Blocked';
+        $task_icon = isset($task['icon']) ? $task['icon'] : 'construction';
         ?>
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
-            <span class="hhdl-blocked-label"><?php _e('Out of service', 'hhdl'); ?></span>
+            <div class="hhdl-task-block" style="background-color: <?php echo esc_attr($task_color); ?>; border-color: <?php echo esc_attr($task_color); ?>;">
+                <span class="material-symbols-outlined hhdl-task-icon">
+                    <?php echo esc_html($task_icon); ?>
+                </span>
+                <span class="hhdl-task-description"><?php echo esc_html($task_description); ?></span>
+            </div>
             <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                 <?php echo esc_html($room['site_status']); ?>
             </span>
@@ -401,6 +410,9 @@ class HHDL_Display {
             }
         }
 
+        // Get task description mappings for colors
+        $task_description_mappings = HHDL_Settings::get_task_description_mappings($location_id);
+
         // Process occupy tasks (blocked rooms)
         error_log('HHDL Display - Total tasks fetched: ' . count($tasks));
         error_log('HHDL Display - Available rooms in rooms_by_id: ' . json_encode(array_keys($rooms_by_id)));
@@ -436,6 +448,22 @@ class HHDL_Display {
                 continue;
             }
 
+            // Get color from task description mapping
+            $task_color = '#ef4444'; // Default red
+            foreach ($task_description_mappings as $filter => $mapping) {
+                if (stripos($task_desc, $filter) !== false) {
+                    $task_color = $mapping['color'];
+                    break;
+                }
+            }
+
+            // Build task info array
+            $task_info = array(
+                'description' => $task_desc,
+                'color' => $task_color,
+                'icon' => 'construction' // Default Material icon
+            );
+
             // Determine task dates
             $task_dates = $this->get_task_dates($task);
             error_log('HHDL Display - Occupy task ' . $task_id . ': task_dates=' . json_encode($task_dates) . ' (period_from=' . (isset($task['task_period_from']) ? $task['task_period_from'] : 'null') . ', period_to=' . (isset($task['task_period_to']) ? $task['task_period_to'] : 'null') . ')');
@@ -444,13 +472,13 @@ class HHDL_Display {
             foreach ($task_dates as $task_date) {
                 if ($task_date === $yesterday) {
                     error_log('HHDL Display - Marking room ' . $site_id . ' as BLOCKED on YESTERDAY (' . $yesterday . ') due to task ' . $task_id);
-                    $rooms_by_id[$site_id]['bookings']['yesterday'] = 'blocked';
+                    $rooms_by_id[$site_id]['bookings']['yesterday'] = $task_info;
                 } elseif ($task_date === $date) {
                     error_log('HHDL Display - Marking room ' . $site_id . ' as BLOCKED on TODAY (' . $date . ') due to task ' . $task_id);
-                    $rooms_by_id[$site_id]['bookings']['today'] = 'blocked';
+                    $rooms_by_id[$site_id]['bookings']['today'] = $task_info;
                 } elseif ($task_date === $tomorrow) {
                     error_log('HHDL Display - Marking room ' . $site_id . ' as BLOCKED on TOMORROW (' . $tomorrow . ') due to task ' . $task_id);
-                    $rooms_by_id[$site_id]['bookings']['tomorrow'] = 'blocked';
+                    $rooms_by_id[$site_id]['bookings']['tomorrow'] = $task_info;
                 }
             }
         }
@@ -466,20 +494,27 @@ class HHDL_Display {
 
             // Determine today's booking status
             $booking_data = null;
+            $blocking_task = null;
             $booking_status = '';
             if ($today_booking && is_array($today_booking)) {
-                $booking_data = $this->format_booking_data($today_booking, $date);
-                $booking_status = $this->get_booking_status($today_booking);
-            } elseif ($today_booking === 'blocked') {
-                $booking_status = 'blocked';
+                // Check if it's a blocking task (has 'description' key) or a booking
+                if (isset($today_booking['description'])) {
+                    // It's a blocking task
+                    $booking_status = 'blocked';
+                    $blocking_task = $today_booking;
+                } else {
+                    // It's a regular booking
+                    $booking_data = $this->format_booking_data($today_booking, $date);
+                    $booking_status = $this->get_booking_status($today_booking);
+                }
             }
 
-            // Determine arrival/departure/stopover
-            $is_arriving = $today_booking && is_array($today_booking) &&
+            // Determine arrival/departure/stopover (only for bookings, not blocking tasks)
+            $is_arriving = $booking_data && isset($today_booking['booking_arrival']) &&
                           date('Y-m-d', strtotime($today_booking['booking_arrival'])) === $date;
-            $is_departing = $today_booking && is_array($today_booking) &&
+            $is_departing = $booking_data && isset($today_booking['booking_departure']) &&
                            date('Y-m-d', strtotime($today_booking['booking_departure'])) === $date;
-            $is_stopover = $today_booking && is_array($today_booking) && !$is_arriving && !$is_departing;
+            $is_stopover = $booking_data && !$is_arriving && !$is_departing;
 
             // Determine spanning
             $spans_previous = !empty($yesterday_booking);
@@ -488,16 +523,22 @@ class HHDL_Display {
             // Get adjacent booking statuses
             $prev_booking_status = '';
             if ($yesterday_booking && is_array($yesterday_booking)) {
-                $prev_booking_status = $this->get_booking_status($yesterday_booking);
-            } elseif ($yesterday_booking === 'blocked') {
-                $prev_booking_status = 'blocked';
+                if (isset($yesterday_booking['description'])) {
+                    // It's a blocking task
+                    $prev_booking_status = 'blocked';
+                } else {
+                    $prev_booking_status = $this->get_booking_status($yesterday_booking);
+                }
             }
 
             $next_booking_status = '';
             if ($tomorrow_booking && is_array($tomorrow_booking)) {
-                $next_booking_status = $this->get_booking_status($tomorrow_booking);
-            } elseif ($tomorrow_booking === 'blocked') {
-                $next_booking_status = 'blocked';
+                if (isset($tomorrow_booking['description'])) {
+                    // It's a blocking task
+                    $next_booking_status = 'blocked';
+                } else {
+                    $next_booking_status = $this->get_booking_status($tomorrow_booking);
+                }
             }
 
             $room_cards[] = array(
@@ -514,6 +555,7 @@ class HHDL_Display {
                 'prev_booking_status'  => $prev_booking_status,
                 'next_booking_status'  => $next_booking_status,
                 'booking'              => $booking_data,
+                'blocking_task'        => $blocking_task,
                 'order'                => $room['order']
             );
         }
