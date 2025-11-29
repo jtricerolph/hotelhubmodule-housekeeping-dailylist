@@ -817,13 +817,24 @@ class HHDL_Display {
         // Determine if Twin Optimizer is configured for this location
         $twin_optimizer_configured = !empty($custom_field_names) && !empty($custom_field_values);
 
+        error_log('HHDL Twin Detection - Twin Optimizer configured: ' . ($twin_optimizer_configured ? 'YES' : 'NO'));
+        error_log('HHDL Twin Detection - Custom field names to check: ' . json_encode($custom_field_names));
+        error_log('HHDL Twin Detection - Custom field values to match: ' . json_encode($custom_field_values));
+        error_log('HHDL Twin Detection - Notes search terms: ' . json_encode($notes_search_terms));
+
         // Debug: Log booking custom fields structure
         if (!empty($booking['booking_custom_fields'])) {
-            error_log('HHDL Twin Detection - Booking custom fields: ' . json_encode($booking['booking_custom_fields']));
+            error_log('HHDL Twin Detection - Booking ref: ' . (isset($booking['reference']) ? $booking['reference'] : 'unknown'));
+            foreach ($booking['booking_custom_fields'] as $idx => $field) {
+                error_log('HHDL Twin Detection - Custom field #' . $idx . ': name=' . (isset($field['name']) ? $field['name'] : 'null') .
+                         ', label=' . (isset($field['label']) ? $field['label'] : 'null') .
+                         ', value=' . (isset($field['value']) ? $field['value'] : 'null'));
+            }
         }
 
         // PRIMARY DETECTION: Check booking custom fields with configured field names and values
         if (!empty($booking['booking_custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            error_log('HHDL Twin Detection - Running PRIMARY detection...');
             foreach ($booking['booking_custom_fields'] as $custom_field) {
                 // Get field name from both 'name' and 'label' keys
                 $field_name_actual = isset($custom_field['name']) ? $custom_field['name'] : '';
@@ -848,6 +859,7 @@ class HHDL_Display {
                     }
                 }
             }
+            error_log('HHDL Twin Detection - PRIMARY detection complete, no match found');
         }
 
         // FALLBACK DETECTION: Check legacy bed type field for "twin" or "2 x single"
@@ -921,17 +933,20 @@ class HHDL_Display {
 
         // POTENTIAL DETECTION: Check booking notes for configured search terms
         if (!empty($booking['notes']) && !empty($notes_search_terms)) {
-            foreach ($booking['notes'] as $note) {
+            error_log('HHDL Twin Detection - Running NOTES detection with ' . count($booking['notes']) . ' notes...');
+            foreach ($booking['notes'] as $idx => $note) {
                 $note_content = isset($note['content']) ? strtolower($note['content']) : '';
                 if (empty($note_content)) {
                     continue;
                 }
 
+                error_log('HHDL Twin Detection - Checking note #' . $idx . ': ' . substr($note_content, 0, 100));
+
                 // Check against configured search terms
                 foreach ($notes_search_terms as $search_term) {
                     $search_term_lower = strtolower($search_term);
                     if (strpos($note_content, $search_term_lower) !== false) {
-                        error_log('HHDL Twin Detection - NOTES MATCH: note=' . substr($note_content, 0, 50) . '..., matched=' . $search_term);
+                        error_log('HHDL Twin Detection - NOTES MATCH: term="' . $search_term . '" found in note="' . substr($note_content, 0, 100) . '..."');
                         return array(
                             'type' => 'potential',
                             'matched_term' => $search_term,
@@ -940,6 +955,7 @@ class HHDL_Display {
                     }
                 }
             }
+            error_log('HHDL Twin Detection - No notes matched configured search terms');
         }
 
         // FINAL FALLBACK: Check booking notes for common twin keywords (ONLY if Twin Optimizer NOT configured)
@@ -965,6 +981,7 @@ class HHDL_Display {
         }
 
         // No twin detected
+        error_log('HHDL Twin Detection - FINAL RESULT: No twin detected');
         return array(
             'type' => 'none',
             'matched_term' => '',
