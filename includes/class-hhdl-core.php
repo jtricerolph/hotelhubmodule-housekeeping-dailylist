@@ -160,13 +160,14 @@ class HHDL_Core {
      * Enqueue frontend assets
      */
     public function enqueue_assets() {
-        // Only load on module pages
-        if (!$this->is_module_page()) {
+        // For SPA architecture, always load on Hotel Hub pages
+        // The JavaScript will initialize only when the module content appears
+        if (!function_exists('hha')) {
             return;
         }
 
-        // Check permission
-        if (!$this->user_can_access()) {
+        // Only enqueue on Hotel Hub pages (not everywhere)
+        if (!is_page() && !is_singular()) {
             return;
         }
 
