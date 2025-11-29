@@ -634,7 +634,9 @@ class HHDL_Display {
         // Check custom fields
         if (!empty($booking['custom_fields'])) {
             foreach ($booking['custom_fields'] as $field) {
-                if (stripos($field, 'twin') !== false || stripos($field, 'sofabed') !== false) {
+                // Handle both array and string formats
+                $field_value = is_array($field) ? implode(' ', $field) : $field;
+                if (stripos($field_value, 'twin') !== false || stripos($field_value, 'sofabed') !== false) {
                     return true;
                 }
             }
