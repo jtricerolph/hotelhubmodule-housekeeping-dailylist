@@ -798,13 +798,20 @@ class HHDL_Display {
             'custom_field' => 'Bed Type'
         );
 
+        error_log('HHDL Twin Detection - Checking location_id: ' . $location_id);
+        error_log('HHDL Twin Detection - HHTM_Settings class exists: ' . (class_exists('HHTM_Settings') ? 'YES' : 'NO'));
+
         // Try to get Twin Optimizer settings
         if (class_exists('HHTM_Settings')) {
             $twin_settings = HHTM_Settings::get_location_settings($location_id);
+
+            // Also check what's actually in the database
+            $all_location_settings = get_option('hhtm_location_settings', array());
+            error_log('HHDL Twin Detection - All Twin Optimizer location IDs in database: ' . json_encode(array_keys($all_location_settings)));
         }
 
         // Debug: Log Twin Optimizer settings
-        error_log('HHDL Twin Detection - Twin Optimizer settings: ' . json_encode($twin_settings));
+        error_log('HHDL Twin Detection - Twin Optimizer settings for location ' . $location_id . ': ' . json_encode($twin_settings));
 
         // Parse settings into arrays
         $custom_field_names = !empty($twin_settings['custom_field_names']) ?
