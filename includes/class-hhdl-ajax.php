@@ -636,13 +636,11 @@ class HHDL_Ajax {
             if ($start_date === $end_date) {
                 $dates[] = $start_date;
             } else {
-                // Multi-day: period_to is exclusive, so subtract one day from the end date
-                // Use date-only timestamps (midnight) to avoid time-of-day comparison issues
-                $current = strtotime($start_date); // Start at midnight of start date
-                $end_midnight = strtotime($end_date); // Midnight of end date
-                $last_day = strtotime('-1 day', $end_midnight); // One day before end date
+                // Multi-day: period_to is exclusive, so subtract one day
+                $end = strtotime('-1 day', $end);
 
-                while ($current <= $last_day) {
+                $current = $start;
+                while ($current <= $end) {
                     $dates[] = date('Y-m-d', $current);
                     $current = strtotime('+1 day', $current);
                 }
