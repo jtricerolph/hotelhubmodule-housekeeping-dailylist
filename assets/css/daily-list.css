@@ -384,6 +384,7 @@
 .hhdl-room-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 6px;
 }
@@ -426,12 +427,26 @@
 }
 
 .hhdl-checkin-time {
+    display: flex;
+    align-items: center;
+    gap: 3px;
     font-size: 12px;
     font-weight: 500;
     color: #6b7280;
     padding: 2px 6px;
     background: #f3f4f6;
     border-radius: 4px;
+}
+
+.hhdl-checkin-time.hhdl-early-arrival {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+}
+
+.hhdl-early-icon {
+    font-size: 14px;
+    color: #f59e0b;
 }
 
 .hhdl-pax-badge {
@@ -451,8 +466,18 @@
 }
 
 .hhdl-nights {
+    display: flex;
+    align-items: center;
+    gap: 3px;
     font-size: 11px;
+    font-weight: 500;
     color: #6b7280;
+    margin-left: auto;
+}
+
+.hhdl-nights .material-symbols-outlined {
+    font-size: 14px;
+    color: #9ca3af;
 }
 
 .hhdl-occupancy-badge {

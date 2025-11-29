@@ -315,13 +315,24 @@ class HHDL_Display {
             <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                 <?php echo esc_html($room['site_status']); ?>
             </span>
+            <?php if (!empty($booking['night_info'])): ?>
+                <span class="hhdl-nights">
+                    <span class="material-symbols-outlined">bedtime</span>
+                    <?php echo esc_html(preg_replace('/\s*nights?$/i', '', $booking['night_info'])); ?>
+                </span>
+            <?php endif; ?>
         </div>
 
         <div class="hhdl-booking-info">
             <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
 
             <?php if (!empty($booking['checkin_time'])): ?>
-                <span class="hhdl-checkin-time"><?php echo esc_html($booking['checkin_time']); ?></span>
+                <span class="hhdl-checkin-time <?php echo isset($booking['is_early_arrival']) && $booking['is_early_arrival'] ? 'hhdl-early-arrival' : ''; ?>">
+                    <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival']): ?>
+                        <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
+                    <?php endif; ?>
+                    <?php echo esc_html($booking['checkin_time']); ?>
+                </span>
             <?php endif; ?>
 
             <?php if (!empty($booking['pax'])): ?>
@@ -330,9 +341,6 @@ class HHDL_Display {
         </div>
 
         <div class="hhdl-booking-meta">
-            <?php if (!empty($booking['night_info'])): ?>
-                <span class="hhdl-nights"><?php echo esc_html($booking['night_info']); ?></span>
-            <?php endif; ?>
 
             <?php if (!empty($booking['occupancy'])): ?>
                 <span class="hhdl-occupancy-badge">🛏️ <?php echo esc_html($booking['occupancy']); ?></span>
@@ -577,6 +585,15 @@ class HHDL_Display {
             $booking_data = null;
             $blocking_task = null;
             $booking_status = '';
+
+            // Pre-calculate is_arriving for passing to format_booking_data
+            $is_arriving = false;
+            if ($today_booking && is_array($today_booking) && !isset($today_booking['description'])) {
+                // It's a regular booking (not a blocking task)
+                $is_arriving = isset($today_booking['booking_arrival']) &&
+                              date('Y-m-d', strtotime($today_booking['booking_arrival'])) === $date;
+            }
+
             if ($today_booking && is_array($today_booking)) {
                 // Check if it's a blocking task (has 'description' key) or a booking
                 if (isset($today_booking['description'])) {
@@ -585,15 +602,10 @@ class HHDL_Display {
                     $blocking_task = $today_booking;
                 } else {
                     // It's a regular booking
-                    $booking_data = $this->format_booking_data($today_booking, $date);
+                    $booking_data = $this->format_booking_data($today_booking, $date, $location_id, $is_arriving);
                     $booking_status = $this->get_booking_status($today_booking);
                 }
             }
-
-            // Determine arrival/departure/stopover (only for bookings, not blocking tasks)
-            // Arrivals: today's booking arriving today
-            $is_arriving = $booking_data && isset($today_booking['booking_arrival']) &&
-                          date('Y-m-d', strtotime($today_booking['booking_arrival'])) === $date;
 
             // Departures: yesterday's booking departing today (room needs cleaning after guest left)
             $is_departing = false;
@@ -1003,7 +1015,7 @@ class HHDL_Display {
     /**
      * Format booking data for display
      */
-    private function format_booking_data($booking, $date) {
+    private function format_booking_data($booking, $date, $location_id, $is_arriving) {
         $arrival_date = date('Y-m-d', strtotime($booking['booking_arrival']));
         $departure_date = date('Y-m-d', strtotime($booking['booking_departure']));
 
@@ -1024,13 +1036,51 @@ class HHDL_Display {
             }
         }
 
+        // Early arrival detection (only for arrivals)
+        $checkin_time = '';
+        $is_early_arrival = false;
+
+        if ($is_arriving) {
+            // Get hotel's default arrival time
+            $hotel = $this->get_hotel_from_location($location_id);
+            $default_arrival_time = ($hotel && isset($hotel->default_arrival_time)) ? $hotel->default_arrival_time : '15:00';
+
+            // Extract time from booking_eta
+            $eta_time = null;
+            if (isset($booking['booking_eta']) && !empty($booking['booking_eta'])) {
+                $eta_time = date('H:i', strtotime($booking['booking_eta']));
+            }
+
+            // Extract time from booking_arrival
+            $arrival_time = null;
+            if (isset($booking['booking_arrival']) && !empty($booking['booking_arrival'])) {
+                $arrival_time = date('H:i', strtotime($booking['booking_arrival']));
+            }
+
+            // Check if either is before default time
+            if ($eta_time && $eta_time < $default_arrival_time) {
+                $is_early_arrival = true;
+                $checkin_time = $eta_time;
+            } elseif ($arrival_time && $arrival_time < $default_arrival_time) {
+                $is_early_arrival = true;
+                $checkin_time = $arrival_time;
+            } elseif ($eta_time) {
+                // Not early but still show ETA
+                $checkin_time = $eta_time;
+            } elseif ($arrival_time) {
+                // Not early but still show arrival time
+                $checkin_time = $arrival_time;
+            }
+        }
+
         return array(
-            'reference'    => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
-            'guest_name'   => $guest_name,
-            'checkin_time' => isset($booking['booking_eta']) ? date('H:i', strtotime($booking['booking_eta'])) : '',
-            'pax'          => isset($booking['pax']) ? $booking['pax'] : 0,
-            'night_info'   => $current_night . '/' . $total_nights . ' nights',
-            'occupancy'    => isset($booking['occupancy']) ? $booking['occupancy'] : ''
+            'reference'         => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
+            'guest_name'        => $guest_name,
+            'checkin_time'      => $checkin_time,
+            'is_early_arrival'  => $is_early_arrival,
+            'pax'               => isset($booking['pax']) ? $booking['pax'] : 0,
+            'night_info'        => $current_night . '/' . $total_nights . ' nights',
+            'occupancy'         => isset($booking['occupancy']) ? $booking['occupancy'] : ''
         );
     }
 
