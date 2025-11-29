@@ -104,6 +104,25 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+/* Early arrival glow effect */
+.hhdl-room-card[data-early-arrival="true"] {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), 0 0 24px rgba(245, 158, 11, 0.2);
+    animation: earlyArrivalPulse 3s ease-in-out infinite;
+}
+
+.hhdl-room-card[data-early-arrival="true"]:hover {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), 0 0 32px rgba(245, 158, 11, 0.3);
+}
+
+@keyframes earlyArrivalPulse {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), 0 0 24px rgba(245, 158, 11, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), 0 0 32px rgba(245, 158, 11, 0.25);
+    }
+}
+
 /* Status-based border colors */
 .hhdl-room-card[data-booking-status="departed"] {
     border-color: #a855f7 !important;
@@ -472,7 +491,6 @@
     font-size: 11px;
     font-weight: 500;
     color: #6b7280;
-    margin-left: auto;
 }
 
 .hhdl-nights .material-symbols-outlined {

@@ -184,6 +184,9 @@ class HHDL_Display {
         $is_blocked = $room['booking_status'] === 'blocked';
         $card_class = $is_blocked ? 'hhdl-blocked' : ($is_vacant ? 'hhdl-vacant' : 'hhdl-booked');
 
+        // Check if early arrival
+        $is_early_arrival = !empty($room['booking']) && isset($room['booking']['is_early_arrival']) && $room['booking']['is_early_arrival'];
+
         // Data attributes for filtering
         $data_attrs = array(
             'data-room-id'         => $room['room_id'],
@@ -194,7 +197,8 @@ class HHDL_Display {
             'data-twin-type'       => isset($room['twin_info']['type']) ? $room['twin_info']['type'] : 'none',
             'data-booking-status'  => $room['booking_status'],
             'data-spans-previous'  => $room['spans_previous'] ? 'true' : 'false',
-            'data-spans-next'      => $room['spans_next'] ? 'true' : 'false'
+            'data-spans-next'      => $room['spans_next'] ? 'true' : 'false',
+            'data-early-arrival'   => $is_early_arrival ? 'true' : 'false'
         );
 
         // Add previous night data attributes
@@ -312,25 +316,23 @@ class HHDL_Display {
             <?php if ($room['is_departing']): ?>
                 <span class="hhdl-departure-icon" title="<?php esc_attr_e('Departure', 'hhdl'); ?>">←</span>
             <?php endif; ?>
-            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
-                <?php echo esc_html($room['site_status']); ?>
-            </span>
             <?php if (!empty($booking['night_info'])): ?>
                 <span class="hhdl-nights">
                     <span class="material-symbols-outlined">bedtime</span>
                     <?php echo esc_html(preg_replace('/\s*nights?$/i', '', $booking['night_info'])); ?>
                 </span>
             <?php endif; ?>
+            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                <?php echo esc_html($room['site_status']); ?>
+            </span>
         </div>
 
         <div class="hhdl-booking-info">
             <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
 
-            <?php if (!empty($booking['checkin_time'])): ?>
-                <span class="hhdl-checkin-time <?php echo isset($booking['is_early_arrival']) && $booking['is_early_arrival'] ? 'hhdl-early-arrival' : ''; ?>">
-                    <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival']): ?>
-                        <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
-                    <?php endif; ?>
+            <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])): ?>
+                <span class="hhdl-checkin-time hhdl-early-arrival">
+                    <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
                     <?php echo esc_html($booking['checkin_time']); ?>
                 </span>
             <?php endif; ?>
