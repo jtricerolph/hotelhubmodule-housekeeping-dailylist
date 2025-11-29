@@ -382,6 +382,8 @@
     font-weight: 600;
     text-transform: uppercase;
     margin-left: auto;
+    min-width: 45px;
+    text-align: center;
 }
 
 .hhdl-site-status.clean {
@@ -397,6 +399,11 @@
 .hhdl-site-status.unknown {
     background: #e5e7eb;
     color: #6b7280;
+}
+
+.hhdl-site-status.arrived {
+    background: #3b82f6;
+    color: #ffffff;
 }
 
 /* Booked room content */
