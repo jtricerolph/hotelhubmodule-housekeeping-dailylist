@@ -100,6 +100,16 @@
     }
 
     /**
+     * Update filter button counts
+     */
+    function updateFilterCounts(counts) {
+        $('.hhdl-filter-btn[data-filter="arrivals"]').html('Arrivals <span class="hhdl-count-badge">' + counts.arrivals + '</span>');
+        $('.hhdl-filter-btn[data-filter="departs"]').html('Departures <span class="hhdl-count-badge">' + counts.departures + '</span>');
+        $('.hhdl-filter-btn[data-filter="stopovers"]').html('Stopovers <span class="hhdl-count-badge">' + counts.stopovers + '</span>');
+        $('.hhdl-filter-btn[data-filter="twins"]').html('Twins <span class="hhdl-count-badge">' + counts.twins + '</span>');
+    }
+
+    /**
      * Load room list via AJAX
      */
     function loadRoomList(date) {
@@ -117,8 +127,14 @@
             },
             success: function(response) {
                 if (response.success) {
-                    roomList.html(response.data);
+                    // Update room list HTML
+                    roomList.html(response.data.html);
                     initRoomCards();
+
+                    // Update filter counts
+                    if (response.data.counts) {
+                        updateFilterCounts(response.data.counts);
+                    }
                 } else {
                     roomList.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');
                 }

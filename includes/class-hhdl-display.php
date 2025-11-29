@@ -145,13 +145,35 @@ class HHDL_Display {
             echo '<div class="hhdl-no-rooms">';
             echo '<p>' . __('No rooms found for this date.', 'hhdl') . '</p>';
             echo '</div>';
-            return;
+            return array(
+                'arrivals' => 0,
+                'departures' => 0,
+                'stopovers' => 0,
+                'twins' => 0
+            );
+        }
+
+        // Calculate filter counts
+        $counts = array(
+            'arrivals' => 0,
+            'departures' => 0,
+            'stopovers' => 0,
+            'twins' => 0
+        );
+
+        foreach ($rooms_data as $room) {
+            if ($room['is_arriving']) $counts['arrivals']++;
+            if ($room['is_departing']) $counts['departures']++;
+            if ($room['is_stopover']) $counts['stopovers']++;
+            if ($room['has_twin']) $counts['twins']++;
         }
 
         // Render each room card
         foreach ($rooms_data as $room) {
             $this->render_room_card($room);
         }
+
+        return $counts;
     }
 
     /**

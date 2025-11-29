@@ -68,10 +68,13 @@ class HHDL_Ajax {
         // Render room cards
         ob_start();
         $display = HHDL_Display::instance();
-        $display->render_room_cards($location_id, $date);
+        $counts = $display->render_room_cards($location_id, $date);
         $html = ob_get_clean();
 
-        wp_send_json_success($html);
+        wp_send_json_success(array(
+            'html' => $html,
+            'counts' => $counts
+        ));
     }
 
     /**
