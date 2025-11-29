@@ -215,9 +215,15 @@ class HHDL_Display {
             }
         }
 
-        // Build inline styles for status colors
+        // Build inline styles for status colors and task backgrounds
         $inline_style = '';
-        if (!$is_vacant || $is_blocked) {
+
+        // For blocked rooms, apply task background color to entire card
+        if ($is_blocked && isset($room['blocking_task']['color'])) {
+            $task_color = $room['blocking_task']['color'];
+            $inline_style = sprintf('background-color: %s;', $task_color);
+        } elseif (!$is_vacant) {
+            // For bookings, use border color
             $status_color = $this->get_status_color($room['booking_status']);
             $inline_style = sprintf('border-left-color: %s;', $status_color);
 
@@ -274,12 +280,10 @@ class HHDL_Display {
         ?>
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
-            <div class="hhdl-task-block" style="background-color: <?php echo esc_attr($task_color); ?>; border-color: <?php echo esc_attr($task_color); ?>;">
-                <span class="material-symbols-outlined hhdl-task-icon">
-                    <?php echo esc_html($task_icon); ?>
-                </span>
-                <span class="hhdl-task-description"><?php echo esc_html($task_description); ?></span>
-            </div>
+            <span class="material-symbols-outlined hhdl-task-icon">
+                <?php echo esc_html($task_icon); ?>
+            </span>
+            <span class="hhdl-task-label"><?php echo esc_html($task_description); ?></span>
             <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                 <?php echo esc_html($room['site_status']); ?>
             </span>
