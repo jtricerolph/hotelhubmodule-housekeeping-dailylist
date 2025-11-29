@@ -91,7 +91,6 @@
 .hhdl-room-card {
     background: #fff;
     border: 2px solid #d1d5db;
-    border-left: 4px solid #d1d5db;
     border-radius: 8px;
     margin: 0 23px 5px 23px;
     padding: 8px;
@@ -105,33 +104,123 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* Border slivers for multi-day bookings */
-.hhdl-room-card[data-spans-previous="true"] {
-    border-left: none;
-    border-radius: 0 8px 8px 0;
-    margin-left: 23px;
+/* Status-based border colors */
+.hhdl-room-card[data-status="departed"] {
+    border-color: #a855f7 !important;
 }
 
-.hhdl-room-card[data-spans-previous="true"]::before {
-    content: '';
-    position: absolute;
-    left: -15px;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var(--previous-status-color, #d1d5db);
-    border-radius: 2px 0 0 2px;
+.hhdl-room-card[data-status="confirmed"] {
+    border-color: #10b981 !important;
+}
+
+.hhdl-room-card[data-status="unconfirmed"] {
+    border-color: #f59e0b !important;
+}
+
+.hhdl-room-card[data-status="arrived"] {
+    border-color: #3b82f6 !important;
+}
+
+/* Vacant room styling */
+.hhdl-room-card.hhdl-vacant {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* Visual extension effect for multi-day bookings */
+.hhdl-room-card[data-spans-previous="true"] {
+    border-left: none !important;
+    padding-left: 58px !important;
+    margin-left: -27px;
+    border-radius: 0 8px 8px 0 !important;
 }
 
 .hhdl-room-card[data-spans-next="true"] {
-    border-right: 4px solid var(--next-status-color, #d1d5db);
-    border-radius: 8px 0 0 8px;
+    border-right: none !important;
+    padding-right: 58px !important;
+    margin-right: -27px;
+    border-radius: 8px 0 0 8px !important;
 }
 
 .hhdl-room-card[data-spans-previous="true"][data-spans-next="true"] {
-    border-left: none;
-    border-right: 4px solid var(--next-status-color, #d1d5db);
-    border-radius: 0;
+    border-left: none !important;
+    border-right: none !important;
+    padding-left: 58px !important;
+    padding-right: 58px !important;
+    margin-left: -27px;
+    margin-right: -27px;
+    border-radius: 0 !important;
+}
+
+/* Timeline indicators for adjacent nights */
+/* Previous night - different booking */
+.hhdl-room-card[data-previous-status]:not([data-spans-previous="true"])::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-right: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 0 8px 8px 0;
+}
+
+.hhdl-room-card[data-previous-status="departed"]:not([data-spans-previous="true"])::before {
+    border-color: #a855f7;
+}
+
+.hhdl-room-card[data-previous-status="confirmed"]:not([data-spans-previous="true"])::before {
+    border-color: #10b981;
+}
+
+.hhdl-room-card[data-previous-status="unconfirmed"]:not([data-spans-previous="true"])::before {
+    border-color: #f59e0b;
+}
+
+.hhdl-room-card[data-previous-status="arrived"]:not([data-spans-previous="true"])::before {
+    border-color: #3b82f6;
+}
+
+/* Previous night - vacant */
+.hhdl-room-card[data-previous-vacant="true"]:not([data-spans-previous="true"])::before {
+    border-color: #d1d5db;
+}
+
+/* Next night - different booking */
+.hhdl-room-card[data-next-status]:not([data-spans-next="true"])::after {
+    content: '';
+    position: absolute;
+    right: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-left: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 8px 0 0 8px;
+}
+
+.hhdl-room-card[data-next-status="departed"]:not([data-spans-next="true"])::after {
+    border-color: #a855f7;
+}
+
+.hhdl-room-card[data-next-status="confirmed"]:not([data-spans-next="true"])::after {
+    border-color: #10b981;
+}
+
+.hhdl-room-card[data-next-status="unconfirmed"]:not([data-spans-next="true"])::after {
+    border-color: #f59e0b;
+}
+
+.hhdl-room-card[data-next-status="arrived"]:not([data-spans-next="true"])::after {
+    border-color: #3b82f6;
+}
+
+/* Next night - vacant */
+.hhdl-room-card[data-next-vacant="true"]:not([data-spans-next="true"])::after {
+    border-color: #d1d5db;
 }
 
 /* Room content */
