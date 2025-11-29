@@ -130,25 +130,25 @@
 /* Visual extension effect for multi-day bookings */
 .hhdl-room-card[data-spans-previous="true"] {
     border-left: none !important;
-    padding-left: 58px !important;
-    margin-left: -27px;
+    padding-left: 54px !important;
+    margin-left: -23px;
     border-radius: 0 8px 8px 0 !important;
 }
 
 .hhdl-room-card[data-spans-next="true"] {
     border-right: none !important;
-    padding-right: 58px !important;
-    margin-right: -27px;
+    padding-right: 54px !important;
+    margin-right: -23px;
     border-radius: 8px 0 0 8px !important;
 }
 
 .hhdl-room-card[data-spans-previous="true"][data-spans-next="true"] {
     border-left: none !important;
     border-right: none !important;
-    padding-left: 58px !important;
-    padding-right: 58px !important;
-    margin-left: -27px;
-    margin-right: -27px;
+    padding-left: 54px !important;
+    padding-right: 54px !important;
+    margin-left: -23px;
+    margin-right: -23px;
     border-radius: 0 !important;
 }
 
