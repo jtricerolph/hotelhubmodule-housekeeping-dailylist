@@ -341,8 +341,6 @@ class HHDL_Display {
         </div>
 
         <div class="hhdl-booking-info">
-            <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
-
             <?php if (!empty($booking['pax'])): ?>
                 <span class="hhdl-pax-badge"><?php echo esc_html($booking['pax']); ?> pax</span>
             <?php endif; ?>
@@ -406,12 +404,12 @@ class HHDL_Display {
     private function render_booking_type_indicator($room) {
         $booking_type = isset($room['booking_type']) ? $room['booking_type'] : 'vacant';
 
-        // Only show indicator for non-vacant rooms
-        if ($booking_type === 'vacant' || $booking_type === 'blocked') {
+        // Only show indicator for arrive and depart (not stopover or back-to-back)
+        if ($booking_type === 'vacant' || $booking_type === 'blocked' || $booking_type === 'stopover' || $booking_type === 'back-to-back') {
             return;
         }
 
-        // Define icon and label for each booking type
+        // Define icon and label for arrive and depart only
         $type_config = array(
             'arrive' => array(
                 'icon'  => 'flight_land',
@@ -422,16 +420,6 @@ class HHDL_Display {
                 'icon'  => 'flight_takeoff',
                 'label' => 'Depart',
                 'title' => 'Departure - Room becoming vacant today'
-            ),
-            'stopover' => array(
-                'icon'  => 'hotel',
-                'label' => 'Stopover',
-                'title' => 'Stopover - Guest staying multiple nights'
-            ),
-            'back-to-back' => array(
-                'icon'  => 'sync_alt',
-                'label' => 'Back to Back',
-                'title' => 'Back to Back - Departure and arrival today (turnover)'
             )
         );
 
