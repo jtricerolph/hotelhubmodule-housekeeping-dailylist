@@ -357,64 +357,92 @@ class HHDL_Display {
             </div>
         </div>
 
-        <div class="hhdl-booking-info">
-            <?php if (!empty($booking['pax'])): ?>
-                <span class="hhdl-pax-badge"><?php echo esc_html($booking['pax']); ?> pax</span>
-            <?php endif; ?>
+        <div class="hhdl-room-stats">
+            <!-- Block 1: Early Arrival Time -->
+            <div class="hhdl-stat-block">
+                <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])): ?>
+                    <?php
+                    // Only show glow effect if booking hasn't arrived yet
+                    $early_class = $room['booking_status'] === 'arrived' ? '' : 'hhdl-early-arrival';
+                    ?>
+                    <span class="hhdl-checkin-time <?php echo esc_attr($early_class); ?>">
+                        <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
+                        <?php echo esc_html($booking['checkin_time']); ?>
+                    </span>
+                <?php endif; ?>
+            </div>
 
-            <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])): ?>
+            <!-- Block 2: Twin Room Indicator -->
+            <div class="hhdl-stat-block">
+                <?php if ($room['has_twin']): ?>
+                    <?php
+                    $twin_info = isset($room['twin_info']) ? $room['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
+                    $twin_type = $twin_info['type'];
+                    $matched_term = $twin_info['matched_term'];
+                    $source = $twin_info['source'];
+
+                    // Convert source to user-friendly name
+                    $source_labels = array(
+                        'custom_field' => 'custom field',
+                        'legacy_field' => 'bed type field',
+                        'universal_fallback' => 'custom field',
+                        'booking_notes' => 'booking notes',
+                        'notes_fallback' => 'booking notes'
+                    );
+                    $source_display = isset($source_labels[$source]) ? $source_labels[$source] : $source;
+
+                    if ($twin_type === 'confirmed'):
+                        $title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source_display);
+                        $class = 'hhdl-twin-beds hhdl-twin-confirmed';
+                    elseif ($twin_type === 'potential'):
+                        $title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source_display);
+                        $class = 'hhdl-twin-beds hhdl-twin-potential';
+                    else:
+                        $title = __('Twin/Sofabed', 'hhdl');
+                        $class = 'hhdl-twin-beds';
+                    endif;
+                    ?>
+                    <span class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($title); ?>">
+                        <span class="material-symbols-outlined">single_bed</span>
+                        <span class="material-symbols-outlined">single_bed</span>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <!-- Block 3: NewBook/Default Tasks -->
+            <div class="hhdl-stat-block">
                 <?php
-                // Only show glow effect if booking hasn't arrived yet
-                $early_class = $room['booking_status'] === 'arrived' ? '' : 'hhdl-early-arrival';
+                // TODO: Add task status logic from NewBook/default tasks
+                // assignment_late - outstanding tasks (red)
+                // assignment_return - rollover tasks from previous dates (amber)
+                // assignment_turned_in - no outstanding tasks (green)
                 ?>
-                <span class="hhdl-checkin-time <?php echo esc_attr($early_class); ?>">
-                    <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
-                    <?php echo esc_html($booking['checkin_time']); ?>
+                <span class="hhdl-task-status hhdl-task-none" title="<?php esc_attr_e('No tasks', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">assignment_turned_in</span>
                 </span>
-            <?php endif; ?>
+            </div>
 
-            <?php $this->render_booking_type_indicator($room, $is_viewing_today); ?>
-        </div>
-
-        <div class="hhdl-booking-meta">
-
-            <?php if (!empty($booking['occupancy'])): ?>
-                <span class="hhdl-occupancy-badge">🛏️ <?php echo esc_html($booking['occupancy']); ?></span>
-            <?php endif; ?>
-
-            <?php if ($room['has_twin']): ?>
+            <!-- Block 4: Future Tasks Module -->
+            <div class="hhdl-stat-block">
                 <?php
-                $twin_info = isset($room['twin_info']) ? $room['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
-                $twin_type = $twin_info['type'];
-                $matched_term = $twin_info['matched_term'];
-                $source = $twin_info['source'];
-
-                // Convert source to user-friendly name
-                $source_labels = array(
-                    'custom_field' => 'custom field',
-                    'legacy_field' => 'bed type field',
-                    'universal_fallback' => 'custom field',
-                    'booking_notes' => 'booking notes',
-                    'notes_fallback' => 'booking notes'
-                );
-                $source_display = isset($source_labels[$source]) ? $source_labels[$source] : $source;
-
-                if ($twin_type === 'confirmed'):
-                    $title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source_display);
-                    $icon = '👥';
-                    $class = 'hhdl-twin-icon hhdl-twin-confirmed';
-                elseif ($twin_type === 'potential'):
-                    $title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source_display);
-                    $icon = '👥';
-                    $class = 'hhdl-twin-icon hhdl-twin-potential';
-                else:
-                    $title = __('Twin/Sofabed', 'hhdl');
-                    $icon = '👥';
-                    $class = 'hhdl-twin-icon';
-                endif;
+                // TODO: Add future tasks module integration
+                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
                 ?>
-                <span class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($title); ?>"><?php echo $icon; ?></span>
-            <?php endif; ?>
+                <span class="hhdl-future-tasks hhdl-tasks-none" title="<?php esc_attr_e('No current tasks', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">checklist_rtl</span>
+                </span>
+            </div>
+
+            <!-- Block 5: Spoilt Linen Module -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add spoilt linen module integration
+                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
+                ?>
+                <span class="hhdl-linen-status hhdl-linen-none" title="<?php esc_attr_e('No linen data', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                </span>
+            </div>
         </div>
         <?php
     }

@@ -569,6 +569,202 @@
     color: #9ca3af;
 }
 
+/* Room Stats Layout */
+.hhdl-room-stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.hhdl-stat-block {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+}
+
+/* Twin Beds Indicator */
+.hhdl-twin-beds {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-twin-beds .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.hhdl-twin-beds.hhdl-twin-confirmed {
+    background: #d1fae5;
+    border: 1px solid #10b981;
+}
+
+.hhdl-twin-beds.hhdl-twin-confirmed .material-symbols-outlined {
+    color: #059669;
+}
+
+.hhdl-twin-beds.hhdl-twin-potential {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+}
+
+.hhdl-twin-beds.hhdl-twin-potential .material-symbols-outlined {
+    color: #d97706;
+}
+
+.hhdl-twin-beds:hover {
+    transform: scale(1.05);
+}
+
+/* Task Status Icons */
+.hhdl-task-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-task-status .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Outstanding tasks (red) */
+.hhdl-task-status.hhdl-task-late {
+    background: #fee2e2;
+}
+
+.hhdl-task-status.hhdl-task-late .material-symbols-outlined {
+    color: #dc2626;
+}
+
+/* Rollover tasks from previous dates (amber) */
+.hhdl-task-status.hhdl-task-return {
+    background: #fef3c7;
+}
+
+.hhdl-task-status.hhdl-task-return .material-symbols-outlined {
+    color: #f59e0b;
+}
+
+/* No outstanding tasks (green) */
+.hhdl-task-status.hhdl-task-complete {
+    background: #d1fae5;
+}
+
+.hhdl-task-status.hhdl-task-complete .material-symbols-outlined {
+    color: #10b981;
+}
+
+/* No tasks (grey) */
+.hhdl-task-status.hhdl-task-none {
+    background: #f3f4f6;
+}
+
+.hhdl-task-status.hhdl-task-none .material-symbols-outlined {
+    color: #9ca3af;
+}
+
+.hhdl-task-status:hover {
+    transform: scale(1.1);
+}
+
+/* Future Tasks Module Icons */
+.hhdl-future-tasks {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-future-tasks .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Waiting tasks (red) */
+.hhdl-future-tasks.hhdl-tasks-waiting {
+    background: #fee2e2;
+}
+
+.hhdl-future-tasks.hhdl-tasks-waiting .material-symbols-outlined {
+    color: #dc2626;
+}
+
+/* All tasks complete (green) */
+.hhdl-future-tasks.hhdl-tasks-complete {
+    background: #d1fae5;
+}
+
+.hhdl-future-tasks.hhdl-tasks-complete .material-symbols-outlined {
+    color: #10b981;
+}
+
+/* No current tasks (grey) */
+.hhdl-future-tasks.hhdl-tasks-none {
+    background: #f3f4f6;
+}
+
+.hhdl-future-tasks.hhdl-tasks-none .material-symbols-outlined {
+    color: #9ca3af;
+}
+
+.hhdl-future-tasks:hover {
+    transform: scale(1.1);
+}
+
+/* Spoilt Linen Module Icons */
+.hhdl-linen-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-linen-status .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Unsubmitted count (amber) */
+.hhdl-linen-status.hhdl-linen-pending {
+    background: #fef3c7;
+}
+
+.hhdl-linen-status.hhdl-linen-pending .material-symbols-outlined {
+    color: #f59e0b;
+}
+
+/* Submitted count (green) */
+.hhdl-linen-status.hhdl-linen-submitted {
+    background: #d1fae5;
+}
+
+.hhdl-linen-status.hhdl-linen-submitted .material-symbols-outlined {
+    color: #10b981;
+}
+
+/* No values (grey) */
+.hhdl-linen-status.hhdl-linen-none {
+    background: #f3f4f6;
+}
+
+.hhdl-linen-status.hhdl-linen-none .material-symbols-outlined {
+    color: #9ca3af;
+}
+
+.hhdl-linen-status:hover {
+    transform: scale(1.1);
+}
+
 .hhdl-occupancy-badge {
     font-size: 11px;
     color: #6b7280;
