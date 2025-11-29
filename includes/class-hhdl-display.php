@@ -321,7 +321,8 @@ class HHDL_Display {
         // Fetch data from NewBook
         $sites_response = $api->get_sites(true);
         $bookings_response = $api->get_bookings($yesterday, $tomorrow_end, 'staying', true);
-        $tasks_response = $api->get_tasks($yesterday, $tomorrow_end, array(), true, null, true);
+        // Query ALL task types (-1) to include occupy site tasks (blocked rooms)
+        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', array(-1), true, null, true);
 
         // Process responses
         $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
@@ -679,18 +680,27 @@ class HHDL_Display {
             return $dates;
         }
 
-        // Multi-day task
+        // Multi-day or period task
         if (!empty($task['task_period_from']) && !empty($task['task_period_to'])) {
             $start = strtotime($task['task_period_from']);
             $end = strtotime($task['task_period_to']);
 
-            // Period_to is exclusive, so subtract one day
-            $end = strtotime('-1 day', $end);
+            // Get date-only parts for comparison
+            $start_date = date('Y-m-d', $start);
+            $end_date = date('Y-m-d', $end);
 
-            $current = $start;
-            while ($current <= $end) {
-                $dates[] = date('Y-m-d', $current);
-                $current = strtotime('+1 day', $current);
+            // If dates are the same, it's a single-day task
+            if ($start_date === $end_date) {
+                $dates[] = $start_date;
+            } else {
+                // Multi-day: period_to is exclusive, so subtract one day
+                $end = strtotime('-1 day', $end);
+
+                $current = $start;
+                while ($current <= $end) {
+                    $dates[] = date('Y-m-d', $current);
+                    $current = strtotime('+1 day', $current);
+                }
             }
         }
 
