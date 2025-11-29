@@ -78,16 +78,16 @@
                 // Apply normal filtering for bookings and vacant rooms
                 switch(filterType) {
                     case 'arrivals':
-                        shouldShow = card.data('is-arriving') === 'true';
+                        shouldShow = card.data('is-arriving') === true;
                         break;
                     case 'departs':
-                        shouldShow = card.data('is-departing') === 'true';
+                        shouldShow = card.data('is-departing') === true;
                         break;
                     case 'stopovers':
-                        shouldShow = card.data('is-stopover') === 'true';
+                        shouldShow = card.data('is-stopover') === true;
                         break;
                     case 'twins':
-                        shouldShow = card.data('has-twin') === 'true';
+                        shouldShow = card.data('has-twin') === true;
                         break;
                     case 'all':
                     default:
