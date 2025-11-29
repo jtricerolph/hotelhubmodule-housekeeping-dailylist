@@ -275,11 +275,24 @@ class HHDL_Ajax {
         }
 
         // Get tasks for this room/date
-        // NewBook API requires datetime format and task_type=[-1] for all tasks
+        // Get configured task type IDs from settings
+        $configured_tasks = HHDL_Settings::get_default_tasks($location_id);
+        $task_type_ids = array();
+        foreach ($configured_tasks as $task) {
+            if (!empty($task['task_type_id'])) {
+                $task_type_ids[] = intval($task['task_type_id']);
+            }
+        }
+
+        // If no task types configured, use -1 (housekeeping default)
+        if (empty($task_type_ids)) {
+            $task_type_ids = array(-1);
+        }
+
         $from_datetime = $date . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
-        error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime . ' with task_type=[-1]');
-        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, array(-1), true, null, true);
+        error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime . ' with task_types=' . json_encode($task_type_ids));
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
         error_log('HHDL Debug - Total tasks returned: ' . count($all_tasks));
 
