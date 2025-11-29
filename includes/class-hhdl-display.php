@@ -113,6 +113,9 @@ class HHDL_Display {
             <button class="hhdl-filter-btn" data-filter="stopovers">
                 <?php _e('Stopovers', 'hhdl'); ?>
             </button>
+            <button class="hhdl-filter-btn" data-filter="back-to-back">
+                <?php _e('Back to Back', 'hhdl'); ?>
+            </button>
             <button class="hhdl-filter-btn" data-filter="twins">
                 <?php _e('Twins', 'hhdl'); ?>
             </button>
@@ -149,6 +152,7 @@ class HHDL_Display {
                 'arrivals' => 0,
                 'departures' => 0,
                 'stopovers' => 0,
+                'back_to_back' => 0,
                 'twins' => 0
             );
         }
@@ -158,6 +162,7 @@ class HHDL_Display {
             'arrivals' => 0,
             'departures' => 0,
             'stopovers' => 0,
+            'back_to_back' => 0,
             'twins' => 0
         );
 
@@ -165,6 +170,7 @@ class HHDL_Display {
             if ($room['is_arriving']) $counts['arrivals']++;
             if ($room['is_departing']) $counts['departures']++;
             if ($room['is_stopover']) $counts['stopovers']++;
+            if (isset($room['booking_type']) && $room['booking_type'] === 'back-to-back') $counts['back_to_back']++;
             if ($room['has_twin']) $counts['twins']++;
         }
 
@@ -193,6 +199,7 @@ class HHDL_Display {
             'data-is-arriving'     => $room['is_arriving'] ? 'true' : 'false',
             'data-is-departing'    => $room['is_departing'] ? 'true' : 'false',
             'data-is-stopover'     => $room['is_stopover'] ? 'true' : 'false',
+            'data-booking-type'    => isset($room['booking_type']) ? $room['booking_type'] : 'vacant',
             'data-has-twin'        => $room['has_twin'] ? 'true' : 'false',
             'data-twin-type'       => isset($room['twin_info']['type']) ? $room['twin_info']['type'] : 'none',
             'data-booking-status'  => $room['booking_status'],
@@ -346,6 +353,8 @@ class HHDL_Display {
                     <?php echo esc_html($booking['checkin_time']); ?>
                 </span>
             <?php endif; ?>
+
+            <?php $this->render_booking_type_indicator($room); ?>
         </div>
 
         <div class="hhdl-booking-meta">
@@ -388,6 +397,55 @@ class HHDL_Display {
                 <span class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($title); ?>"><?php echo $icon; ?></span>
             <?php endif; ?>
         </div>
+        <?php
+    }
+
+    /**
+     * Render booking type indicator badge
+     */
+    private function render_booking_type_indicator($room) {
+        $booking_type = isset($room['booking_type']) ? $room['booking_type'] : 'vacant';
+
+        // Only show indicator for non-vacant rooms
+        if ($booking_type === 'vacant' || $booking_type === 'blocked') {
+            return;
+        }
+
+        // Define icon and label for each booking type
+        $type_config = array(
+            'arrive' => array(
+                'icon'  => 'flight_land',
+                'label' => 'Arrive',
+                'title' => 'Arrival - Room was vacant yesterday'
+            ),
+            'depart' => array(
+                'icon'  => 'flight_takeoff',
+                'label' => 'Depart',
+                'title' => 'Departure - Room becoming vacant today'
+            ),
+            'stopover' => array(
+                'icon'  => 'hotel',
+                'label' => 'Stopover',
+                'title' => 'Stopover - Guest staying multiple nights'
+            ),
+            'back-to-back' => array(
+                'icon'  => 'sync_alt',
+                'label' => 'Back to Back',
+                'title' => 'Back to Back - Departure and arrival today (turnover)'
+            )
+        );
+
+        if (!isset($type_config[$booking_type])) {
+            return;
+        }
+
+        $config = $type_config[$booking_type];
+        ?>
+        <span class="hhdl-booking-type-badge hhdl-booking-type-<?php echo esc_attr($booking_type); ?>"
+              title="<?php echo esc_attr($config['title']); ?>">
+            <span class="material-symbols-outlined"><?php echo esc_html($config['icon']); ?></span>
+            <span class="hhdl-booking-type-label"><?php echo esc_html($config['label']); ?></span>
+        </span>
         <?php
     }
 
@@ -692,6 +750,16 @@ class HHDL_Display {
                 $next_is_vacant = true;
             }
 
+            // Calculate booking type based on yesterday and today occupancy
+            $booking_type = $this->calculate_booking_type(
+                $is_arriving,
+                $is_departing,
+                $is_stopover,
+                $prev_is_vacant,
+                $today_booking,
+                $booking_status
+            );
+
             $room_cards[] = array(
                 'room_id'              => $room['room_id'],
                 'room_number'          => $room['room_number'],
@@ -700,6 +768,7 @@ class HHDL_Display {
                 'is_arriving'          => $is_arriving,
                 'is_departing'         => $is_departing,
                 'is_stopover'          => $is_stopover,
+                'booking_type'         => $booking_type,
                 'has_twin'             => $room['has_twin'],
                 'twin_info'            => $room['twin_info'],
                 'spans_previous'       => $spans_previous,
@@ -1106,5 +1175,46 @@ class HHDL_Display {
         }
 
         return 'unconfirmed';
+    }
+
+    /**
+     * Calculate booking type based on occupancy pattern
+     *
+     * @param bool $is_arriving Whether the room has an arrival today
+     * @param bool $is_departing Whether the room has a departure today (from yesterday's booking)
+     * @param bool $is_stopover Whether the room is a stopover (continuing booking)
+     * @param bool $prev_is_vacant Whether the room was vacant yesterday
+     * @param mixed $today_booking Today's booking data (or null if vacant)
+     * @param string $booking_status Current booking status
+     * @return string Booking type: 'arrive', 'depart', 'stopover', 'back-to-back', or 'vacant'
+     */
+    private function calculate_booking_type($is_arriving, $is_departing, $is_stopover, $prev_is_vacant, $today_booking, $booking_status) {
+        // Back to Back: Room departing from yesterday AND arriving today (different bookings - turnover)
+        if ($is_arriving && $is_departing) {
+            return 'back-to-back';
+        }
+
+        // Arrive: Room was vacant yesterday, arriving today
+        if ($is_arriving && $prev_is_vacant) {
+            return 'arrive';
+        }
+
+        // Depart: Room departing from yesterday, no booking today (becoming vacant)
+        if ($is_departing && empty($today_booking)) {
+            return 'depart';
+        }
+
+        // Stopover: Room occupied yesterday and tonight (same booking continuing)
+        if ($is_stopover && !$prev_is_vacant) {
+            return 'stopover';
+        }
+
+        // Blocked rooms
+        if ($booking_status === 'blocked') {
+            return 'blocked';
+        }
+
+        // Default: Vacant or other state
+        return 'vacant';
     }
 }

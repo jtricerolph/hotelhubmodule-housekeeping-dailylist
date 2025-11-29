@@ -359,9 +359,10 @@
 }
 
 .hhdl-status-wrapper {
-    min-width: 45px;
+    width: 45px;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .hhdl-site-status {
@@ -482,6 +483,67 @@
     padding: 2px 6px;
     background: #e5e7eb;
     border-radius: 4px;
+}
+
+/* Booking Type Badge */
+.hhdl-booking-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+.hhdl-booking-type-badge .material-symbols-outlined {
+    font-size: 13px;
+}
+
+.hhdl-booking-type-label {
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Arrive - Green */
+.hhdl-booking-type-arrive {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.hhdl-booking-type-arrive .material-symbols-outlined {
+    color: #10b981;
+}
+
+/* Depart - Purple */
+.hhdl-booking-type-depart {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.hhdl-booking-type-depart .material-symbols-outlined {
+    color: #8b5cf6;
+}
+
+/* Stopover - Blue */
+.hhdl-booking-type-stopover {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.hhdl-booking-type-stopover .material-symbols-outlined {
+    color: #3b82f6;
+}
+
+/* Back to Back - Amber/Orange (high priority turnover) */
+.hhdl-booking-type-back-to-back {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.hhdl-booking-type-back-to-back .material-symbols-outlined {
+    color: #f59e0b;
 }
 
 .hhdl-booking-meta {

@@ -86,6 +86,9 @@
                     case 'stopovers':
                         shouldShow = card.data('is-stopover') === true;
                         break;
+                    case 'back-to-back':
+                        shouldShow = card.data('booking-type') === 'back-to-back';
+                        break;
                     case 'twins':
                         shouldShow = card.data('has-twin') === true;
                         break;
@@ -106,6 +109,7 @@
         $('.hhdl-filter-btn[data-filter="arrivals"]').html('Arrivals <span class="hhdl-count-badge">' + counts.arrivals + '</span>');
         $('.hhdl-filter-btn[data-filter="departs"]').html('Departures <span class="hhdl-count-badge">' + counts.departures + '</span>');
         $('.hhdl-filter-btn[data-filter="stopovers"]').html('Stopovers <span class="hhdl-count-badge">' + counts.stopovers + '</span>');
+        $('.hhdl-filter-btn[data-filter="back-to-back"]').html('Back to Back <span class="hhdl-count-badge">' + counts.back_to_back + '</span>');
         $('.hhdl-filter-btn[data-filter="twins"]').html('Twins <span class="hhdl-count-badge">' + counts.twins + '</span>');
     }
 
