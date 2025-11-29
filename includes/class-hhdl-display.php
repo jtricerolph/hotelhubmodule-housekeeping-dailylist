@@ -277,7 +277,7 @@ class HHDL_Display {
      */
     private function render_modal() {
         ?>
-        <div class="hhdl-modal-overlay" id="hhdl-modal" style="display: none;">
+        <div class="hhdl-modal-overlay" id="hhdl-modal">
             <div class="hhdl-modal">
                 <div class="hhdl-modal-header">
                     <h2 id="hhdl-modal-title"><?php _e('Room Details', 'hhdl'); ?></h2>
