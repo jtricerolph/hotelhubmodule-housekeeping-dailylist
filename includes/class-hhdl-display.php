@@ -602,19 +602,19 @@ class HHDL_Display {
             // Stopovers: today's booking that's not arriving (and not departing from yesterday's perspective)
             $is_stopover = $booking_data && !$is_arriving;
 
-            // Determine spanning - check if SAME booking by booking_ref
+            // Determine spanning - check if SAME booking by booking_id
             $spans_previous = false;
             $spans_next = false;
-            $today_booking_ref = !empty($today_booking['booking_ref']) ? $today_booking['booking_ref'] : null;
+            $today_booking_id = !empty($today_booking['booking_id']) ? $today_booking['booking_id'] : null;
 
-            if ($today_booking_ref && $yesterday_booking && is_array($yesterday_booking) && !isset($yesterday_booking['description'])) {
-                $yesterday_booking_ref = !empty($yesterday_booking['booking_ref']) ? $yesterday_booking['booking_ref'] : null;
-                $spans_previous = ($today_booking_ref === $yesterday_booking_ref);
+            if ($today_booking_id && $yesterday_booking && is_array($yesterday_booking) && !isset($yesterday_booking['description'])) {
+                $yesterday_booking_id = !empty($yesterday_booking['booking_id']) ? $yesterday_booking['booking_id'] : null;
+                $spans_previous = ($today_booking_id === $yesterday_booking_id);
             }
 
-            if ($today_booking_ref && $tomorrow_booking && is_array($tomorrow_booking) && !isset($tomorrow_booking['description'])) {
-                $tomorrow_booking_ref = !empty($tomorrow_booking['booking_ref']) ? $tomorrow_booking['booking_ref'] : null;
-                $spans_next = ($today_booking_ref === $tomorrow_booking_ref);
+            if ($today_booking_id && $tomorrow_booking && is_array($tomorrow_booking) && !isset($tomorrow_booking['description'])) {
+                $tomorrow_booking_id = !empty($tomorrow_booking['booking_id']) ? $tomorrow_booking['booking_id'] : null;
+                $spans_next = ($today_booking_id === $tomorrow_booking_id);
             }
 
             // Get adjacent booking statuses and vacancy info
