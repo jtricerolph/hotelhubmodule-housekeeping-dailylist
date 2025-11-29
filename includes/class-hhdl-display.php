@@ -786,10 +786,14 @@ class HHDL_Display {
      * Detect twin/sofabed from booking using Twin Optimizer settings
      *
      * @param array $booking Booking data from NewBook API
-     * @param int $location_id Workforce location ID
+     * @param int $hotel_id Hotel Hub hotel ID
      * @return array Detection result with 'type' and 'matched_term' keys
      */
-    private function detect_twin($booking, $location_id) {
+    private function detect_twin($booking, $hotel_id) {
+        // Get hotel object to retrieve workforce location_id
+        $hotel = $this->get_hotel_from_location($hotel_id);
+        $workforce_location_id = $hotel && isset($hotel->location_id) ? $hotel->location_id : null;
+
         // Get Twin Optimizer settings if available
         $twin_settings = array(
             'custom_field_names' => '',
@@ -798,20 +802,20 @@ class HHDL_Display {
             'custom_field' => 'Bed Type'
         );
 
-        error_log('HHDL Twin Detection - Checking location_id: ' . $location_id);
+        error_log('HHDL Twin Detection - Hotel ID: ' . $hotel_id . ', Workforce location_id: ' . ($workforce_location_id ? $workforce_location_id : 'null'));
         error_log('HHDL Twin Detection - HHTM_Settings class exists: ' . (class_exists('HHTM_Settings') ? 'YES' : 'NO'));
 
-        // Try to get Twin Optimizer settings
-        if (class_exists('HHTM_Settings')) {
-            $twin_settings = HHTM_Settings::get_location_settings($location_id);
+        // Try to get Twin Optimizer settings using workforce location_id
+        if (class_exists('HHTM_Settings') && $workforce_location_id) {
+            $twin_settings = HHTM_Settings::get_location_settings($workforce_location_id);
 
             // Also check what's actually in the database
             $all_location_settings = get_option('hhtm_location_settings', array());
             error_log('HHDL Twin Detection - All Twin Optimizer location IDs in database: ' . json_encode(array_keys($all_location_settings)));
+            error_log('HHDL Twin Detection - Twin Optimizer settings for workforce location_id ' . $workforce_location_id . ': ' . json_encode($twin_settings));
+        } else {
+            error_log('HHDL Twin Detection - Could not get workforce location_id from hotel, or HHTM_Settings not available');
         }
-
-        // Debug: Log Twin Optimizer settings
-        error_log('HHDL Twin Detection - Twin Optimizer settings for location ' . $location_id . ': ' . json_encode($twin_settings));
 
         // Parse settings into arrays
         $custom_field_names = !empty($twin_settings['custom_field_names']) ?
