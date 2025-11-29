@@ -273,9 +273,11 @@ class HHDL_Display {
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
             <span class="hhdl-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
-            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
-                <?php echo esc_html($room['site_status']); ?>
-            </span>
+            <div class="hhdl-status-wrapper">
+                <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                    <?php echo esc_html($room['site_status']); ?>
+                </span>
+            </div>
         </div>
         <?php
     }
@@ -295,9 +297,11 @@ class HHDL_Display {
                 <?php echo esc_html($task_icon); ?>
             </span>
             <span class="hhdl-task-label"><?php echo esc_html($task_description); ?></span>
-            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
-                <?php echo esc_html($room['site_status']); ?>
-            </span>
+            <div class="hhdl-status-wrapper">
+                <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                    <?php echo esc_html($room['site_status']); ?>
+                </span>
+            </div>
         </div>
         <?php
     }
