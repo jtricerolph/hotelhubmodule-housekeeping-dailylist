@@ -310,12 +310,6 @@ class HHDL_Display {
             <?php else: ?>
                 <span class="hhdl-guest-name hhdl-guest-blurred">Guest Name</span>
             <?php endif; ?>
-            <?php if ($room['is_arriving']): ?>
-                <span class="hhdl-arrival-icon" title="<?php esc_attr_e('Arrival', 'hhdl'); ?>">→</span>
-            <?php endif; ?>
-            <?php if ($room['is_departing']): ?>
-                <span class="hhdl-departure-icon" title="<?php esc_attr_e('Departure', 'hhdl'); ?>">←</span>
-            <?php endif; ?>
             <?php if (!empty($booking['night_info'])): ?>
                 <span class="hhdl-nights">
                     <span class="material-symbols-outlined">bedtime</span>
@@ -340,15 +334,15 @@ class HHDL_Display {
         <div class="hhdl-booking-info">
             <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
 
+            <?php if (!empty($booking['pax'])): ?>
+                <span class="hhdl-pax-badge"><?php echo esc_html($booking['pax']); ?> pax</span>
+            <?php endif; ?>
+
             <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])): ?>
                 <span class="hhdl-checkin-time hhdl-early-arrival">
                     <span class="material-symbols-outlined hhdl-early-icon">schedule</span>
                     <?php echo esc_html($booking['checkin_time']); ?>
                 </span>
-            <?php endif; ?>
-
-            <?php if (!empty($booking['pax'])): ?>
-                <span class="hhdl-pax-badge"><?php echo esc_html($booking['pax']); ?> pax</span>
             <?php endif; ?>
         </div>
 
