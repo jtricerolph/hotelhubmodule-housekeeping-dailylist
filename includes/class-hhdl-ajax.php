@@ -105,17 +105,9 @@ class HHDL_Ajax {
         // Get task description mappings for this location
         $task_description_mappings = HHDL_Settings::get_task_description_mappings($location_id);
 
-        // DEBUG: Log what we're working with
-        error_log('HHDL Debug - Room: ' . $room_id);
-        error_log('HHDL Debug - Task mappings: ' . print_r($task_description_mappings, true));
-        error_log('HHDL Debug - NewBook tasks: ' . print_r($room_details['newbook_tasks'], true));
-
         // Prepare data
         $booking_data = $this->filter_booking_data($room_details['booking']);
         $tasks = $this->build_tasks_list($room_details, $task_description_mappings, $date);
-
-        // DEBUG: Log final tasks
-        error_log('HHDL Debug - Final tasks: ' . print_r($tasks, true));
 
         // Render modal body HTML
         ob_start();
