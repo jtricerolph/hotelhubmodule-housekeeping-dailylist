@@ -279,6 +279,23 @@
 .hhdl-twin-icon {
     font-size: 14px;
     cursor: help;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.hhdl-twin-icon.hhdl-twin-confirmed {
+    background: #d1fae5;
+    border: 1px solid #10b981;
+}
+
+.hhdl-twin-icon.hhdl-twin-potential {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+}
+
+.hhdl-twin-icon:hover {
+    transform: scale(1.1);
 }
 
 /* Modal */

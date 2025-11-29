@@ -191,6 +191,7 @@ class HHDL_Display {
             'data-is-departing'    => $room['is_departing'] ? 'true' : 'false',
             'data-is-stopover'     => $room['is_stopover'] ? 'true' : 'false',
             'data-has-twin'        => $room['has_twin'] ? 'true' : 'false',
+            'data-twin-type'       => isset($room['twin_info']['type']) ? $room['twin_info']['type'] : 'none',
             'data-booking-status'  => $room['booking_status'],
             'data-spans-previous'  => $room['spans_previous'] ? 'true' : 'false',
             'data-spans-next'      => $room['spans_next'] ? 'true' : 'false'
@@ -315,7 +316,27 @@ class HHDL_Display {
             <?php endif; ?>
 
             <?php if ($room['has_twin']): ?>
-                <span class="hhdl-twin-icon" title="<?php esc_attr_e('Twin/Sofabed', 'hhdl'); ?>">👥</span>
+                <?php
+                $twin_info = isset($room['twin_info']) ? $room['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
+                $twin_type = $twin_info['type'];
+                $matched_term = $twin_info['matched_term'];
+                $source = $twin_info['source'];
+
+                if ($twin_type === 'confirmed'):
+                    $title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source);
+                    $icon = '👥';
+                    $class = 'hhdl-twin-icon hhdl-twin-confirmed';
+                elseif ($twin_type === 'potential'):
+                    $title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source);
+                    $icon = '👥';
+                    $class = 'hhdl-twin-icon hhdl-twin-potential';
+                else:
+                    $title = __('Twin/Sofabed', 'hhdl');
+                    $icon = '👥';
+                    $class = 'hhdl-twin-icon';
+                endif;
+                ?>
+                <span class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($title); ?>"><?php echo $icon; ?></span>
             <?php endif; ?>
         </div>
         <?php
@@ -401,7 +422,8 @@ class HHDL_Display {
                 'category'    => isset($site_to_category[$site_id]) ? $site_to_category[$site_id] : array(),
                 'order'       => isset($site_order_map[$site_id]) ? $site_order_map[$site_id] : array('category_order' => 999, 'site_order' => 999),
                 'bookings'    => array('yesterday' => null, 'today' => null, 'tomorrow' => null),
-                'has_twin'    => false
+                'has_twin'    => false,
+                'twin_info'   => array('type' => 'none', 'matched_term' => '', 'source' => '')
             );
         }
 
@@ -428,7 +450,10 @@ class HHDL_Display {
 
             // Check for twin/sofabed indicators
             if ($rooms_by_id[$site_id]['bookings']['today'] === $booking) {
-                $rooms_by_id[$site_id]['has_twin'] = $this->detect_twin($booking);
+                $twin_detection = $this->detect_twin($booking, $location_id);
+                $rooms_by_id[$site_id]['twin_info'] = $twin_detection;
+                // Set has_twin to true for both confirmed and potential twins
+                $rooms_by_id[$site_id]['has_twin'] = ($twin_detection['type'] === 'confirmed' || $twin_detection['type'] === 'potential');
             }
         }
 
@@ -583,6 +608,7 @@ class HHDL_Display {
                 'is_departing'         => $is_departing,
                 'is_stopover'          => $is_stopover,
                 'has_twin'             => $room['has_twin'],
+                'twin_info'            => $room['twin_info'],
                 'spans_previous'       => $spans_previous,
                 'spans_next'           => $spans_next,
                 'prev_booking_status'  => $prev_booking_status,
@@ -747,43 +773,117 @@ class HHDL_Display {
     }
 
     /**
-     * Detect twin/sofabed from booking
+     * Detect twin/sofabed from booking using Twin Optimizer settings
+     *
+     * @param array $booking Booking data from NewBook API
+     * @param int $location_id Workforce location ID
+     * @return array Detection result with 'type' and 'matched_term' keys
      */
-    private function detect_twin($booking) {
-        // Check custom fields
-        if (!empty($booking['custom_fields'])) {
-            foreach ($booking['custom_fields'] as $field) {
-                // Handle both array and string formats
-                $field_value = is_array($field) ? implode(' ', $field) : $field;
-                if (stripos($field_value, 'twin') !== false || stripos($field_value, 'sofabed') !== false) {
-                    return true;
+    private function detect_twin($booking, $location_id) {
+        // Get Twin Optimizer settings if available
+        $twin_settings = array(
+            'custom_field_names' => '',
+            'custom_field_values' => '',
+            'notes_search_terms' => '',
+            'custom_field' => 'Bed Type'
+        );
+
+        // Try to get Twin Optimizer settings
+        if (class_exists('HHTM_Settings')) {
+            $twin_settings = HHTM_Settings::get_location_settings($location_id);
+        }
+
+        // Parse settings into arrays
+        $custom_field_names = !empty($twin_settings['custom_field_names']) ?
+            array_map('trim', explode(',', $twin_settings['custom_field_names'])) : array();
+        $custom_field_values = !empty($twin_settings['custom_field_values']) ?
+            array_map('trim', explode(',', $twin_settings['custom_field_values'])) : array();
+        $notes_search_terms = !empty($twin_settings['notes_search_terms']) ?
+            array_map('trim', explode(',', $twin_settings['notes_search_terms'])) : array();
+
+        // PRIMARY DETECTION: Check booking custom fields with configured field names and values
+        if (!empty($booking['booking_custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            foreach ($booking['booking_custom_fields'] as $custom_field) {
+                // Check if this field name matches any configured names
+                if (isset($custom_field['name'])) {
+                    foreach ($custom_field_names as $field_name) {
+                        if ($custom_field['name'] === $field_name) {
+                            // Check if field value contains any configured search values
+                            $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+                            foreach ($custom_field_values as $search_value) {
+                                $search_value_lower = strtolower($search_value);
+                                if (strpos($field_value, $search_value_lower) !== false) {
+                                    return array(
+                                        'type' => 'confirmed',
+                                        'matched_term' => $search_value,
+                                        'source' => 'custom_field'
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // Check booking custom fields
+        // FALLBACK DETECTION: Check legacy bed type field for "twin" or "2 x single"
         if (!empty($booking['booking_custom_fields'])) {
-            foreach ($booking['booking_custom_fields'] as $field) {
-                if (isset($field['value'])) {
-                    if (stripos($field['value'], 'twin') !== false || stripos($field['value'], 'sofabed') !== false) {
-                        return true;
+            $legacy_field_name = !empty($twin_settings['custom_field']) ? $twin_settings['custom_field'] : 'Bed Type';
+
+            foreach ($booking['booking_custom_fields'] as $custom_field) {
+                // Check by label (legacy method)
+                if (isset($custom_field['label']) && $custom_field['label'] === $legacy_field_name) {
+                    $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+
+                    // Check for "twin"
+                    if (strpos($field_value, 'twin') !== false) {
+                        return array(
+                            'type' => 'confirmed',
+                            'matched_term' => 'twin',
+                            'source' => 'legacy_field'
+                        );
+                    }
+
+                    // Check for "2 x single" pattern
+                    if (preg_match('/2\s*x?\s*single/i', $field_value)) {
+                        return array(
+                            'type' => 'confirmed',
+                            'matched_term' => '2 x single',
+                            'source' => 'legacy_field'
+                        );
                     }
                 }
             }
         }
 
-        // Check notes
-        if (!empty($booking['notes'])) {
+        // POTENTIAL DETECTION: Check booking notes for configured search terms
+        if (!empty($booking['notes']) && !empty($notes_search_terms)) {
             foreach ($booking['notes'] as $note) {
-                if (isset($note['content'])) {
-                    if (stripos($note['content'], 'twin') !== false || stripos($note['content'], 'sofabed') !== false) {
-                        return true;
+                $note_content = isset($note['content']) ? strtolower($note['content']) : '';
+                if (empty($note_content)) {
+                    continue;
+                }
+
+                // Check against configured search terms
+                foreach ($notes_search_terms as $search_term) {
+                    $search_term_lower = strtolower($search_term);
+                    if (strpos($note_content, $search_term_lower) !== false) {
+                        return array(
+                            'type' => 'potential',
+                            'matched_term' => $search_term,
+                            'source' => 'booking_notes'
+                        );
                     }
                 }
             }
         }
 
-        return false;
+        // No twin detected
+        return array(
+            'type' => 'none',
+            'matched_term' => '',
+            'source' => ''
+        );
     }
 
     /**
