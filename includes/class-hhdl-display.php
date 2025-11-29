@@ -320,15 +320,17 @@ class HHDL_Display {
             // Only show status for current/arriving bookings (not future bookings)
             $show_status = $room['is_arriving'] || $room['booking_status'] === 'arrived';
             if ($show_status):
-                // Override with ARRIVED for checked-in bookings
-                if ($room['booking_status'] === 'arrived'):
             ?>
-                <span class="hhdl-site-status arrived">ARRIVED</span>
-            <?php else: ?>
-                <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
-                    <?php echo esc_html($room['site_status']); ?>
-                </span>
-            <?php endif; endif; ?>
+            <div class="hhdl-status-wrapper">
+                <?php if ($room['booking_status'] === 'arrived'): ?>
+                    <span class="hhdl-site-status arrived">ARRIVED</span>
+                <?php else: ?>
+                    <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                        <?php echo esc_html($room['site_status']); ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
         </div>
 
         <div class="hhdl-booking-info">
