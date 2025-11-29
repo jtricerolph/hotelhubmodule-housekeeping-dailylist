@@ -263,9 +263,22 @@ class HHDL_Ajax {
                     $total_nights = (strtotime($departure) - strtotime($arrival)) / 86400;
                     $current_night = (strtotime($date) - strtotime($arrival)) / 86400 + 1;
 
+                    // Extract guest name from guests array if not already set
+                    $guest_name = '';
+                    if (isset($booking['guest_name']) && !empty($booking['guest_name'])) {
+                        $guest_name = $booking['guest_name'];
+                    } elseif (isset($booking['guests']) && is_array($booking['guests']) && !empty($booking['guests'])) {
+                        $first_guest = $booking['guests'][0];
+                        $firstname = isset($first_guest['firstname']) ? trim($first_guest['firstname']) : '';
+                        $lastname = isset($first_guest['lastname']) ? trim($first_guest['lastname']) : '';
+                        if ($firstname || $lastname) {
+                            $guest_name = trim($firstname . ' ' . $lastname);
+                        }
+                    }
+
                     $booking_data = array(
                         'reference'     => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
-                        'guest_name'    => isset($booking['guest_name']) ? $booking['guest_name'] : '',
+                        'guest_name'    => $guest_name,
                         'email'         => isset($booking['guest_email']) ? $booking['guest_email'] : '',
                         'phone'         => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
                         'checkin_date'  => $arrival,

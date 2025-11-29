@@ -301,6 +301,11 @@ class HHDL_Display {
         ?>
         <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
+            <?php if ($can_view_guest && !empty($booking['guest_name'])): ?>
+                <span class="hhdl-guest-name"><?php echo esc_html($booking['guest_name']); ?></span>
+            <?php else: ?>
+                <span class="hhdl-guest-name hhdl-guest-blurred">Guest Name</span>
+            <?php endif; ?>
             <?php if ($room['is_arriving']): ?>
                 <span class="hhdl-arrival-icon" title="<?php esc_attr_e('Arrival', 'hhdl'); ?>">→</span>
             <?php endif; ?>
@@ -313,11 +318,7 @@ class HHDL_Display {
         </div>
 
         <div class="hhdl-booking-info">
-            <?php if ($can_view_guest && !empty($booking['guest_name'])): ?>
-                <span class="hhdl-guest-name"><?php echo esc_html($booking['guest_name']); ?></span>
-            <?php else: ?>
-                <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
-            <?php endif; ?>
+            <span class="hhdl-ref-number"><?php echo esc_html($booking['reference']); ?></span>
 
             <?php if (!empty($booking['checkin_time'])): ?>
                 <span class="hhdl-checkin-time"><?php echo esc_html($booking['checkin_time']); ?></span>
@@ -1010,9 +1011,22 @@ class HHDL_Display {
         $total_nights = (strtotime($departure_date) - strtotime($arrival_date)) / 86400;
         $current_night = (strtotime($date) - strtotime($arrival_date)) / 86400 + 1;
 
+        // Extract guest name from guests array if not already set
+        $guest_name = '';
+        if (isset($booking['guest_name']) && !empty($booking['guest_name'])) {
+            $guest_name = $booking['guest_name'];
+        } elseif (isset($booking['guests']) && is_array($booking['guests']) && !empty($booking['guests'])) {
+            $first_guest = $booking['guests'][0];
+            $firstname = isset($first_guest['firstname']) ? trim($first_guest['firstname']) : '';
+            $lastname = isset($first_guest['lastname']) ? trim($first_guest['lastname']) : '';
+            if ($firstname || $lastname) {
+                $guest_name = trim($firstname . ' ' . $lastname);
+            }
+        }
+
         return array(
             'reference'    => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
-            'guest_name'   => isset($booking['guest_name']) ? $booking['guest_name'] : '',
+            'guest_name'   => $guest_name,
             'checkin_time' => isset($booking['booking_eta']) ? date('H:i', strtotime($booking['booking_eta'])) : '',
             'pax'          => isset($booking['pax']) ? $booking['pax'] : 0,
             'night_info'   => $current_night . '/' . $total_nights . ' nights',

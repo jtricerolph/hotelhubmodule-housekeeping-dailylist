@@ -407,9 +407,15 @@
 }
 
 .hhdl-guest-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: #1f2937;
+}
+
+.hhdl-guest-blurred {
+    color: #9ca3af;
+    filter: blur(4px);
+    user-select: none;
 }
 
 .hhdl-ref-number {
