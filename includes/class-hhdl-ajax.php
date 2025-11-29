@@ -275,7 +275,9 @@ class HHDL_Ajax {
         }
 
         // Get tasks for this room/date
-        $tasks_response = $api->get_tasks($date, date('Y-m-d', strtotime($date . ' +1 day')), array(), true, null, true);
+        $from_datetime = $date . ' 00:00:00';
+        $to_datetime = $date . ' 23:59:59';
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, array(), true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
         $newbook_tasks = array();
