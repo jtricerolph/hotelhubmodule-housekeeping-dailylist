@@ -30,6 +30,7 @@ if (!defined('ABSPATH')) {
                     <th><?php _e('Location', 'hhdl'); ?></th>
                     <th><?php _e('Enabled', 'hhdl'); ?></th>
                     <th><?php _e('Default Tasks', 'hhdl'); ?></th>
+                    <th><?php _e('Twin Detection', 'hhdl'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -111,6 +112,46 @@ if (!defined('ABSPATH')) {
                                        name="locations[<?php echo $location_id; ?>][tasks_json]"
                                        class="hhdl-tasks-json"
                                        value="<?php echo esc_attr(json_encode($tasks)); ?>">
+                            </div>
+                        </td>
+                        <td class="location-twin-settings">
+                            <div class="hhdl-twin-config">
+                                <div class="hhdl-twin-field">
+                                    <label><?php _e('Custom Field Names (CSV)', 'hhdl'); ?></label>
+                                    <input type="text"
+                                           name="locations[<?php echo $location_id; ?>][twin_custom_field_names]"
+                                           placeholder="<?php esc_attr_e('e.g., Bed Type,Room Configuration', 'hhdl'); ?>"
+                                           value="<?php echo esc_attr(isset($location_settings['twin_custom_field_names']) ? $location_settings['twin_custom_field_names'] : ''); ?>"
+                                           class="widefat">
+                                    <p class="description"><?php _e('Comma-separated list of custom field names to check for twin bed configuration', 'hhdl'); ?></p>
+                                </div>
+                                <div class="hhdl-twin-field">
+                                    <label><?php _e('Confirmed Twin Values (CSV)', 'hhdl'); ?></label>
+                                    <input type="text"
+                                           name="locations[<?php echo $location_id; ?>][twin_custom_field_values]"
+                                           placeholder="<?php esc_attr_e('e.g., Twin,Twin Beds,2 Single Beds', 'hhdl'); ?>"
+                                           value="<?php echo esc_attr(isset($location_settings['twin_custom_field_values']) ? $location_settings['twin_custom_field_values'] : ''); ?>"
+                                           class="widefat">
+                                    <p class="description"><?php _e('Comma-separated list of values that confirm a twin room', 'hhdl'); ?></p>
+                                </div>
+                                <div class="hhdl-twin-field">
+                                    <label><?php _e('Notes Search Terms (CSV)', 'hhdl'); ?></label>
+                                    <input type="text"
+                                           name="locations[<?php echo $location_id; ?>][twin_notes_search_terms]"
+                                           placeholder="<?php esc_attr_e('e.g., twin,2 single,two single', 'hhdl'); ?>"
+                                           value="<?php echo esc_attr(isset($location_settings['twin_notes_search_terms']) ? $location_settings['twin_notes_search_terms'] : ''); ?>"
+                                           class="widefat">
+                                    <p class="description"><?php _e('Comma-separated search terms to find potential twins in booking notes (case insensitive)', 'hhdl'); ?></p>
+                                </div>
+                                <div class="hhdl-twin-field">
+                                    <label><?php _e('Excluded Terms (CSV)', 'hhdl'); ?></label>
+                                    <input type="text"
+                                           name="locations[<?php echo $location_id; ?>][twin_excluded_terms]"
+                                           placeholder="<?php esc_attr_e('e.g., Double or Twin:,Not twin', 'hhdl'); ?>"
+                                           value="<?php echo esc_attr(isset($location_settings['twin_excluded_terms']) ? $location_settings['twin_excluded_terms'] : ''); ?>"
+                                           class="widefat">
+                                    <p class="description"><?php _e('Case-sensitive terms to remove from notes before searching (e.g., "Double or Twin: Double" won\'t match "twin")', 'hhdl'); ?></p>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -270,6 +311,36 @@ input:checked + .hhdl-slider:before {
 
 .hhdl-add-task {
     margin-top: 8px;
+}
+
+/* Twin Detection Settings */
+.location-twin-settings {
+    min-width: 350px;
+}
+
+.hhdl-twin-config {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hhdl-twin-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1d2327;
+}
+
+.hhdl-twin-field input[type="text"] {
+    width: 100%;
+    max-width: 100%;
+}
+
+.hhdl-twin-field .description {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #646970;
+    font-style: italic;
 }
 </style>
 

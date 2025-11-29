@@ -99,7 +99,11 @@ class HHDL_Settings {
 
                 $settings[$location_id] = array(
                     'enabled' => isset($location_data['enabled']) ? true : false,
-                    'default_tasks' => array()
+                    'default_tasks' => array(),
+                    'twin_custom_field_names' => isset($location_data['twin_custom_field_names']) ? sanitize_text_field($location_data['twin_custom_field_names']) : '',
+                    'twin_custom_field_values' => isset($location_data['twin_custom_field_values']) ? sanitize_text_field($location_data['twin_custom_field_values']) : '',
+                    'twin_notes_search_terms' => isset($location_data['twin_notes_search_terms']) ? sanitize_text_field($location_data['twin_notes_search_terms']) : '',
+                    'twin_excluded_terms' => isset($location_data['twin_excluded_terms']) ? sanitize_text_field($location_data['twin_excluded_terms']) : ''
                 );
 
                 // Process tasks if provided
@@ -202,7 +206,11 @@ class HHDL_Settings {
         // Return defaults
         return array(
             'enabled' => false,
-            'default_tasks' => self::get_default_tasks_template()
+            'default_tasks' => self::get_default_tasks_template(),
+            'twin_custom_field_names' => '',
+            'twin_custom_field_values' => '',
+            'twin_notes_search_terms' => '',
+            'twin_excluded_terms' => ''
         );
     }
 
