@@ -286,7 +286,7 @@ class HHDL_Ajax {
         $from_datetime = $date . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
         error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime . ' with task_types=' . json_encode($task_type_ids));
-        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, null, true);
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, false, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
         error_log('HHDL Debug - Total tasks returned: ' . count($all_tasks));
 

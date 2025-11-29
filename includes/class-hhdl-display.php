@@ -325,7 +325,7 @@ class HHDL_Display {
         $sites_response = $api->get_sites(true);
         $bookings_response = $api->get_bookings($yesterday, $tomorrow_end, 'staying', true);
         // Query ALL task types from hotel integration settings (includes housekeeping, occupy site, custom types)
-        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', $task_type_ids, true, null, true);
+        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', $task_type_ids, false, null, true);
 
         // Process responses
         $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
