@@ -36,8 +36,19 @@
     function initDatePicker() {
         $('#hhdl-date-picker').on('change', function() {
             currentDate = $(this).val();
+            updateDateDisplay(currentDate);
             loadRoomList(currentDate);
         });
+    }
+
+    /**
+     * Update the displayed date text
+     */
+    function updateDateDisplay(date) {
+        const dateObj = new Date(date + 'T00:00:00');
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = dateObj.toLocaleDateString('en-US', options);
+        $('.hhdl-viewing-date').text(formattedDate);
     }
 
     /**

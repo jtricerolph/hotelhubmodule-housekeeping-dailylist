@@ -78,6 +78,7 @@
     padding: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
 }
 
 .hhdl-room-card:hover {
@@ -85,10 +86,54 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+/* Border slivers for multi-day bookings */
+.hhdl-room-card[data-spans-previous="true"] {
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    margin-left: 23px;
+}
+
+.hhdl-room-card[data-spans-previous="true"]::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--previous-status-color, #d1d5db);
+    border-radius: 2px 0 0 2px;
+}
+
+.hhdl-room-card[data-spans-next="true"] {
+    border-right: 4px solid var(--next-status-color, #d1d5db);
+    border-radius: 8px 0 0 8px;
+}
+
+.hhdl-room-card[data-spans-previous="true"][data-spans-next="true"] {
+    border-left: none;
+    border-right: 4px solid var(--next-status-color, #d1d5db);
+    border-radius: 0;
+}
+
+/* Room content */
+.hhdl-vacant .hhdl-room-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .hhdl-room-number {
     font-size: 13px;
     font-weight: 600;
     color: #1f2937;
+    min-width: 40px;
+}
+
+.hhdl-vacant-label {
+    flex: 1;
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
 }
 
 .hhdl-site-status {
@@ -96,6 +141,7 @@
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 .hhdl-site-status.clean {
@@ -106,6 +152,90 @@
 .hhdl-site-status.dirty {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.hhdl-site-status.unknown {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+/* Booked room content */
+.hhdl-room-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.hhdl-arrival-icon,
+.hhdl-departure-icon {
+    font-size: 14px;
+    color: #10b981;
+}
+
+.hhdl-departure-icon {
+    color: #ef4444;
+}
+
+.hhdl-booking-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.hhdl-guest-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.hhdl-ref-number {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    font-family: monospace;
+}
+
+.hhdl-checkin-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 2px 6px;
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.hhdl-pax-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+    padding: 2px 6px;
+    background: #e5e7eb;
+    border-radius: 4px;
+}
+
+.hhdl-booking-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.hhdl-nights {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.hhdl-occupancy-badge {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.hhdl-twin-icon {
+    font-size: 14px;
+    cursor: help;
 }
 
 /* Modal */
