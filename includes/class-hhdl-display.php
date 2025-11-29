@@ -313,6 +313,9 @@ class HHDL_Display {
         $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
         $categories_sort = isset($integration['categories_sort']) ? $integration['categories_sort'] : array();
 
+        // Get all configured task type IDs from NewBook integration
+        $task_type_ids = $this->get_all_task_type_ids($integration);
+
         // Calculate 3-day period
         $yesterday = date('Y-m-d', strtotime($date . ' -1 day'));
         $tomorrow = date('Y-m-d', strtotime($date . ' +1 day'));
@@ -321,8 +324,8 @@ class HHDL_Display {
         // Fetch data from NewBook
         $sites_response = $api->get_sites(true);
         $bookings_response = $api->get_bookings($yesterday, $tomorrow_end, 'staying', true);
-        // Query ALL task types (-1) to include occupy site tasks (blocked rooms)
-        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', array(-1), true, null, true);
+        // Query ALL task types from hotel integration settings (includes housekeeping, occupy site, custom types)
+        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', $task_type_ids, true, null, true);
 
         // Process responses
         $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
@@ -666,6 +669,32 @@ class HHDL_Display {
         }
 
         return false;
+    }
+
+    /**
+     * Get all task type IDs from NewBook integration settings
+     *
+     * @param array $integration NewBook integration settings
+     * @return array Array of task type IDs
+     */
+    private function get_all_task_type_ids($integration) {
+        $task_type_ids = array();
+
+        // Get task types from integration settings
+        if (isset($integration['task_types']) && is_array($integration['task_types'])) {
+            foreach ($integration['task_types'] as $task_type) {
+                if (isset($task_type['id'])) {
+                    $task_type_ids[] = intval($task_type['id']);
+                }
+            }
+        }
+
+        // If no task types configured, fall back to -1 (housekeeping default)
+        if (empty($task_type_ids)) {
+            $task_type_ids = array(-1);
+        }
+
+        return $task_type_ids;
     }
 
     /**

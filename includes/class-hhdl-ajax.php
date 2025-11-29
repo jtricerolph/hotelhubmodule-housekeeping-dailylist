@@ -223,6 +223,14 @@ class HHDL_Ajax {
             return null;
         }
 
+        // Get hotel and integration settings for task types
+        $hotel = $this->get_hotel_from_location($location_id);
+        $task_type_ids = array(-1); // Default fallback
+        if ($hotel) {
+            $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+            $task_type_ids = $this->get_all_task_type_ids($integration);
+        }
+
         // Get site details
         $sites_response = $api->get_sites(true);
         $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
@@ -274,10 +282,7 @@ class HHDL_Ajax {
             }
         }
 
-        // Get tasks for this room/date
-        // Query ALL task types (-1) to include booking tasks AND site tasks (occupied/blocked)
-        $task_type_ids = array(-1);
-
+        // Get tasks for this room/date using all configured task types
         $from_datetime = $date . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
         error_log('HHDL Debug - Querying tasks from ' . $from_datetime . ' to ' . $to_datetime . ' with task_types=' . json_encode($task_type_ids));
@@ -546,6 +551,42 @@ class HHDL_Ajax {
             return wfa_user_can('hhdl_view_all_notes');
         }
         return current_user_can('edit_posts');
+    }
+
+    /**
+     * Get hotel from location ID
+     */
+    private function get_hotel_from_location($location_id) {
+        if (!function_exists('hha')) {
+            return null;
+        }
+        return hha()->hotels->get($location_id);
+    }
+
+    /**
+     * Get all task type IDs from NewBook integration settings
+     *
+     * @param array $integration NewBook integration settings
+     * @return array Array of task type IDs
+     */
+    private function get_all_task_type_ids($integration) {
+        $task_type_ids = array();
+
+        // Get task types from integration settings
+        if (isset($integration['task_types']) && is_array($integration['task_types'])) {
+            foreach ($integration['task_types'] as $task_type) {
+                if (isset($task_type['id'])) {
+                    $task_type_ids[] = intval($task_type['id']);
+                }
+            }
+        }
+
+        // If no task types configured, fall back to -1 (housekeeping default)
+        if (empty($task_type_ids)) {
+            $task_type_ids = array(-1);
+        }
+
+        return $task_type_ids;
     }
 
     /**
