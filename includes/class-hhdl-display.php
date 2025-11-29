@@ -258,9 +258,9 @@ class HHDL_Display {
              style="<?php echo esc_attr($inline_style); ?>">
 
             <?php if ($is_blocked): ?>
-                <?php $this->render_blocked_room($room); ?>
+                <?php $this->render_blocked_room($room, $is_viewing_today); ?>
             <?php elseif ($is_vacant): ?>
-                <?php $this->render_vacant_room($room); ?>
+                <?php $this->render_vacant_room($room, $is_viewing_today); ?>
             <?php else: ?>
                 <?php $this->render_booked_room($room, $is_viewing_today); ?>
             <?php endif; ?>
@@ -271,12 +271,12 @@ class HHDL_Display {
     /**
      * Render vacant room content
      */
-    private function render_vacant_room($room) {
+    private function render_vacant_room($room, $is_viewing_today = true) {
         ?>
         <div class="hhdl-room-content">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
             <span class="hhdl-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
-            <?php if (strtolower($room['site_status']) !== 'unknown'): ?>
+            <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
                 <div class="hhdl-status-wrapper">
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
@@ -290,7 +290,7 @@ class HHDL_Display {
     /**
      * Render blocked room content
      */
-    private function render_blocked_room($room) {
+    private function render_blocked_room($room, $is_viewing_today = true) {
         $task = $room['blocking_task'];
         $task_color = isset($task['color']) ? $task['color'] : '#ef4444';
         $task_description = isset($task['description']) ? $task['description'] : 'Blocked';
@@ -302,7 +302,7 @@ class HHDL_Display {
                 <?php echo esc_html($task_icon); ?>
             </span>
             <span class="hhdl-task-label"><?php echo esc_html($task_description); ?></span>
-            <?php if (strtolower($room['site_status']) !== 'unknown'): ?>
+            <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
                 <div class="hhdl-status-wrapper">
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
