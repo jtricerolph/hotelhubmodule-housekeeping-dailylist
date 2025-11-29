@@ -197,6 +197,24 @@ class HHDL_Display {
             'data-spans-next'      => $room['spans_next'] ? 'true' : 'false'
         );
 
+        // Add previous night data attributes
+        if (!$room['spans_previous']) {
+            if (!empty($room['prev_booking_status'])) {
+                $data_attrs['data-previous-status'] = $room['prev_booking_status'];
+            } elseif (!empty($room['prev_is_vacant'])) {
+                $data_attrs['data-previous-vacant'] = 'true';
+            }
+        }
+
+        // Add next night data attributes
+        if (!$room['spans_next']) {
+            if (!empty($room['next_booking_status'])) {
+                $data_attrs['data-next-status'] = $room['next_booking_status'];
+            } elseif (!empty($room['next_is_vacant'])) {
+                $data_attrs['data-next-vacant'] = 'true';
+            }
+        }
+
         // Build inline styles for status colors
         $inline_style = '';
         if (!$is_vacant || $is_blocked) {
@@ -584,12 +602,24 @@ class HHDL_Display {
             // Stopovers: today's booking that's not arriving (and not departing from yesterday's perspective)
             $is_stopover = $booking_data && !$is_arriving;
 
-            // Determine spanning
-            $spans_previous = !empty($yesterday_booking);
-            $spans_next = !empty($tomorrow_booking);
+            // Determine spanning - check if SAME booking by booking_ref
+            $spans_previous = false;
+            $spans_next = false;
+            $today_booking_ref = !empty($today_booking['booking_ref']) ? $today_booking['booking_ref'] : null;
 
-            // Get adjacent booking statuses
+            if ($today_booking_ref && $yesterday_booking && is_array($yesterday_booking) && !isset($yesterday_booking['description'])) {
+                $yesterday_booking_ref = !empty($yesterday_booking['booking_ref']) ? $yesterday_booking['booking_ref'] : null;
+                $spans_previous = ($today_booking_ref === $yesterday_booking_ref);
+            }
+
+            if ($today_booking_ref && $tomorrow_booking && is_array($tomorrow_booking) && !isset($tomorrow_booking['description'])) {
+                $tomorrow_booking_ref = !empty($tomorrow_booking['booking_ref']) ? $tomorrow_booking['booking_ref'] : null;
+                $spans_next = ($today_booking_ref === $tomorrow_booking_ref);
+            }
+
+            // Get adjacent booking statuses and vacancy info
             $prev_booking_status = '';
+            $prev_is_vacant = false;
             if ($yesterday_booking && is_array($yesterday_booking)) {
                 if (isset($yesterday_booking['description'])) {
                     // It's a blocking task
@@ -597,9 +627,12 @@ class HHDL_Display {
                 } else {
                     $prev_booking_status = $this->get_booking_status($yesterday_booking);
                 }
+            } else {
+                $prev_is_vacant = true;
             }
 
             $next_booking_status = '';
+            $next_is_vacant = false;
             if ($tomorrow_booking && is_array($tomorrow_booking)) {
                 if (isset($tomorrow_booking['description'])) {
                     // It's a blocking task
@@ -607,6 +640,8 @@ class HHDL_Display {
                 } else {
                     $next_booking_status = $this->get_booking_status($tomorrow_booking);
                 }
+            } else {
+                $next_is_vacant = true;
             }
 
             $room_cards[] = array(
@@ -623,6 +658,8 @@ class HHDL_Display {
                 'spans_next'           => $spans_next,
                 'prev_booking_status'  => $prev_booking_status,
                 'next_booking_status'  => $next_booking_status,
+                'prev_is_vacant'       => $prev_is_vacant,
+                'next_is_vacant'       => $next_is_vacant,
                 'booking'              => $booking_data,
                 'blocking_task'        => $blocking_task,
                 'order'                => $room['order']

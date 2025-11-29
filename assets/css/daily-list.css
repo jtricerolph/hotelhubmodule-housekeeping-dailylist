@@ -105,19 +105,19 @@
 }
 
 /* Status-based border colors */
-.hhdl-room-card[data-status="departed"] {
+.hhdl-room-card[data-booking-status="departed"] {
     border-color: #a855f7 !important;
 }
 
-.hhdl-room-card[data-status="confirmed"] {
+.hhdl-room-card[data-booking-status="confirmed"] {
     border-color: #10b981 !important;
 }
 
-.hhdl-room-card[data-status="unconfirmed"] {
+.hhdl-room-card[data-booking-status="unconfirmed"] {
     border-color: #f59e0b !important;
 }
 
-.hhdl-room-card[data-status="arrived"] {
+.hhdl-room-card[data-booking-status="arrived"] {
     border-color: #3b82f6 !important;
 }
 
