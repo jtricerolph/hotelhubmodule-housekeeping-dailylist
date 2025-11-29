@@ -301,15 +301,15 @@ class HHDL_Display {
         ?>
         <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
-            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
-                <?php echo esc_html($room['site_status']); ?>
-            </span>
             <?php if ($room['is_arriving']): ?>
                 <span class="hhdl-arrival-icon" title="<?php esc_attr_e('Arrival', 'hhdl'); ?>">→</span>
             <?php endif; ?>
             <?php if ($room['is_departing']): ?>
                 <span class="hhdl-departure-icon" title="<?php esc_attr_e('Departure', 'hhdl'); ?>">←</span>
             <?php endif; ?>
+            <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
+                <?php echo esc_html($room['site_status']); ?>
+            </span>
         </div>
 
         <div class="hhdl-booking-info">
