@@ -184,8 +184,17 @@
 }
 
 /* Previous night - vacant */
-.hhdl-room-card[data-previous-vacant="true"]:not([data-spans-previous="true"])::before {
-    border-color: #d1d5db;
+.hhdl-room-card[data-previous-vacant="true"]:not([data-spans-previous="true"]):not(.hhdl-vacant)::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-right: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 0 8px 8px 0;
 }
 
 /* Next night - different booking */
@@ -219,8 +228,17 @@
 }
 
 /* Next night - vacant */
-.hhdl-room-card[data-next-vacant="true"]:not([data-spans-next="true"])::after {
-    border-color: #d1d5db;
+.hhdl-room-card[data-next-vacant="true"]:not([data-spans-next="true"]):not(.hhdl-vacant)::after {
+    content: '';
+    position: absolute;
+    right: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-left: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 8px 0 0 8px;
 }
 
 /* Timeline indicators for vacant blocks adjacent to bookings */
