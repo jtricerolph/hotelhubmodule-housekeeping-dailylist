@@ -538,6 +538,7 @@ class HHDL_Display {
 
             // Build task info array
             $task_info = array(
+                'task_id' => $task_id,
                 'description' => $task_desc,
                 'color' => $task_color,
                 'icon' => 'construction' // Default Material icon
@@ -606,27 +607,38 @@ class HHDL_Display {
             // Stopovers: today's booking that's not arriving (and not departing from yesterday's perspective)
             $is_stopover = $booking_data && !$is_arriving;
 
-            // Determine spanning - check if SAME booking by booking_id OR both vacant
+            // Determine spanning - check if SAME booking/task by booking_id/task_id OR both vacant
             $spans_previous = false;
             $spans_next = false;
 
-            // Check if today has a booking
+            // Check if today has a booking or blocking task
             $today_booking_id = !empty($today_booking['booking_id']) ? $today_booking['booking_id'] : null;
+            $today_task_id = !empty($today_booking['task_id']) ? $today_booking['task_id'] : null;
             $today_is_vacant = empty($today_booking);
 
+            // Check spanning with previous day
             if ($today_booking_id && $yesterday_booking && is_array($yesterday_booking) && !isset($yesterday_booking['description'])) {
                 // Today has booking, check if same booking yesterday
                 $yesterday_booking_id = !empty($yesterday_booking['booking_id']) ? $yesterday_booking['booking_id'] : null;
                 $spans_previous = ($today_booking_id === $yesterday_booking_id);
+            } elseif ($today_task_id && $yesterday_booking && is_array($yesterday_booking) && isset($yesterday_booking['task_id'])) {
+                // Today has blocking task, check if same task yesterday
+                $yesterday_task_id = !empty($yesterday_booking['task_id']) ? $yesterday_booking['task_id'] : null;
+                $spans_previous = ($today_task_id === $yesterday_task_id);
             } elseif ($today_is_vacant && empty($yesterday_booking)) {
                 // Both today and yesterday are vacant
                 $spans_previous = true;
             }
 
+            // Check spanning with next day
             if ($today_booking_id && $tomorrow_booking && is_array($tomorrow_booking) && !isset($tomorrow_booking['description'])) {
                 // Today has booking, check if same booking tomorrow
                 $tomorrow_booking_id = !empty($tomorrow_booking['booking_id']) ? $tomorrow_booking['booking_id'] : null;
                 $spans_next = ($today_booking_id === $tomorrow_booking_id);
+            } elseif ($today_task_id && $tomorrow_booking && is_array($tomorrow_booking) && isset($tomorrow_booking['task_id'])) {
+                // Today has blocking task, check if same task tomorrow
+                $tomorrow_task_id = !empty($tomorrow_booking['task_id']) ? $tomorrow_booking['task_id'] : null;
+                $spans_next = ($today_task_id === $tomorrow_task_id);
             } elseif ($today_is_vacant && empty($tomorrow_booking)) {
                 // Both today and tomorrow are vacant
                 $spans_next = true;
