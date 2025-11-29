@@ -814,6 +814,9 @@ class HHDL_Display {
         $notes_search_terms = !empty($twin_settings['notes_search_terms']) ?
             array_map('trim', explode(',', $twin_settings['notes_search_terms'])) : array();
 
+        // Determine if Twin Optimizer is configured for this location
+        $twin_optimizer_configured = !empty($custom_field_names) && !empty($custom_field_values);
+
         // Debug: Log booking custom fields structure
         if (!empty($booking['booking_custom_fields'])) {
             error_log('HHDL Twin Detection - Booking custom fields: ' . json_encode($booking['booking_custom_fields']));
@@ -822,21 +825,24 @@ class HHDL_Display {
         // PRIMARY DETECTION: Check booking custom fields with configured field names and values
         if (!empty($booking['booking_custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
             foreach ($booking['booking_custom_fields'] as $custom_field) {
-                // Check if this field name matches any configured names
-                if (isset($custom_field['name'])) {
-                    foreach ($custom_field_names as $field_name) {
-                        if ($custom_field['name'] === $field_name) {
-                            // Check if field value contains any configured search values
-                            $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
-                            foreach ($custom_field_values as $search_value) {
-                                $search_value_lower = strtolower($search_value);
-                                if (strpos($field_value, $search_value_lower) !== false) {
-                                    return array(
-                                        'type' => 'confirmed',
-                                        'matched_term' => $search_value,
-                                        'source' => 'custom_field'
-                                    );
-                                }
+                // Get field name from both 'name' and 'label' keys
+                $field_name_actual = isset($custom_field['name']) ? $custom_field['name'] : '';
+                $field_label_actual = isset($custom_field['label']) ? $custom_field['label'] : '';
+
+                // Check if this field name/label matches any configured names
+                foreach ($custom_field_names as $field_name) {
+                    if ($field_name_actual === $field_name || $field_label_actual === $field_name) {
+                        // Check if field value contains any configured search values
+                        $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+                        foreach ($custom_field_values as $search_value) {
+                            $search_value_lower = strtolower($search_value);
+                            if (strpos($field_value, $search_value_lower) !== false) {
+                                error_log('HHDL Twin Detection - PRIMARY MATCH: field=' . $field_name . ', value=' . $field_value . ', matched=' . $search_value);
+                                return array(
+                                    'type' => 'confirmed',
+                                    'matched_term' => $search_value,
+                                    'source' => 'custom_field'
+                                );
                             }
                         }
                     }
@@ -877,8 +883,8 @@ class HHDL_Display {
             }
         }
 
-        // UNIVERSAL FALLBACK: Check ANY custom field for common twin keywords (if Twin Optimizer not configured)
-        if (!empty($booking['booking_custom_fields'])) {
+        // UNIVERSAL FALLBACK: Check ANY custom field for common twin keywords (ONLY if Twin Optimizer NOT configured)
+        if (!$twin_optimizer_configured && !empty($booking['booking_custom_fields'])) {
             foreach ($booking['booking_custom_fields'] as $custom_field) {
                 $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
 
@@ -925,6 +931,7 @@ class HHDL_Display {
                 foreach ($notes_search_terms as $search_term) {
                     $search_term_lower = strtolower($search_term);
                     if (strpos($note_content, $search_term_lower) !== false) {
+                        error_log('HHDL Twin Detection - NOTES MATCH: note=' . substr($note_content, 0, 50) . '..., matched=' . $search_term);
                         return array(
                             'type' => 'potential',
                             'matched_term' => $search_term,
@@ -935,8 +942,8 @@ class HHDL_Display {
             }
         }
 
-        // FINAL FALLBACK: Check booking notes for common twin keywords (even without Twin Optimizer config)
-        if (!empty($booking['notes'])) {
+        // FINAL FALLBACK: Check booking notes for common twin keywords (ONLY if Twin Optimizer NOT configured)
+        if (!$twin_optimizer_configured && !empty($booking['notes'])) {
             $common_keywords = array('twin', 'sofabed', 'sofa bed', '2 x single', 'two single');
 
             foreach ($booking['notes'] as $note) {
