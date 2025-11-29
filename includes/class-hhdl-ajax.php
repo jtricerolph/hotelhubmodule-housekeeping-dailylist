@@ -281,8 +281,16 @@ class HHDL_Ajax {
         $newbook_tasks = array();
         foreach ($all_tasks as $task) {
             // Get site ID from task
-            $task_site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
-                            (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+            // For booking tasks, use booking_site_id; for site tasks, use task_location_id
+            $task_location_type = isset($task['task_location_type']) ? $task['task_location_type'] : '';
+
+            if ($task_location_type === 'bookings' && !empty($task['booking_site_id'])) {
+                $task_site_id = $task['booking_site_id'];
+            } elseif (!empty($task['task_location_id'])) {
+                $task_site_id = $task['task_location_id'];
+            } else {
+                $task_site_id = '';
+            }
 
             if ($task_site_id !== $room_id) {
                 continue;
