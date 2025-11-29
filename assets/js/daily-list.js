@@ -71,22 +71,28 @@
             const card = $(this);
             let shouldShow = false;
 
-            switch(filterType) {
-                case 'arrivals':
-                    shouldShow = card.data('is-arriving') === 'true';
-                    break;
-                case 'departs':
-                    shouldShow = card.data('is-departing') === 'true';
-                    break;
-                case 'stopovers':
-                    shouldShow = card.data('is-stopover') === 'true';
-                    break;
-                case 'twins':
-                    shouldShow = card.data('has-twin') === 'true';
-                    break;
-                case 'all':
-                default:
-                    shouldShow = true;
+            // Always show blocked rooms (maintenance tasks are important)
+            if (card.data('booking-status') === 'blocked') {
+                shouldShow = true;
+            } else {
+                // Apply normal filtering for bookings and vacant rooms
+                switch(filterType) {
+                    case 'arrivals':
+                        shouldShow = card.data('is-arriving') === 'true';
+                        break;
+                    case 'departs':
+                        shouldShow = card.data('is-departing') === 'true';
+                        break;
+                    case 'stopovers':
+                        shouldShow = card.data('is-stopover') === 'true';
+                        break;
+                    case 'twins':
+                        shouldShow = card.data('has-twin') === 'true';
+                        break;
+                    case 'all':
+                    default:
+                        shouldShow = true;
+                }
             }
 
             card.toggle(shouldShow);
