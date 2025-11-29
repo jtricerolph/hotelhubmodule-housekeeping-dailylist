@@ -275,19 +275,8 @@ class HHDL_Ajax {
         }
 
         // Get tasks for this room/date
-        // Get configured task type IDs from settings
-        $configured_tasks = HHDL_Settings::get_default_tasks($location_id);
-        $task_type_ids = array();
-        foreach ($configured_tasks as $task) {
-            if (!empty($task['task_type_id'])) {
-                $task_type_ids[] = intval($task['task_type_id']);
-            }
-        }
-
-        // If no task types configured, use -1 (housekeeping default)
-        if (empty($task_type_ids)) {
-            $task_type_ids = array(-1);
-        }
+        // Query ALL task types (-1) to include booking tasks AND site tasks (occupied/blocked)
+        $task_type_ids = array(-1);
 
         $from_datetime = $date . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
@@ -396,29 +385,30 @@ class HHDL_Ajax {
     private function build_tasks_list($room_details, $task_description_mappings, $date) {
         $tasks = array();
 
-        // Only show NewBook tasks that match configured task description filters
+        // Show NewBook tasks that match configured task description filters
         if (!empty($room_details['newbook_tasks'])) {
             foreach ($room_details['newbook_tasks'] as $nb_task) {
                 $task_description = $nb_task['task_description'];
+                $matched_color = '#10b981'; // Default color
 
-                // Check if this task description matches any of our filters
-                if (isset($task_description_mappings[$task_description])) {
-                    $mapping = $task_description_mappings[$task_description];
-
-                    // Get task type name from NewBook task types
-                    $task_type_name = $this->get_task_type_name($mapping['task_type_id']);
-
-                    // Check if already completed locally (for user attribution)
-                    $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
-
-                    $tasks[] = array(
-                        'id'        => $nb_task['id'],
-                        'name'      => $task_type_name ?: $task_description, // Use task type name or fall back to description
-                        'color'     => $mapping['color'],
-                        'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
-                        'source'    => 'newbook'
-                    );
+                // Check if this task description matches any of our filter patterns
+                foreach ($task_description_mappings as $filter => $mapping) {
+                    if (stripos($task_description, $filter) !== false) {
+                        $matched_color = $mapping['color'];
+                        break;
+                    }
                 }
+
+                // Check if already completed locally (for user attribution)
+                $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
+
+                $tasks[] = array(
+                    'id'        => $nb_task['id'],
+                    'name'      => $task_description, // Use actual task description from NewBook
+                    'color'     => $matched_color,
+                    'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
+                    'source'    => 'newbook'
+                );
             }
         }
 
