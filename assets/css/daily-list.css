@@ -223,6 +223,67 @@
     border-color: #d1d5db;
 }
 
+/* Timeline indicators for vacant blocks adjacent to bookings */
+/* Vacant block with booking on previous night */
+.hhdl-room-card.hhdl-vacant[data-previous-status]:not([data-spans-previous="true"])::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-right: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 0 8px 8px 0;
+}
+
+.hhdl-room-card.hhdl-vacant[data-previous-status="departed"]:not([data-spans-previous="true"])::before {
+    border-color: #a855f7;
+}
+
+.hhdl-room-card.hhdl-vacant[data-previous-status="confirmed"]:not([data-spans-previous="true"])::before {
+    border-color: #10b981;
+}
+
+.hhdl-room-card.hhdl-vacant[data-previous-status="unconfirmed"]:not([data-spans-previous="true"])::before {
+    border-color: #f59e0b;
+}
+
+.hhdl-room-card.hhdl-vacant[data-previous-status="arrived"]:not([data-spans-previous="true"])::before {
+    border-color: #3b82f6;
+}
+
+/* Vacant block with booking on next night */
+.hhdl-room-card.hhdl-vacant[data-next-status]:not([data-spans-next="true"])::after {
+    content: '';
+    position: absolute;
+    right: -23px;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    border-left: 2px solid #d1d5db;
+    border-top: 2px solid #d1d5db;
+    border-bottom: 2px solid #d1d5db;
+    border-radius: 8px 0 0 8px;
+}
+
+.hhdl-room-card.hhdl-vacant[data-next-status="departed"]:not([data-spans-next="true"])::after {
+    border-color: #a855f7;
+}
+
+.hhdl-room-card.hhdl-vacant[data-next-status="confirmed"]:not([data-spans-next="true"])::after {
+    border-color: #10b981;
+}
+
+.hhdl-room-card.hhdl-vacant[data-next-status="unconfirmed"]:not([data-spans-next="true"])::after {
+    border-color: #f59e0b;
+}
+
+.hhdl-room-card.hhdl-vacant[data-next-status="arrived"]:not([data-spans-next="true"])::after {
+    border-color: #3b82f6;
+}
+
 /* Room content */
 .hhdl-vacant .hhdl-room-content,
 .hhdl-blocked .hhdl-room-content {
