@@ -430,7 +430,7 @@ class HHDL_Display {
         ?>
         <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
-            <span class="hhdl-blocked-label">
+            <span class="hhdl-blocked-label" style="color: <?php echo esc_attr($task_color); ?>;">
                 <span class="material-symbols-outlined hhdl-task-icon">
                     <?php echo esc_html($task_icon); ?>
                 </span>
