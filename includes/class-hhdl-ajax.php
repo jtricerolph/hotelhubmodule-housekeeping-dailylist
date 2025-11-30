@@ -1533,7 +1533,7 @@ class HHDL_Ajax {
                                         </div>
                                     </div>
                                     <div class="hhdl-note-content">
-                                        <?php echo esc_html(isset($note['content']) ? $note['content'] : ''); ?>
+                                        <?php echo esc_html(isset($note['content']) ? trim($note['content']) : ''); ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
