@@ -305,8 +305,6 @@ class HHDL_Display {
                 $task_title = __('No tasks', 'hhdl');
                 $task_icon = 'assignment_turned_in';
 
-                error_log('HHDL Render Vacant - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
-
                 if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
                     $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
                     $today = date('Y-m-d');
@@ -587,8 +585,6 @@ class HHDL_Display {
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
                 $task_icon = 'assignment_turned_in';
-
-                error_log('HHDL Render Booked - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
 
                 if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
                     $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');

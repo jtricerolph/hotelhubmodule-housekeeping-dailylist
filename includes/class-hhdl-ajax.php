@@ -269,10 +269,6 @@ class HHDL_Ajax {
         $bookings_response = $api->get_bookings($yesterday, $tomorrow, 'staying', true);
         $all_bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
 
-        // DEBUG: Log what bookings we got
-        error_log("HHDL Flow Detection - Room $room_id on $date:");
-        error_log("  Total bookings in range ($yesterday to $tomorrow): " . count($all_bookings));
-
         $staying_booking = null;
         $departing_booking = null;
         $arriving_booking = null;
@@ -283,31 +279,23 @@ class HHDL_Ajax {
             if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
                 $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
                 $departure = date('Y-m-d', strtotime($booking['booking_departure']));
-                $booking_ref = isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : 'N/A';
-                $booking_status = isset($booking['booking_status']) ? $booking['booking_status'] : 'unknown';
-
-                error_log("  Found booking for room: Ref=$booking_ref, Status=$booking_status, Arrival=$arrival, Departure=$departure");
 
                 // Check for any booking ending today (includes already departed)
                 if ($departure === $date) {
                     $has_departure_today = true;
-                    error_log("    -> Departure today detected! (has_departure_today=true)");
                     if ($arrival < $date) {
                         $departing_booking = $booking;
-                        error_log("    -> Set as departing_booking (arrival before today)");
                     }
                 }
 
                 // Check for arriving booking (checkin today)
                 if ($arrival === $date) {
                     $arriving_booking = $booking;
-                    error_log("    -> Set as arriving_booking");
                 }
 
                 // Check for staying booking (covers this date)
                 if ($arrival < $date && $departure > $date) {
                     $staying_booking = $booking;
-                    error_log("    -> Set as staying_booking");
                 }
             }
         }
@@ -316,35 +304,23 @@ class HHDL_Ajax {
         $booking_flow_type = null;
         $primary_booking = null;
 
-        error_log("  Flow Detection Results:");
-        error_log("    has_departure_today: " . ($has_departure_today ? 'YES' : 'NO'));
-        error_log("    arriving_booking: " . ($arriving_booking ? 'YES' : 'NO'));
-        error_log("    departing_booking: " . ($departing_booking ? 'YES' : 'NO'));
-        error_log("    staying_booking: " . ($staying_booking ? 'YES' : 'NO'));
-
         // If there's an arrival today AND any departure today, it's back-to-back
         // This handles cases where the departing booking has already checked out
         if ($arriving_booking && $has_departure_today) {
             // Back-to-back scenario (even if previous guest already departed)
             $booking_flow_type = 'depart_arrive';
             $primary_booking = $arriving_booking; // Use arriving booking as primary
-            error_log("  -> Final Flow Type: DEPART/ARRIVE");
         } elseif ($arriving_booking) {
             $booking_flow_type = 'arrive';
             $primary_booking = $arriving_booking;
-            error_log("  -> Final Flow Type: ARRIVE");
         } elseif ($departing_booking) {
             // DEPART: Guest checking out today, room is vacant tonight
             // Don't set primary_booking so modal shows "No booking" instead of departing guest details
             $booking_flow_type = 'depart';
             $primary_booking = null; // Room is vacant for tonight
-            error_log("  -> Final Flow Type: DEPART (room vacant tonight)");
         } elseif ($staying_booking) {
             $booking_flow_type = 'stay_over';
             $primary_booking = $staying_booking;
-            error_log("  -> Final Flow Type: STAY OVER");
-        } else {
-            error_log("  -> Final Flow Type: NONE (vacant)");
         }
 
         // Process the primary booking
@@ -960,19 +936,6 @@ class HHDL_Ajax {
                     <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                 <?php endif; ?>
                 <div class="hhdl-modal-right-group">
-                    <?php
-                    // Debug logging
-                    error_log('[HHDL Modal] Room: ' . $room_details['room_number']);
-                    error_log('[HHDL Modal] is_viewing_today: ' . ($is_viewing_today ? 'TRUE' : 'FALSE'));
-                    error_log('[HHDL Modal] is_future_date: ' . ($is_future_date ? 'TRUE' : 'FALSE'));
-                    error_log('[HHDL Modal] show_arrived: ' . ($show_arrived ? 'TRUE' : 'FALSE'));
-                    error_log('[HHDL Modal] is_arriving: ' . ($is_arriving ? 'TRUE' : 'FALSE'));
-                    error_log('[HHDL Modal] booking_data: ' . ($booking_data ? json_encode(array_keys($booking_data)) : 'NULL'));
-                    error_log('[HHDL Modal] has_nights: ' . (($booking_data && isset($booking_data['nights'])) ? 'TRUE' : 'FALSE'));
-                    error_log('[HHDL Modal] site_status: ' . (isset($room_details['site_status']) ? $room_details['site_status'] : 'NOT SET'));
-                    error_log('[HHDL Modal] date: ' . $date);
-                    error_log('[HHDL Modal] today: ' . date('Y-m-d'));
-                    ?>
                     <?php if ($booking_data && isset($booking_data['nights'])): ?>
                         <span class="hhdl-modal-nights">
                             <span class="material-symbols-outlined">bedtime</span>
@@ -994,7 +957,6 @@ class HHDL_Ajax {
                         <?php endif; ?>
                     <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights']))): ?>
                         <!-- Show site status for vacant rooms and DEPART flow on today's date (always show, even if unknown) -->
-                        <?php error_log('[HHDL Modal] MATCHED vacant/DEPART condition - rendering status'); ?>
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
