@@ -366,13 +366,17 @@
                 // Add to page
                 $('body').append(modal);
 
-                console.log('HHDL: Modal appended, setting active class in 10ms');
+                console.log('HHDL: Modal appended, immediately adding active class for debugging');
+                console.log('HHDL: Modal element:', modal[0]);
 
-                // Show with animation
-                setTimeout(function() {
-                    modal.addClass('active');
-                    console.log('HHDL: Modal active class added');
-                }, 10);
+                // Force active class immediately (no animation delay) for debugging
+                modal.addClass('active');
+                console.log('HHDL: Modal active class added immediately');
+                console.log('HHDL: Modal has active class:', modal.hasClass('active'));
+                console.log('HHDL: Modal opacity:', modal.css('opacity'));
+                console.log('HHDL: Modal z-index:', modal.css('z-index'));
+                console.log('HHDL: Modal display:', modal.css('display'));
+                console.log('HHDL: Modal visibility:', modal.css('visibility'));
 
                 // Handle cancel
                 modal.find('.hhdl-confirm-btn-cancel').on('click', function() {
