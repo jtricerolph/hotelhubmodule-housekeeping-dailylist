@@ -369,9 +369,11 @@
                 console.log('HHDL: Modal appended, immediately adding active class for debugging');
                 console.log('HHDL: Modal element:', modal[0]);
 
-                // Force active class immediately (no animation delay) for debugging
+                // Force active class immediately and force display to flex (workaround for cache issue)
                 modal.addClass('active');
-                console.log('HHDL: Modal active class added immediately');
+                // Force display property inline to override any cached CSS
+                modal.css('display', 'flex');
+                console.log('HHDL: Modal active class added and display forced to flex');
                 console.log('HHDL: Modal has active class:', modal.hasClass('active'));
                 console.log('HHDL: Modal opacity:', modal.css('opacity'));
                 console.log('HHDL: Modal z-index:', modal.css('z-index'));
