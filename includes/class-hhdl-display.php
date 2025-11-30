@@ -806,11 +806,17 @@ class HHDL_Display {
             $occupy_task_count++;
             error_log('HHDL Display - Found occupy task #' . $occupy_task_count . ': task_id=' . $task_id . ', desc=' . $task_desc);
 
-            // Get site ID
-            $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
-                       (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+            // Get site ID - check task_location_type to determine which field contains the site ID
+            $site_id = '';
+            if (!empty($task['task_location_type']) && $task['task_location_type'] === 'bookings') {
+                // For booking tasks, use booking_site_id (task_location_id contains booking ID)
+                $site_id = !empty($task['booking_site_id']) ? $task['booking_site_id'] : '';
+            } else {
+                // For other task types, use task_location_id
+                $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] : '';
+            }
 
-            error_log('HHDL Display - Occupy task ' . $task_id . ': extracted site_id=' . $site_id . ' (task_location_id=' . (isset($task['task_location_id']) ? $task['task_location_id'] : 'null') . ', booking_site_id=' . (isset($task['booking_site_id']) ? $task['booking_site_id'] : 'null') . ')');
+            error_log('HHDL Display - Occupy task ' . $task_id . ': extracted site_id=' . $site_id . ' (task_location_type=' . (isset($task['task_location_type']) ? $task['task_location_type'] : 'null') . ', task_location_id=' . (isset($task['task_location_id']) ? $task['task_location_id'] : 'null') . ', booking_site_id=' . (isset($task['booking_site_id']) ? $task['booking_site_id'] : 'null') . ')');
 
             if (empty($site_id)) {
                 error_log('HHDL Display - Occupy task ' . $task_id . ' SKIPPED: empty site_id');
@@ -874,11 +880,17 @@ class HHDL_Display {
             $task_id = isset($task['task_id']) ? $task['task_id'] : 'unknown';
             $task_desc = isset($task['task_description']) ? $task['task_description'] : 'no description';
 
-            // Get site ID
-            $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
-                       (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+            // Get site ID - check task_location_type to determine which field contains the site ID
+            $site_id = '';
+            if (!empty($task['task_location_type']) && $task['task_location_type'] === 'bookings') {
+                // For booking tasks, use booking_site_id (task_location_id contains booking ID)
+                $site_id = !empty($task['booking_site_id']) ? $task['booking_site_id'] : '';
+            } else {
+                // For other task types, use task_location_id
+                $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] : '';
+            }
 
-            error_log('HHDL Display - Non-blocking task ' . $task_id . ': site_id=' . $site_id . ', desc=' . $task_desc);
+            error_log('HHDL Display - Non-blocking task ' . $task_id . ': site_id=' . $site_id . ' (task_location_type=' . (isset($task['task_location_type']) ? $task['task_location_type'] : 'null') . '), desc=' . $task_desc);
 
             if (empty($site_id)) {
                 error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: empty site_id');
