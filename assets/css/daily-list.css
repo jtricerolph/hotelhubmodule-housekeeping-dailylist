@@ -595,7 +595,39 @@
     color: #f59e0b;
 }
 
-/* Twin Beds Indicator */
+/* Bed Type Indicator (New System) */
+.hhdl-stat-content.hhdl-bed-type {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s;
+}
+
+.hhdl-stat-content.hhdl-bed-type .material-symbols-outlined {
+    font-size: 14px;
+}
+
+/* Twin bed icons - make them overlap slightly */
+.hhdl-stat-content.hhdl-bed-type .material-symbols-outlined:nth-child(2) {
+    margin-left: -2px;
+}
+
+/* Extra bed separator */
+.hhdl-extra-bed-separator {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 2px;
+}
+
+.hhdl-stat-content.hhdl-bed-type:hover {
+    transform: scale(1.05);
+}
+
+/* Legacy Twin Beds Indicator (kept for backwards compatibility) */
 .hhdl-stat-content.hhdl-twin-beds {
     gap: 0px;
     padding: 2px 6px;
@@ -605,6 +637,10 @@
 
 .hhdl-stat-content.hhdl-twin-beds .material-symbols-outlined {
     font-size: 14px;
+}
+
+.hhdl-stat-content.hhdl-twin-beds .material-symbols-outlined:last-child {
+    margin-left: -2px;
 }
 
 .hhdl-stat-content.hhdl-twin-confirmed {

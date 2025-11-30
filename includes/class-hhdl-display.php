@@ -381,45 +381,71 @@ class HHDL_Display {
                 </div>
             </div>
 
-            <!-- Block 2: Twin Room Indicator -->
+            <!-- Block 2: Bed Type Indicator -->
             <div class="hhdl-stat-block">
                 <?php
-                $twin_class = '';
-                $twin_title = '';
-                if ($room['has_twin']):
+                // Show bed type indicator for all arriving bookings
+                if ($room['is_arriving']):
+                    // Get location settings for bed colors
+                    $location_id = $this->get_current_location();
+                    $bed_settings = HHDL_Settings::get_location_settings($location_id);
+
+                    // Get detection info
                     $twin_info = isset($room['twin_info']) ? $room['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
-                    $twin_type = $twin_info['type'];
-                    $matched_term = $twin_info['matched_term'];
-                    $source = $twin_info['source'];
+                    $extra_bed_info = isset($room['extra_bed_info']) ? $room['extra_bed_info'] : array('has_extra_bed' => false, 'matched_term' => '', 'source' => '');
 
-                    // Convert source to user-friendly name
-                    $source_labels = array(
-                        'custom_field' => 'custom field',
-                        'legacy_field' => 'bed type field',
-                        'universal_fallback' => 'custom field',
-                        'booking_notes' => 'booking notes',
-                        'notes_fallback' => 'booking notes'
-                    );
-                    $source_display = isset($source_labels[$source]) ? $source_labels[$source] : $source;
+                    // Determine bed type and color based on priority
+                    // Priority: 1. Matched twin 2. Extra bed 3. Potential twin 4. Default
+                    $bed_class = 'hhdl-bed-type';
+                    $bed_color = $bed_settings['bed_color_default']; // Default
+                    $bed_title_parts = array();
 
-                    if ($twin_type === 'confirmed'):
-                        $twin_title = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $matched_term, $source_display);
-                        $twin_class = 'hhdl-twin-beds hhdl-twin-confirmed';
-                    elseif ($twin_type === 'potential'):
-                        $twin_title = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $matched_term, $source_display);
-                        $twin_class = 'hhdl-twin-beds hhdl-twin-potential';
-                    else:
-                        $twin_title = __('Twin/Sofabed', 'hhdl');
-                        $twin_class = 'hhdl-twin-beds';
-                    endif;
-                endif;
+                    // Check twin status
+                    if ($twin_info['type'] === 'confirmed') {
+                        $bed_color = $bed_settings['bed_color_twin_confirmed'];
+                        $source_display = ($twin_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $twin_info['matched_term'], $source_display);
+                    } elseif ($extra_bed_info['has_extra_bed']) {
+                        $bed_color = $bed_settings['bed_color_extra'];
+                        $source_display = ($extra_bed_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Extra Bed - Found "%s" in %s', 'hhdl'), $extra_bed_info['matched_term'], $source_display);
+                    } elseif ($twin_info['type'] === 'potential') {
+                        $bed_color = $bed_settings['bed_color_twin_potential'];
+                        $source_display = ($twin_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $twin_info['matched_term'], $source_display);
+                    } else {
+                        $bed_title_parts[] = __('Standard Double Bed', 'hhdl');
+                    }
+
+                    // Add extra bed to title if detected (in addition to bed type)
+                    if ($extra_bed_info['has_extra_bed'] && $twin_info['type'] !== 'none') {
+                        $source_display = ($extra_bed_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Extra Bed - Found "%s" in %s', 'hhdl'), $extra_bed_info['matched_term'], $source_display);
+                    }
+
+                    $bed_title = implode(' | ', $bed_title_parts);
+
+                    // Build inline style for color
+                    $bed_inline_style = sprintf('color: %s; border-color: %s;', $bed_color, $bed_color);
                 ?>
-                <div class="hhdl-stat-content <?php echo esc_attr($twin_class); ?>" title="<?php echo esc_attr($twin_title); ?>">
+                <div class="hhdl-stat-content <?php echo esc_attr($bed_class); ?>"
+                     title="<?php echo esc_attr($bed_title); ?>"
+                     style="<?php echo esc_attr($bed_inline_style); ?>">
                     <?php if ($room['has_twin']): ?>
+                        <!-- Twin beds: 2x single_bed symbols -->
                         <span class="material-symbols-outlined">single_bed</span>
                         <span class="material-symbols-outlined">single_bed</span>
+                    <?php else: ?>
+                        <!-- Default double bed: king_bed symbol -->
+                        <span class="material-symbols-outlined">king_bed</span>
+                    <?php endif; ?>
+                    <?php if ($extra_bed_info['has_extra_bed']): ?>
+                        <!-- Extra bed indicator: + chair symbol -->
+                        <span class="hhdl-extra-bed-separator">+</span>
+                        <span class="material-symbols-outlined">chair</span>
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
 
             <!-- Block 3: NewBook/Default Tasks -->
@@ -591,7 +617,8 @@ class HHDL_Display {
                 'order'       => isset($site_order_map[$site_id]) ? $site_order_map[$site_id] : array('category_order' => 999, 'site_order' => 999),
                 'bookings'    => array('yesterday' => null, 'today' => null, 'tomorrow' => null),
                 'has_twin'    => false,
-                'twin_info'   => array('type' => 'none', 'matched_term' => '', 'source' => '')
+                'twin_info'   => array('type' => 'none', 'matched_term' => '', 'source' => ''),
+                'extra_bed_info' => array('has_extra_bed' => false, 'matched_term' => '', 'source' => '')
             );
         }
 
@@ -622,6 +649,10 @@ class HHDL_Display {
                 $rooms_by_id[$site_id]['twin_info'] = $twin_detection;
                 // Set has_twin to true for both confirmed and potential twins
                 $rooms_by_id[$site_id]['has_twin'] = ($twin_detection['type'] === 'confirmed' || $twin_detection['type'] === 'potential');
+
+                // Check for extra bed
+                $extra_bed_detection = $this->detect_extra_bed($booking, $location_id);
+                $rooms_by_id[$site_id]['extra_bed_info'] = $extra_bed_detection;
             }
         }
 
@@ -832,6 +863,7 @@ class HHDL_Display {
                 'booking_type'         => $booking_type,
                 'has_twin'             => $room['has_twin'],
                 'twin_info'            => $room['twin_info'],
+                'extra_bed_info'       => $room['extra_bed_info'],
                 'spans_previous'       => $spans_previous,
                 'spans_next'           => $spans_next,
                 'prev_booking_status'  => $prev_booking_status,
@@ -995,6 +1027,82 @@ class HHDL_Display {
         }
 
         return array($site_to_category, $excluded_sites, $site_order_map);
+    }
+
+    /**
+     * Detect extra bed/sofabed from booking using Daily List module settings
+     *
+     * @param array $booking Booking data from NewBook API
+     * @param int $hotel_id Hotel Hub hotel ID
+     * @return array Detection result with 'has_extra_bed' and 'matched_term' keys
+     */
+    private function detect_extra_bed($booking, $hotel_id) {
+        // Get Daily List settings for this location
+        $settings = HHDL_Settings::get_location_settings($hotel_id);
+
+        // Parse settings into arrays
+        $custom_field_names = !empty($settings['extra_bed_custom_field_names']) ?
+            array_map('trim', explode(',', $settings['extra_bed_custom_field_names'])) : array();
+        $custom_field_values = !empty($settings['extra_bed_custom_field_values']) ?
+            array_map('trim', explode(',', $settings['extra_bed_custom_field_values'])) : array();
+        $notes_search_terms = !empty($settings['extra_bed_notes_search_terms']) ?
+            array_map('trim', explode(',', $settings['extra_bed_notes_search_terms'])) : array();
+
+        // Check booking custom fields with configured field names and values
+        if (!empty($booking['custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            foreach ($booking['custom_fields'] as $custom_field) {
+                // Get field label (NewBook uses 'label' for field name)
+                $field_label = isset($custom_field['label']) ? $custom_field['label'] : '';
+
+                // Check if this field label matches any configured names
+                foreach ($custom_field_names as $field_name) {
+                    if ($field_label === $field_name) {
+                        // Check if field value contains any configured search values
+                        $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+                        foreach ($custom_field_values as $search_value) {
+                            $search_value_lower = strtolower($search_value);
+                            if (strpos($field_value, $search_value_lower) !== false) {
+                                return array(
+                                    'has_extra_bed' => true,
+                                    'matched_term' => $search_value,
+                                    'source' => 'custom_field'
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check booking notes for configured search terms
+        if (!empty($booking['notes']) && !empty($notes_search_terms)) {
+            foreach ($booking['notes'] as $note) {
+                $note_content = isset($note['content']) ? $note['content'] : '';
+                if (empty($note_content)) {
+                    continue;
+                }
+
+                // Search for match terms in notes (case-insensitive)
+                $note_content_lower = strtolower($note_content);
+                foreach ($notes_search_terms as $search_term) {
+                    $search_term_lower = strtolower($search_term);
+                    if (strpos($note_content_lower, $search_term_lower) !== false) {
+                        return array(
+                            'has_extra_bed' => true,
+                            'matched_term' => $search_term,
+                            'source' => 'booking_notes'
+                        );
+                    }
+                }
+            }
+        }
+
+        // No extra bed detected
+        return array(
+            'has_extra_bed' => false,
+            'matched_term' => '',
+            'source' => ''
+        );
     }
 
     /**
