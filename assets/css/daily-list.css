@@ -993,32 +993,15 @@
 }
 
 .hhdl-modal-flow-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
-    padding: 3px 8px;
+    padding: 4px 10px;
+    border: 1px solid #000;
     border-radius: 4px;
+    background: transparent;
+    color: #000;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.hhdl-modal-flow-label.stay-over {
-    background: #e0e7ff;
-    color: #3730a3;
-}
-
-.hhdl-modal-flow-label.depart-arrive {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.hhdl-modal-flow-label.arrive {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.hhdl-modal-flow-label.depart {
-    background: #fee2e2;
-    color: #991b1b;
 }
 
 .hhdl-modal-guest-name {

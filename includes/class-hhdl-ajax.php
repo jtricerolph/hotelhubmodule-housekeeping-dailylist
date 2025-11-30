@@ -283,14 +283,18 @@ class HHDL_Ajax {
         $arriving_booking = null;
 
         // First pass: identify departing, arriving, and staying bookings for this room
+        $has_departure_today = false;
         foreach ($all_bookings as $booking) {
             if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
                 $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
                 $departure = date('Y-m-d', strtotime($booking['booking_departure']));
 
-                // Check for departing booking (checkout today)
-                if ($departure === $date && $arrival < $date) {
-                    $departing_booking = $booking;
+                // Check for any booking ending today (includes already departed)
+                if ($departure === $date) {
+                    $has_departure_today = true;
+                    if ($arrival < $date) {
+                        $departing_booking = $booking;
+                    }
                 }
 
                 // Check for arriving booking (checkin today)
@@ -309,8 +313,10 @@ class HHDL_Ajax {
         $booking_flow_type = null;
         $primary_booking = null;
 
-        if ($departing_booking && $arriving_booking) {
-            // Back-to-back scenario
+        // If there's an arrival today AND any departure today, it's back-to-back
+        // This handles cases where the departing booking has already checked out
+        if ($arriving_booking && $has_departure_today) {
+            // Back-to-back scenario (even if previous guest already departed)
             $booking_flow_type = 'depart_arrive';
             $primary_booking = $arriving_booking; // Use arriving booking as primary
         } elseif ($arriving_booking) {
