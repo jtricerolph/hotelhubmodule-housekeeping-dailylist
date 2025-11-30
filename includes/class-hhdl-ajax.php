@@ -972,13 +972,15 @@ class HHDL_Ajax {
                     <?php elseif ($show_arrived): ?>
                         <!-- Show ARRIVED for checked-in bookings -->
                         <span class="hhdl-modal-site-status arrived">ARRIVED</span>
-                    <?php elseif ($is_viewing_today && $is_arriving && strtolower($room_details['site_status']) !== 'unknown'): ?>
-                        <!-- Show site status for today's arrivals -->
-                        <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
-                            <?php echo esc_html($room_details['site_status']); ?>
-                        </span>
-                    <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights'])) && strtolower($room_details['site_status']) !== 'unknown'): ?>
-                        <!-- Show site status for vacant rooms and DEPART flow on today's date -->
+                    <?php elseif ($is_viewing_today && $is_arriving): ?>
+                        <!-- Show site status for today's arrivals (if not unknown) -->
+                        <?php if (strtolower($room_details['site_status']) !== 'unknown'): ?>
+                            <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                                <?php echo esc_html($room_details['site_status']); ?>
+                            </span>
+                        <?php endif; ?>
+                    <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights']))): ?>
+                        <!-- Show site status for vacant rooms and DEPART flow on today's date (always show, even if unknown) -->
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
