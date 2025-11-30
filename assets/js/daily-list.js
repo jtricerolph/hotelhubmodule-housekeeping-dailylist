@@ -517,7 +517,7 @@
         // Update status badge in room card on main list
         var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
         if (roomCard.length) {
-            var statusBadge = roomCard.find('.hhdl-status-badge');
+            var statusBadge = roomCard.find('.hhdl-site-status');
             if (statusBadge.length) {
                 // Update badge text and class
                 statusBadge.removeClass('clean dirty inspected unknown')
@@ -540,7 +540,7 @@
     }
 
     /**
-     * Update task count badge in modal header and room card
+     * Update task count badge in modal header, section header, and room card
      */
     function updateTaskCount(roomId) {
         console.log('HHDL: updateTaskCount called with roomId:', roomId);
@@ -575,6 +575,30 @@
             }
         }
 
+        // Update the section header icon and badge in modal
+        var sectionHeader = $('.hhdl-section-header');
+        if (sectionHeader.length) {
+            var sectionBadge = sectionHeader.find('.hhdl-task-count-badge');
+            var sectionIcon = sectionHeader.find('.material-symbols-outlined');
+
+            if (incompleteTasks > 0) {
+                // Update badge count
+                if (sectionBadge.length) {
+                    sectionBadge.text(incompleteTasks);
+                }
+                // Icon stays as assignment_late with red color
+            } else {
+                // All complete - update to green checkmark
+                if (sectionBadge.length) {
+                    sectionBadge.parent().remove(); // Remove entire badge container
+                }
+                if (sectionIcon.length) {
+                    sectionIcon.text('assignment_turned_in');
+                    sectionIcon.css('color', '#10b981'); // Green
+                }
+            }
+        }
+
         // Update the task count badge on the room card in main list
         if (roomId) {
             console.log('HHDL: Looking for room card with id:', roomId);
@@ -592,6 +616,16 @@
                     } else {
                         console.log('HHDL: Hiding room badge and updating icon to completed');
                         roomBadge.hide();
+
+                        // Find the task status container and update its class
+                        var taskStatusContainer = roomCard.find('.hhdl-task-status');
+                        if (taskStatusContainer.length) {
+                            // Remove all task status classes
+                            taskStatusContainer.removeClass('hhdl-task-late hhdl-task-return hhdl-task-future hhdl-task-none');
+                            // Add complete class
+                            taskStatusContainer.addClass('hhdl-task-complete');
+                        }
+
                         // Update icon to show completion
                         var taskIcon = roomCard.find('.hhdl-stat-content .material-symbols-outlined').first();
                         if (taskIcon.length) {
