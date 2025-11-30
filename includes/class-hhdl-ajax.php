@@ -313,90 +313,86 @@ class HHDL_Ajax {
             $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
             $departure = date('Y-m-d', strtotime($booking['booking_departure']));
 
-            if (true) { // Always process
-                    $total_nights = (strtotime($departure) - strtotime($arrival)) / 86400;
-                    $current_night = (strtotime($date) - strtotime($arrival)) / 86400 + 1;
+            $total_nights = (strtotime($departure) - strtotime($arrival)) / 86400;
+            $current_night = (strtotime($date) - strtotime($arrival)) / 86400 + 1;
 
-                    // Extract guest name from guests array if not already set
-                    $guest_name = '';
-                    if (isset($booking['guest_name']) && !empty($booking['guest_name'])) {
-                        $guest_name = $booking['guest_name'];
-                    } elseif (isset($booking['guests']) && is_array($booking['guests']) && !empty($booking['guests'])) {
-                        $first_guest = $booking['guests'][0];
-                        $firstname = isset($first_guest['firstname']) ? trim($first_guest['firstname']) : '';
-                        $lastname = isset($first_guest['lastname']) ? trim($first_guest['lastname']) : '';
-                        if ($firstname || $lastname) {
-                            $guest_name = trim($firstname . ' ' . $lastname);
-                        }
-                    }
-
-                    // Detect twin/sofabed configuration
-                    $twin_detection = $this->detect_twin($booking, $location_id);
-                    $has_twin = ($twin_detection['type'] === 'confirmed' || $twin_detection['type'] === 'potential');
-
-                    // Detect extra bed
-                    $extra_bed_detection = $this->detect_extra_bed($booking, $location_id);
-
-                    // Early arrival detection (only for arrivals)
-                    $is_arriving = ($arrival === $date);
-                    $checkin_time = '';
-                    $is_early_arrival = false;
-
-                    if ($is_arriving && $hotel) {
-                        $default_arrival_time = isset($hotel->default_arrival_time) ? $hotel->default_arrival_time : '15:00';
-
-                        // Extract time from booking_eta
-                        $eta_time = null;
-                        if (isset($booking['booking_eta']) && !empty($booking['booking_eta'])) {
-                            $eta_time = date('H:i', strtotime($booking['booking_eta']));
-                        }
-
-                        // Extract time from booking_arrival
-                        $arrival_time = null;
-                        if (isset($booking['booking_arrival']) && !empty($booking['booking_arrival'])) {
-                            $arrival_time = date('H:i', strtotime($booking['booking_arrival']));
-                        }
-
-                        // Check if either is before default time
-                        if ($eta_time && $eta_time < $default_arrival_time) {
-                            $is_early_arrival = true;
-                            $checkin_time = $eta_time;
-                        } elseif ($arrival_time && $arrival_time < $default_arrival_time) {
-                            $is_early_arrival = true;
-                            $checkin_time = $arrival_time;
-                        } elseif ($eta_time) {
-                            $checkin_time = $eta_time;
-                        } elseif ($arrival_time) {
-                            $checkin_time = $arrival_time;
-                        }
-                    }
-
-                    $booking_data = array(
-                        'reference'         => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
-                        'guest_name'        => $guest_name,
-                        'email'             => isset($booking['guest_email']) ? $booking['guest_email'] : '',
-                        'phone'             => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
-                        'checkin_date'      => $arrival,
-                        'checkout_date'     => $departure,
-                        'checkin_time'      => $checkin_time,
-                        'is_early_arrival'  => $is_early_arrival,
-                        'checkout_time'     => '10:00', // Default checkout
-                        'pax'               => isset($booking['pax']) ? $booking['pax'] : 0,
-                        'nights'            => $total_nights,
-                        'current_night'     => $current_night,
-                        'room_type'         => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
-                        'rate_plan'         => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
-                        'rate_amount'       => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
-                        'notes'             => isset($booking['notes']) ? $this->format_notes($booking['notes']) : '',
-                        'booking_status'    => isset($booking['booking_status']) ? strtolower($booking['booking_status']) : 'unconfirmed',
-                        'has_twin'          => $has_twin,
-                        'twin_info'         => $twin_detection,
-                        'extra_bed_info'    => $extra_bed_detection,
-                        'booking_flow_type' => $booking_flow_type
-                    );
-                    // Don't break - we've already selected the primary booking above
+            // Extract guest name from guests array if not already set
+            $guest_name = '';
+            if (isset($booking['guest_name']) && !empty($booking['guest_name'])) {
+                $guest_name = $booking['guest_name'];
+            } elseif (isset($booking['guests']) && is_array($booking['guests']) && !empty($booking['guests'])) {
+                $first_guest = $booking['guests'][0];
+                $firstname = isset($first_guest['firstname']) ? trim($first_guest['firstname']) : '';
+                $lastname = isset($first_guest['lastname']) ? trim($first_guest['lastname']) : '';
+                if ($firstname || $lastname) {
+                    $guest_name = trim($firstname . ' ' . $lastname);
                 }
             }
+
+            // Detect twin/sofabed configuration
+            $twin_detection = $this->detect_twin($booking, $location_id);
+            $has_twin = ($twin_detection['type'] === 'confirmed' || $twin_detection['type'] === 'potential');
+
+            // Detect extra bed
+            $extra_bed_detection = $this->detect_extra_bed($booking, $location_id);
+
+            // Early arrival detection (only for arrivals)
+            $is_arriving = ($arrival === $date);
+            $checkin_time = '';
+            $is_early_arrival = false;
+
+            if ($is_arriving && $hotel) {
+                $default_arrival_time = isset($hotel->default_arrival_time) ? $hotel->default_arrival_time : '15:00';
+
+                // Extract time from booking_eta
+                $eta_time = null;
+                if (isset($booking['booking_eta']) && !empty($booking['booking_eta'])) {
+                    $eta_time = date('H:i', strtotime($booking['booking_eta']));
+                }
+
+                // Extract time from booking_arrival
+                $arrival_time = null;
+                if (isset($booking['booking_arrival']) && !empty($booking['booking_arrival'])) {
+                    $arrival_time = date('H:i', strtotime($booking['booking_arrival']));
+                }
+
+                // Check if either is before default time
+                if ($eta_time && $eta_time < $default_arrival_time) {
+                    $is_early_arrival = true;
+                    $checkin_time = $eta_time;
+                } elseif ($arrival_time && $arrival_time < $default_arrival_time) {
+                    $is_early_arrival = true;
+                    $checkin_time = $arrival_time;
+                } elseif ($eta_time) {
+                    $checkin_time = $eta_time;
+                } elseif ($arrival_time) {
+                    $checkin_time = $arrival_time;
+                }
+            }
+
+            $booking_data = array(
+                'reference'         => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
+                'guest_name'        => $guest_name,
+                'email'             => isset($booking['guest_email']) ? $booking['guest_email'] : '',
+                'phone'             => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
+                'checkin_date'      => $arrival,
+                'checkout_date'     => $departure,
+                'checkin_time'      => $checkin_time,
+                'is_early_arrival'  => $is_early_arrival,
+                'checkout_time'     => '10:00', // Default checkout
+                'pax'               => isset($booking['pax']) ? $booking['pax'] : 0,
+                'nights'            => $total_nights,
+                'current_night'     => $current_night,
+                'room_type'         => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
+                'rate_plan'         => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
+                'rate_amount'       => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
+                'notes'             => isset($booking['notes']) ? $this->format_notes($booking['notes']) : '',
+                'booking_status'    => isset($booking['booking_status']) ? strtolower($booking['booking_status']) : 'unconfirmed',
+                'has_twin'          => $has_twin,
+                'twin_info'         => $twin_detection,
+                'extra_bed_info'    => $extra_bed_detection,
+                'booking_flow_type' => $booking_flow_type
+            );
         }
 
         // Get tasks for this room/date using all configured task types
