@@ -1069,9 +1069,14 @@ class HHDL_Ajax {
         ?>
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
-            <h3>
-                <?php _e('NewBook Tasks', 'hhdl'); ?>
-                <?php
+            <div class="hhdl-section-header">
+                <h3>
+                    <?php _e('NewBook Tasks', 'hhdl'); ?>
+                    <?php
+                // Check if viewing a future date
+                $today = date('Y-m-d');
+                $is_future_date = ($date > $today);
+
                 // Determine task status and count
                 $incomplete_count = 0;
                 if (!empty($tasks)) {
@@ -1082,22 +1087,34 @@ class HHDL_Ajax {
                     }
                 }
 
-                // Show icon based on incomplete task count
-                if ($incomplete_count > 0) {
-                    // Outstanding tasks - red assignment_late icon with badge
-                    $badge_class = 'hhdl-task-late';
-                    $icon_name = 'assignment_late';
-                    $icon_color = '#dc2626';
-                    ?>
-                    <span class="<?php echo esc_attr($badge_class); ?>" style="position: relative; display: inline-flex;">
-                        <span class="material-symbols-outlined" style="color: <?php echo esc_attr($icon_color); ?>; font-size: 16px;"><?php echo esc_html($icon_name); ?></span>
+                // Show icon based on date and incomplete task count
+                if ($is_future_date) {
+                    // Future dates: grey styling (tasks not final yet)
+                    if ($incomplete_count > 0) {
+                        $badge_class = 'hhdl-task-late'; // For badge background color
+                        $icon_name = 'assignment';
+                        $icon_color = '#9ca3af'; // Grey
+                        ?>
+                        <span class="<?php echo esc_attr($badge_class); ?>" style="position: relative; display: inline-flex;">
+                            <span class="material-symbols-outlined" style="color: <?php echo esc_attr($icon_color); ?>; font-size: 16px;"><?php echo esc_html($icon_name); ?></span>
+                            <span class="hhdl-task-count-badge" style="background: <?php echo esc_attr($icon_color); ?>;"><?php echo esc_html($incomplete_count); ?></span>
+                        </span>
+                    <?php } else { ?>
+                        <!-- No tasks scheduled - grey -->
+                        <span class="material-symbols-outlined" style="color: #9ca3af; font-size: 16px;">assignment_turned_in</span>
+                    <?php } ?>
+                <?php } elseif ($incomplete_count > 0) { ?>
+                    <!-- Outstanding tasks - red assignment_late icon with badge -->
+                    <span class="hhdl-task-late" style="position: relative; display: inline-flex;">
+                        <span class="material-symbols-outlined" style="color: #dc2626; font-size: 16px;">assignment_late</span>
                         <span class="hhdl-task-count-badge"><?php echo esc_html($incomplete_count); ?></span>
                     </span>
                 <?php } else { ?>
                     <!-- All complete or no tasks - green assignment_turned_in icon -->
                     <span class="material-symbols-outlined" style="color: #10b981; font-size: 16px;">assignment_turned_in</span>
                 <?php } ?>
-            </h3>
+                </h3>
+            </div>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
                 <?php foreach ($tasks as $task): ?>
@@ -1143,12 +1160,16 @@ class HHDL_Ajax {
 
         <!-- Placeholder Sections -->
         <section class="hhdl-placeholder">
-            <h3><?php _e('Recurring Tasks', 'hhdl'); ?></h3>
+            <div class="hhdl-section-header">
+                <h3><?php _e('Recurring Tasks', 'hhdl'); ?></h3>
+            </div>
             <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
         </section>
 
         <section class="hhdl-placeholder">
-            <h3><?php _e('Spoilt Linen Tracking', 'hhdl'); ?></h3>
+            <div class="hhdl-section-header">
+                <h3><?php _e('Spoilt Linen Tracking', 'hhdl'); ?></h3>
+            </div>
             <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
         </section>
         <?php

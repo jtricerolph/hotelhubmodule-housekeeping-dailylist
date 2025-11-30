@@ -970,12 +970,18 @@
     flex: 1;
 }
 
-.hhdl-modal-body h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 14px;
+/* Section Header with darker background */
+.hhdl-section-header {
+    margin: -12px -12px 12px -12px;
+    padding: 10px 12px;
+    background: #f3f4f6;
     border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 8px;
+    border-radius: 6px 6px 0 0;
+}
+
+.hhdl-modal-body h3 {
+    margin: 0;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -991,6 +997,10 @@
 
 .hhdl-placeholder {
     margin-bottom: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
 }
 
 /* Modal Room Info (now in header) */
