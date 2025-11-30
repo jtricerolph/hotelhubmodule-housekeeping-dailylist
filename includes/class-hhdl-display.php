@@ -861,8 +861,19 @@ class HHDL_Display {
             }
         }
 
-        // Get task description mappings for colors
-        $task_description_mappings = HHDL_Settings::get_task_description_mappings($location_id);
+        // Build task type map from integration settings for colors and icons
+        $task_type_map = array();
+        if (isset($integration['task_types']) && is_array($integration['task_types'])) {
+            foreach ($integration['task_types'] as $task_type) {
+                if (isset($task_type['id'])) {
+                    $task_type_map[$task_type['id']] = array(
+                        'name'  => isset($task_type['name']) ? $task_type['name'] : '',
+                        'color' => isset($task_type['color']) ? $task_type['color'] : '#9e9e9e',
+                        'icon'  => isset($task_type['icon']) ? $task_type['icon'] : 'task'
+                    );
+                }
+            }
+        }
 
         // Process occupy tasks (blocked rooms)
         error_log('HHDL Display - Total tasks fetched: ' . count($tasks));
@@ -873,7 +884,6 @@ class HHDL_Display {
         foreach ($tasks as $task) {
             $task_id = isset($task['task_id']) ? $task['task_id'] : 'unknown';
             $task_desc = isset($task['task_description']) ? $task['task_description'] : 'no description';
-            $task_type = isset($task['task_type']) ? $task['task_type'] : '';
             $task_occupy = isset($task['task_location_occupy']) ? $task['task_location_occupy'] : 'null';
 
             if (empty($task['task_location_occupy']) || $task['task_location_occupy'] != 1) {
@@ -906,13 +916,15 @@ class HHDL_Display {
                 continue;
             }
 
-            // Get color from task description mapping - check both task_type and task_description
+            // Get color and icon from integration task type settings
+            $task_type_id = isset($task['task_type_id']) ? $task['task_type_id'] : '';
             $task_color = '#ef4444'; // Default red
-            foreach ($task_description_mappings as $filter => $mapping) {
-                if (stripos($task_type, $filter) !== false || stripos($task_desc, $filter) !== false) {
-                    $task_color = $mapping['color'];
-                    break;
-                }
+            $task_icon = 'construction'; // Default icon
+
+            // Check if we have a matching task type configuration
+            if (!empty($task_type_id) && isset($task_type_map[$task_type_id])) {
+                $task_color = $task_type_map[$task_type_id]['color'];
+                $task_icon = $task_type_map[$task_type_id]['icon'];
             }
 
             // Build task info array
@@ -920,7 +932,7 @@ class HHDL_Display {
                 'task_id' => $task_id,
                 'description' => $task_desc,
                 'color' => $task_color,
-                'icon' => 'construction' // Default Material icon
+                'icon' => $task_icon
             );
 
             // Determine task dates
