@@ -673,6 +673,7 @@
 
 /* Task Status Icons */
 .hhdl-stat-content.hhdl-task-status {
+    position: relative;
     padding: 3px 6px;
     border-radius: 4px;
     border: 1px solid;
@@ -726,14 +727,13 @@
 
 /* Task Counter Badge */
 .hhdl-task-count {
-    position: relative;
     display: inline-flex;
     align-items: center;
 }
 
 .hhdl-task-count-badge {
     position: absolute;
-    top: -4px;
+    top: -6px;
     right: -6px;
     min-width: 14px;
     height: 14px;
@@ -770,6 +770,7 @@
 
 /* Future Tasks Module Icons */
 .hhdl-stat-content.hhdl-future-tasks {
+    position: relative;
     padding: 3px 6px;
     border-radius: 4px;
     border: 1px solid;
