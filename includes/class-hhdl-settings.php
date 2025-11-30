@@ -100,10 +100,20 @@ class HHDL_Settings {
                 $settings[$location_id] = array(
                     'enabled' => isset($location_data['enabled']) ? true : false,
                     'default_tasks' => array(),
+                    // Bed Type Colors
+                    'bed_color_default' => isset($location_data['bed_color_default']) ? sanitize_hex_color($location_data['bed_color_default']) : '#10b981',
+                    'bed_color_twin_confirmed' => isset($location_data['bed_color_twin_confirmed']) ? sanitize_hex_color($location_data['bed_color_twin_confirmed']) : '#10b981',
+                    'bed_color_twin_potential' => isset($location_data['bed_color_twin_potential']) ? sanitize_hex_color($location_data['bed_color_twin_potential']) : '#f59e0b',
+                    'bed_color_extra' => isset($location_data['bed_color_extra']) ? sanitize_hex_color($location_data['bed_color_extra']) : '#3b82f6',
+                    // Twin Detection
                     'twin_custom_field_names' => isset($location_data['twin_custom_field_names']) ? sanitize_text_field($location_data['twin_custom_field_names']) : '',
                     'twin_custom_field_values' => isset($location_data['twin_custom_field_values']) ? sanitize_text_field($location_data['twin_custom_field_values']) : '',
                     'twin_notes_search_terms' => isset($location_data['twin_notes_search_terms']) ? sanitize_text_field($location_data['twin_notes_search_terms']) : '',
-                    'twin_excluded_terms' => isset($location_data['twin_excluded_terms']) ? sanitize_text_field($location_data['twin_excluded_terms']) : ''
+                    'twin_excluded_terms' => isset($location_data['twin_excluded_terms']) ? sanitize_text_field($location_data['twin_excluded_terms']) : '',
+                    // Extra Bed Detection
+                    'extra_bed_custom_field_names' => isset($location_data['extra_bed_custom_field_names']) ? sanitize_text_field($location_data['extra_bed_custom_field_names']) : '',
+                    'extra_bed_custom_field_values' => isset($location_data['extra_bed_custom_field_values']) ? sanitize_text_field($location_data['extra_bed_custom_field_values']) : '',
+                    'extra_bed_notes_search_terms' => isset($location_data['extra_bed_notes_search_terms']) ? sanitize_text_field($location_data['extra_bed_notes_search_terms']) : ''
                 );
 
                 // Process tasks if provided
@@ -207,10 +217,20 @@ class HHDL_Settings {
         return array(
             'enabled' => false,
             'default_tasks' => self::get_default_tasks_template(),
+            // Bed Type Colors
+            'bed_color_default' => '#10b981',
+            'bed_color_twin_confirmed' => '#10b981',
+            'bed_color_twin_potential' => '#f59e0b',
+            'bed_color_extra' => '#3b82f6',
+            // Twin Detection
             'twin_custom_field_names' => '',
             'twin_custom_field_values' => '',
             'twin_notes_search_terms' => '',
-            'twin_excluded_terms' => ''
+            'twin_excluded_terms' => '',
+            // Extra Bed Detection
+            'extra_bed_custom_field_names' => '',
+            'extra_bed_custom_field_values' => '',
+            'extra_bed_notes_search_terms' => ''
         );
     }
 

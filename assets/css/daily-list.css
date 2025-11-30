@@ -597,7 +597,7 @@
 
 /* Twin Beds Indicator */
 .hhdl-stat-content.hhdl-twin-beds {
-    gap: 2px;
+    gap: 0px;
     padding: 2px 6px;
     border-radius: 4px;
     transition: all 0.2s;
