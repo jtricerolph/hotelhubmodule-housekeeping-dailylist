@@ -314,6 +314,8 @@
             },
             success: function(response) {
                 if (response.success) {
+                    console.log('HHDL: Task completed successfully, starting fade out');
+
                     // Remove overlay immediately
                     overlay.remove();
 
@@ -324,10 +326,11 @@
 
                     // Fade out and remove task
                     taskItem.fadeOut(400, function() {
+                        console.log('HHDL: Fade complete, removing task from DOM');
                         $(this).remove();
 
                         // Update task count after removal
-                        updateTaskCount();
+                        updateTaskCount(taskData.roomId);
                     });
 
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
@@ -380,31 +383,47 @@
     }
 
     /**
-     * Update task count badge in modal header
+     * Update task count badge in modal header and room card
      */
-    function updateTaskCount() {
+    function updateTaskCount(roomId) {
         var taskList = $('.hhdl-task-list');
         if (!taskList.length) return;
 
-        // Count remaining incomplete tasks (not completed)
-        var incompleteTasks = taskList.find('.hhdl-task-item:not(.completed)').length;
+        // Count remaining incomplete tasks (visible items only, not fading out)
+        var incompleteTasks = taskList.find('.hhdl-task-item:visible').length;
+
+        console.log('HHDL: Updating task count - ' + incompleteTasks + ' tasks remaining');
 
         // Update the task count badge in modal header
-        var taskCountBadge = $('.hhdl-modal-header .hhdl-task-count-badge');
-        if (taskCountBadge.length) {
+        var modalBadge = $('.hhdl-modal-header .hhdl-task-count-badge');
+        if (modalBadge.length) {
             if (incompleteTasks > 0) {
-                taskCountBadge.text(incompleteTasks).show();
+                modalBadge.text(incompleteTasks);
+                modalBadge.parent().show();
             } else {
-                taskCountBadge.hide();
+                // Hide the entire badge container
+                modalBadge.parent().hide();
             }
         }
 
-        // Update the section header status indicator
-        var sectionHeader = $('.hhdl-section-header .hhdl-status-indicator');
-        if (sectionHeader.length) {
-            if (incompleteTasks === 0) {
-                sectionHeader.removeClass('hhdl-status-waiting hhdl-status-late hhdl-status-return')
-                    .addClass('hhdl-status-complete');
+        // Update the task count badge on the room card in main list
+        if (roomId) {
+            var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+            if (roomCard.length) {
+                var roomBadge = roomCard.find('.hhdl-task-count-badge');
+                if (roomBadge.length) {
+                    if (incompleteTasks > 0) {
+                        roomBadge.text(incompleteTasks).show();
+                    } else {
+                        roomBadge.hide();
+                        // Update icon to show completion
+                        var taskIcon = roomCard.find('.hhdl-stat-content .material-symbols-outlined').first();
+                        if (taskIcon.length) {
+                            taskIcon.text('assignment_turned_in');
+                            taskIcon.css('color', '#10b981'); // Green
+                        }
+                    }
+                }
             }
         }
     }
