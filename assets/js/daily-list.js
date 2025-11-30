@@ -286,7 +286,8 @@
             const taskData = {
                 roomId: checkbox.data('room-id'),
                 taskId: checkbox.data('task-id'),
-                taskType: checkbox.data('task-type'),
+                taskTypeId: checkbox.data('task-type-id') || null,
+                taskDescription: checkbox.data('task-description'),
                 bookingRef: checkbox.data('booking-ref') || '',
                 isDefault: checkbox.data('is-default') == '1',
                 isOccupy: checkbox.data('is-occupy') == '1'
@@ -330,7 +331,7 @@
     function confirmTaskCompletion(taskData, checkbox) {
         // First check: Non-default task confirmation
         if (!taskData.isDefault) {
-            if (!confirm('Please confirm you want to mark this non-default task complete.\n\nTask: ' + taskData.taskType)) {
+            if (!confirm('Please confirm you want to mark this non-default task complete.\n\nTask: ' + taskData.taskDescription)) {
                 return false;
             }
         }
@@ -374,7 +375,8 @@
                 location_id: currentLocationId,
                 room_id: taskData.roomId,
                 task_id: taskData.taskId,
-                task_type: taskData.taskType,
+                task_type_id: taskData.taskTypeId,
+                task_description: taskData.taskDescription,
                 booking_ref: taskData.bookingRef,
                 service_date: currentDate
             },

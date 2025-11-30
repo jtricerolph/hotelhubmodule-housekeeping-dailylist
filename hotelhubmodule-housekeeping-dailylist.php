@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Hub Module - Housekeeping - Daily List
  * Plugin URI: https://github.com/jtricerolph/hotelhubmodule-housekeeping-dailylist
  * Description: Daily housekeeping task management with NewBook integration and real-time sync
- * Version: 1.8.5
+ * Version: 1.9.0
  * Author: JTR
  * License: GPL v2 or later
  * Text Domain: hhdl
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('HHDL_VERSION', '1.8.5');
+define('HHDL_VERSION', '1.9.0');
 define('HHDL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HHDL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HHDL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -102,7 +102,8 @@ class HotelHub_Housekeeping_DailyList {
             location_id BIGINT(20) UNSIGNED NOT NULL,
             room_id VARCHAR(50) NOT NULL,
             task_id BIGINT(20) UNSIGNED DEFAULT NULL,
-            task_type VARCHAR(100) NOT NULL,
+            task_type_id BIGINT(20) UNSIGNED DEFAULT NULL COMMENT 'NewBook task type ID',
+            task_description VARCHAR(255) DEFAULT NULL COMMENT 'Task description/name',
             completed_by BIGINT(20) UNSIGNED NOT NULL COMMENT 'WordPress user ID',
             completed_at DATETIME NOT NULL,
             booking_ref VARCHAR(100) DEFAULT NULL,
@@ -110,11 +111,21 @@ class HotelHub_Housekeeping_DailyList {
             PRIMARY KEY (id),
             KEY location_date_idx (location_id, service_date),
             KEY room_date_idx (room_id, service_date),
-            KEY completed_by_idx (completed_by)
+            KEY completed_by_idx (completed_by),
+            KEY task_id_idx (task_id)
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+
+        // Migrate old task_type column to task_description if needed
+        $old_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'task_type'");
+        if (!empty($old_column_exists)) {
+            // Migrate data from old column to new column
+            $wpdb->query("UPDATE {$table_name} SET task_description = task_type WHERE task_description IS NULL");
+            // Drop old column
+            $wpdb->query("ALTER TABLE {$table_name} DROP COLUMN task_type");
+        }
 
         // Store database version
         update_option('hhdl_db_version', HHDL_VERSION);

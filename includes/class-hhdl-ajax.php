@@ -149,14 +149,15 @@ class HHDL_Ajax {
         $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
         $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
         $task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
-        $task_type = isset($_POST['task_type']) ? sanitize_text_field($_POST['task_type']) : '';
+        $task_type_id = isset($_POST['task_type_id']) ? intval($_POST['task_type_id']) : null;
+        $task_description = isset($_POST['task_description']) ? sanitize_text_field($_POST['task_description']) : '';
         $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
         $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
 
-        error_log('HHDL: Parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_id: ' . $task_id . ', task_type: ' . $task_type);
+        error_log('HHDL: Parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_id: ' . $task_id . ', task_type_id: ' . $task_type_id . ', task_description: ' . $task_description);
 
-        if (!$location_id || !$room_id || !$task_type) {
-            error_log('HHDL: Invalid parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_type: ' . $task_type);
+        if (!$location_id || !$room_id || !$task_description) {
+            error_log('HHDL: Invalid parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_description: ' . $task_description);
             wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
         }
 
@@ -198,38 +199,40 @@ class HHDL_Ajax {
 
         try {
             // Check for existing completion (with row lock)
+            // IMPORTANT: Use task_id for duplicate check, not task_type
+            // Multiple tasks can have the same description for the same room/date
             $table_name = $wpdb->prefix . 'hhdl_task_completions';
             $exists = $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM {$table_name}
-                 WHERE room_id = %s AND task_type = %s AND service_date = %s
+                 WHERE task_id = %d AND service_date = %s
                  FOR UPDATE",
-                $room_id,
-                $task_type,
+                $task_id,
                 $service_date
             ));
 
             if ($exists) {
-                error_log('HHDL: Task already completed (exists: ' . $exists . ')');
+                error_log('HHDL: Task already completed (task_id: ' . $task_id . ', exists: ' . $exists . ')');
                 $wpdb->query('ROLLBACK');
                 wp_send_json_error(array('message' => __('Task already completed', 'hhdl')));
             }
 
-            error_log('HHDL: No existing completion found, inserting new record');
+            error_log('HHDL: No existing completion found for task_id ' . $task_id . ', inserting new record');
 
             // Insert completion record
             $inserted = $wpdb->insert(
                 $table_name,
                 array(
-                    'location_id'  => $location_id,
-                    'room_id'      => $room_id,
-                    'task_id'      => $task_id,
-                    'task_type'    => $task_type,
-                    'completed_by' => get_current_user_id(),
-                    'completed_at' => current_time('mysql'),
-                    'booking_ref'  => $booking_ref,
-                    'service_date' => $service_date
+                    'location_id'      => $location_id,
+                    'room_id'          => $room_id,
+                    'task_id'          => $task_id,
+                    'task_type_id'     => $task_type_id,
+                    'task_description' => $task_description,
+                    'completed_by'     => get_current_user_id(),
+                    'completed_at'     => current_time('mysql'),
+                    'booking_ref'      => $booking_ref,
+                    'service_date'     => $service_date
                 ),
-                array('%d', '%s', '%d', '%s', '%d', '%s', '%s', '%s')
+                array('%d', '%s', '%d', '%d', '%s', '%d', '%s', '%s', '%s')
             );
 
             if ($inserted === false) {
@@ -654,6 +657,7 @@ class HHDL_Ajax {
                 $tasks[] = array(
                     'id'          => $nb_task['id'],
                     'name'        => $task_description, // Use actual task description from NewBook
+                    'task_type_id' => isset($nb_task['task_type_id']) ? $nb_task['task_type_id'] : null,
                     'task_type'   => $task_type_display,
                     'task_period' => isset($nb_task['task_period']) ? $nb_task['task_period'] : '',
                     'color'       => $matched_color,
@@ -1146,7 +1150,8 @@ class HHDL_Ajax {
                            <?php disabled($task['completed']); ?>
                            data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
                            data-task-id="<?php echo esc_attr($task['id']); ?>"
-                           data-task-type="<?php echo esc_attr($task['name']); ?>"
+                           data-task-type-id="<?php echo isset($task['task_type_id']) ? esc_attr($task['task_type_id']) : ''; ?>"
+                           data-task-description="<?php echo esc_attr($task['name']); ?>"
                            data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>"
                            data-is-default="<?php echo $task['is_default_task'] ? '1' : '0'; ?>"
                            data-is-occupy="<?php echo $task['is_occupy_task'] ? '1' : '0'; ?>">
