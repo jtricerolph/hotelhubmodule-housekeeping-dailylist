@@ -562,8 +562,12 @@
     font-size: 11px;
     font-weight: 500;
     color: #6b7280;
-    margin-left: auto;
     margin-right: 6px;
+}
+
+/* Push nights to right when no lock icon present */
+.hhdl-room-header:not(:has(.hhdl-locked-icon)) .hhdl-nights {
+    margin-left: auto;
 }
 
 .hhdl-nights .material-symbols-outlined {
