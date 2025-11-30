@@ -960,6 +960,19 @@ class HHDL_Ajax {
                     <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                 <?php endif; ?>
                 <div class="hhdl-modal-right-group">
+                    <?php
+                    // Debug logging
+                    error_log('[HHDL Modal] Room: ' . $room_details['room_number']);
+                    error_log('[HHDL Modal] is_viewing_today: ' . ($is_viewing_today ? 'TRUE' : 'FALSE'));
+                    error_log('[HHDL Modal] is_future_date: ' . ($is_future_date ? 'TRUE' : 'FALSE'));
+                    error_log('[HHDL Modal] show_arrived: ' . ($show_arrived ? 'TRUE' : 'FALSE'));
+                    error_log('[HHDL Modal] is_arriving: ' . ($is_arriving ? 'TRUE' : 'FALSE'));
+                    error_log('[HHDL Modal] booking_data: ' . ($booking_data ? json_encode(array_keys($booking_data)) : 'NULL'));
+                    error_log('[HHDL Modal] has_nights: ' . (($booking_data && isset($booking_data['nights'])) ? 'TRUE' : 'FALSE'));
+                    error_log('[HHDL Modal] site_status: ' . (isset($room_details['site_status']) ? $room_details['site_status'] : 'NOT SET'));
+                    error_log('[HHDL Modal] date: ' . $date);
+                    error_log('[HHDL Modal] today: ' . date('Y-m-d'));
+                    ?>
                     <?php if ($booking_data && isset($booking_data['nights'])): ?>
                         <span class="hhdl-modal-nights">
                             <span class="material-symbols-outlined">bedtime</span>
@@ -981,6 +994,7 @@ class HHDL_Ajax {
                         <?php endif; ?>
                     <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights']))): ?>
                         <!-- Show site status for vacant rooms and DEPART flow on today's date (always show, even if unknown) -->
+                        <?php error_log('[HHDL Modal] MATCHED vacant/DEPART condition - rendering status'); ?>
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
