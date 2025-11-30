@@ -154,7 +154,31 @@ class HHDL_Ajax {
             wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
         }
 
-        // Start transaction
+        // STEP 1: Update task in NewBook FIRST (if task_id provided)
+        $site_status = '';
+        if ($task_id > 0) {
+            // Get NewBook API client
+            $api = $this->get_newbook_api($location_id);
+            if (!$api) {
+                wp_send_json_error(array('message' => __('NewBook API not configured', 'hhdl')));
+            }
+
+            // Call NewBook API using the new update_task method
+            $response = $api->update_task($task_id, current_time('mysql'));
+
+            // Check NewBook response
+            if (!$response['success'] || $response['message'] !== 'Updated Task') {
+                $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
+                wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
+            }
+
+            // Extract site_status from response
+            if (isset($response['data'][0]['site_status'])) {
+                $site_status = $response['data'][0]['site_status'];
+            }
+        }
+
+        // STEP 2: ONLY NOW save to local database after NewBook confirms success
         $wpdb->query('START TRANSACTION');
 
         try {
@@ -195,16 +219,6 @@ class HHDL_Ajax {
                 wp_send_json_error(array('message' => __('Failed to save completion', 'hhdl')));
             }
 
-            // Update NewBook if task_id is provided
-            if ($task_id > 0) {
-                $newbook_result = $this->update_newbook_task($task_id);
-
-                if ($newbook_result === false) {
-                    $wpdb->query('ROLLBACK');
-                    wp_send_json_error(array('message' => __('Failed to update NewBook', 'hhdl')));
-                }
-            }
-
             // Commit transaction
             $wpdb->query('COMMIT');
 
@@ -215,7 +229,8 @@ class HHDL_Ajax {
                 'message'       => __('Task completed successfully', 'hhdl'),
                 'completed_by'  => $user->display_name,
                 'completed_at'  => current_time('mysql'),
-                'completion_id' => $wpdb->insert_id
+                'completion_id' => $wpdb->insert_id,
+                'site_status'   => $site_status // Return site_status to frontend
             ));
 
         } catch (Exception $e) {
@@ -662,34 +677,6 @@ class HHDL_Ajax {
         ));
 
         return $exists ? true : false;
-    }
-
-    /**
-     * Update NewBook task status
-     */
-    private function update_newbook_task($task_id) {
-        // Note: For task completion, we're storing in local DB first
-        // Then calling NewBook API. If NewBook fails, transaction rolls back
-
-        // Get current location from context
-        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
-        if (!$location_id) {
-            return false;
-        }
-
-        // Get NewBook API client
-        $api = $this->get_newbook_api($location_id);
-        if (!$api) {
-            return false;
-        }
-
-        // Call tasks_update endpoint
-        $response = $api->call_api('tasks_update', array(
-            'task_id' => $task_id,
-            'completed_on' => current_time('mysql')
-        ));
-
-        return isset($response['success']) && $response['success'];
     }
 
     /**

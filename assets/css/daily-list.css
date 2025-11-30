@@ -1195,6 +1195,7 @@
 }
 
 .hhdl-task-item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1237,6 +1238,41 @@
 .hhdl-task-meta {
     font-size: 10px;
     color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Task Processing Overlay */
+.hhdl-task-processing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(16, 185, 129, 0.95);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 10;
+}
+
+.hhdl-task-processing-overlay .hhdl-processing-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: hhdl-spinner-rotate 0.8s linear infinite;
+}
+
+.hhdl-task-processing-overlay .hhdl-processing-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

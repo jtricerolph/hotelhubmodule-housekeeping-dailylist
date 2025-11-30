@@ -260,6 +260,13 @@
         // Disable checkbox during request
         checkbox.prop('disabled', true);
 
+        // Add processing overlay
+        var overlay = $('<div class="hhdl-task-processing-overlay">' +
+            '<div class="hhdl-processing-spinner"></div>' +
+            '<div class="hhdl-processing-text">Completing task on NewBook</div>' +
+            '</div>');
+        taskItem.append(overlay);
+
         $.ajax({
             url: hhdlAjax.ajaxUrl,
             method: 'POST',
@@ -276,11 +283,18 @@
             success: function(response) {
                 if (response.success) {
                     taskItem.addClass('completed');
+
+                    // Update room status badge if NewBook returned site_status
+                    if (response.data.site_status) {
+                        updateRoomStatusBadge(taskData.roomId, response.data.site_status);
+                    }
+
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
                 } else {
-                    // Rollback on error
+                    // Rollback on error with detailed message
                     checkbox.prop('checked', false);
-                    showToast(response.data.message || hhdlAjax.strings.error, 'error');
+                    var errorMsg = response.data && response.data.message ? response.data.message : hhdlAjax.strings.error;
+                    showToast('NewBook Error: ' + errorMsg, 'error');
                 }
             },
             error: function() {
@@ -289,9 +303,40 @@
                 showToast(hhdlAjax.strings.error, 'error');
             },
             complete: function() {
+                // Remove processing overlay
+                overlay.remove();
                 checkbox.prop('disabled', false);
             }
         });
+    }
+
+    /**
+     * Update room status badge in room card and modal header
+     */
+    function updateRoomStatusBadge(roomId, siteStatus) {
+        // Update status badge in room card on main list
+        var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+        if (roomCard.length) {
+            var statusBadge = roomCard.find('.hhdl-status-badge');
+            if (statusBadge.length) {
+                // Update badge text and class
+                statusBadge.removeClass('clean dirty inspected unknown')
+                    .addClass(siteStatus.toLowerCase())
+                    .text(siteStatus);
+            }
+        }
+
+        // Update status badge in modal header if modal is open for this room
+        var modalRoomId = $('.hhdl-modal-header .hhdl-modal-room-number').text().trim();
+        if (modalRoomId === roomId || modalRoomId === String(roomId)) {
+            var modalStatusBadge = $('.hhdl-modal-site-status');
+            if (modalStatusBadge.length) {
+                // Update modal status badge
+                modalStatusBadge.removeClass('clean dirty inspected unknown arrived')
+                    .addClass(siteStatus.toLowerCase())
+                    .text(siteStatus);
+            }
+        }
     }
 
     /**
