@@ -334,9 +334,11 @@ class HHDL_Ajax {
             $primary_booking = $arriving_booking;
             error_log("  -> Final Flow Type: ARRIVE");
         } elseif ($departing_booking) {
+            // DEPART: Guest checking out today, room is vacant tonight
+            // Don't set primary_booking so modal shows "No booking" instead of departing guest details
             $booking_flow_type = 'depart';
-            $primary_booking = $departing_booking;
-            error_log("  -> Final Flow Type: DEPART");
+            $primary_booking = null; // Room is vacant for tonight
+            error_log("  -> Final Flow Type: DEPART (room vacant tonight)");
         } elseif ($staying_booking) {
             $booking_flow_type = 'stay_over';
             $primary_booking = $staying_booking;
@@ -432,6 +434,12 @@ class HHDL_Ajax {
                 'extra_bed_info'    => $extra_bed_detection,
                 'booking_flow_type' => $booking_flow_type
             );
+        } elseif ($booking_flow_type === 'depart') {
+            // For DEPART flow, create minimal booking_data with only flow_type
+            // This shows the DEPART label but "No booking" for nights/details
+            $booking_data = array(
+                'booking_flow_type' => $booking_flow_type
+            );
         }
 
         // Get tasks for this room/date using all configured task types
@@ -514,6 +522,13 @@ class HHDL_Ajax {
     private function filter_booking_data($booking) {
         if (!$booking) {
             return null;
+        }
+
+        // Handle minimal booking_data (DEPART flow with only flow_type)
+        if (isset($booking['booking_flow_type']) && count($booking) === 1) {
+            return array(
+                'booking_flow_type' => $booking['booking_flow_type']
+            );
         }
 
         $can_view_guest = $this->user_can_view_guest_details();
