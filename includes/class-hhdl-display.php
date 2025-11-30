@@ -1530,7 +1530,10 @@ class HHDL_Display {
                 // Multi-day: period_to is exclusive, so subtract one day
                 $end = strtotime('-1 day', $end);
 
-                $current = $start;
+                // Normalize to midnight to ensure date-only comparison
+                $current = strtotime('midnight', $start);
+                $end = strtotime('midnight', $end);
+
                 while ($current <= $end) {
                     $dates[] = date('Y-m-d', $current);
                     $current = strtotime('+1 day', $current);
