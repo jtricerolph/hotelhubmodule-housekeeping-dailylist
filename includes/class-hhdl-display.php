@@ -425,18 +425,149 @@ class HHDL_Display {
         $task_description = isset($task['description']) ? $task['description'] : 'Blocked';
         $task_icon = isset($task['icon']) ? $task['icon'] : 'construction';
         ?>
-        <div class="hhdl-room-content">
+        <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
-            <span class="material-symbols-outlined hhdl-task-icon">
-                <?php echo esc_html($task_icon); ?>
+            <span class="hhdl-blocked-label">
+                <span class="material-symbols-outlined hhdl-task-icon">
+                    <?php echo esc_html($task_icon); ?>
+                </span>
+                <?php echo esc_html($task_description); ?>
             </span>
-            <span class="hhdl-task-label"><?php echo esc_html($task_description); ?></span>
             <div class="hhdl-status-wrapper">
                 <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
                     <span class="hhdl-site-status <?php echo esc_attr(strtolower($room['site_status'])); ?>">
                         <?php echo esc_html($room['site_status']); ?>
                     </span>
                 <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="hhdl-room-stats">
+            <!-- Block 1: Arrival Time (Empty for spacing) -->
+            <div class="hhdl-stat-block">
+                <div class="hhdl-stat-content"></div>
+            </div>
+
+            <!-- Block 2: Bed Type Indicator (Empty for spacing) -->
+            <div class="hhdl-stat-block">
+                <div class="hhdl-stat-content"></div>
+            </div>
+
+            <!-- Block 3: NewBook/Default Tasks -->
+            <div class="hhdl-stat-block">
+                <?php
+                // Count NewBook tasks for this room
+                $newbook_tasks = 0;
+                $task_class = 'hhdl-task-status hhdl-task-none';
+                $task_title = __('No tasks', 'hhdl');
+                $task_icon_stat = 'assignment_turned_in';
+
+                if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
+                    $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
+                    $today = date('Y-m-d');
+                    $is_future_date = ($viewing_date > $today);
+
+                    // For future dates, only count tasks for that specific date (no rollover)
+                    if ($is_future_date) {
+                        $future_tasks = 0;
+                        foreach ($room['newbook_tasks'] as $task) {
+                            $task_dates = $this->get_task_dates($task);
+                            if (!empty($task_dates) && in_array($viewing_date, $task_dates)) {
+                                $future_tasks++;
+                            }
+                        }
+                        $newbook_tasks = $future_tasks;
+
+                        // Future dates always show grey styling
+                        if ($newbook_tasks > 0) {
+                            $task_class = 'hhdl-task-status hhdl-task-future';
+                            $task_title = sprintf(_n('%d scheduled task', '%d scheduled tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon_stat = 'assignment';
+                        } else {
+                            $task_class = 'hhdl-task-status hhdl-task-none';
+                            $task_title = __('No tasks scheduled', 'hhdl');
+                            $task_icon_stat = 'assignment_turned_in';
+                        }
+                    } else {
+                        // Today or past: count all tasks including rollover and show red/amber
+                        $newbook_tasks = count($room['newbook_tasks']);
+
+                        if ($newbook_tasks > 0) {
+                            // Check if tasks are current (for today) or rollover (from before today)
+                            $has_late = false;
+                            $has_rollover = false;
+
+                            foreach ($room['newbook_tasks'] as $task) {
+                                $task_dates = $this->get_task_dates($task);
+                                if (!empty($task_dates)) {
+                                    $latest_task_date = max($task_dates);
+                                    if ($latest_task_date < $viewing_date) {
+                                        // Task is from before today - rollover (amber)
+                                        $has_rollover = true;
+                                    } elseif (in_array($viewing_date, $task_dates)) {
+                                        // Task is for today - outstanding (red)
+                                        $has_late = true;
+                                    }
+                                }
+                            }
+
+                            if ($has_late) {
+                                $task_class = 'hhdl-task-status hhdl-task-late';
+                                $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                                $task_icon_stat = 'assignment_late';
+                            } elseif ($has_rollover) {
+                                $task_class = 'hhdl-task-status hhdl-task-return';
+                                $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                                $task_icon_stat = 'assignment_late';
+                            }
+                        } else {
+                            $task_class = 'hhdl-task-status hhdl-task-complete';
+                            $task_title = __('All tasks complete', 'hhdl');
+                            $task_icon_stat = 'assignment_turned_in';
+                        }
+                    }
+                }
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined"><?php echo esc_html($task_icon_stat); ?></span>
+                        <?php if ($newbook_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($newbook_tasks); ?></span>
+                        <?php endif; ?>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Block 4: Future Tasks Module -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add future tasks module integration
+                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
+                $future_class = 'hhdl-future-tasks hhdl-tasks-none';
+                $future_title = __('No current tasks', 'hhdl');
+                $module_tasks = 0; // TODO: Set actual count from future tasks module
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined">checklist_rtl</span>
+                        <?php if ($module_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
+                        <?php endif; ?>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Block 5: Spoilt Linen Module -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add spoilt linen module integration
+                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
+                $linen_class = 'hhdl-linen-status hhdl-linen-none';
+                $linen_title = __('No linen data', 'hhdl');
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                </div>
             </div>
         </div>
         <?php
