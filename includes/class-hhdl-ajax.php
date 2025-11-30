@@ -119,7 +119,7 @@ class HHDL_Ajax {
 
         // Render modal body HTML
         ob_start();
-        $this->render_room_modal_body($room_details, $booking_data, $tasks, $date);
+        $this->render_room_modal_body($room_details, $booking_data, $tasks, $date, $location_id);
         $body_html = ob_get_clean();
 
         wp_send_json_success(array(
@@ -1089,10 +1089,7 @@ class HHDL_Ajax {
     /**
      * Render room modal body HTML
      */
-    private function render_room_modal_body($room_details, $booking_data, $tasks, $date) {
-        // Get location ID for notes rendering
-        $location_id = isset($room_details['location_id']) ? $room_details['location_id'] : 0;
-
+    private function render_room_modal_body($room_details, $booking_data, $tasks, $date, $location_id) {
         // Render notes section (if applicable note types exist)
         $this->render_notes_section($booking_data, $location_id);
         ?>
