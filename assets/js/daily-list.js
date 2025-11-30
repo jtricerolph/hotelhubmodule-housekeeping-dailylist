@@ -189,7 +189,8 @@
         const modalHeader = modal.find('.hhdl-modal-header');
         const modalBody = $('#hhdl-modal-body');
 
-        // Show loading state
+        // Clear previous content and show loading state
+        modalHeader.html('');
         modalBody.html('<div class="hhdl-loading"><span class="spinner is-active"></span><p>' + hhdlAjax.strings.loading + '</p></div>');
         modal.addClass('active');
 
