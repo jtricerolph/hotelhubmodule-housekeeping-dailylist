@@ -273,7 +273,7 @@ class HHDL_Display {
      */
     private function render_vacant_room($room, $is_viewing_today = true) {
         ?>
-        <div class="hhdl-room-content">
+        <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
             <span class="hhdl-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
             <div class="hhdl-status-wrapper">
@@ -282,6 +282,59 @@ class HHDL_Display {
                         <?php echo esc_html($room['site_status']); ?>
                     </span>
                 <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="hhdl-room-stats">
+            <!-- Block 1: Arrival Time (Empty for spacing) -->
+            <div class="hhdl-stat-block">
+                <div class="hhdl-stat-content"></div>
+            </div>
+
+            <!-- Block 2: Bed Type Indicator (Empty for spacing) -->
+            <div class="hhdl-stat-block">
+                <div class="hhdl-stat-content"></div>
+            </div>
+
+            <!-- Block 3: NewBook/Default Tasks -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add task status logic from NewBook/default tasks
+                // assignment_late - outstanding tasks (red)
+                // assignment_return - rollover tasks from previous dates (amber)
+                // assignment_turned_in - no outstanding tasks (green)
+                $task_class = 'hhdl-task-status hhdl-task-none';
+                $task_title = __('No tasks', 'hhdl');
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
+                    <span class="material-symbols-outlined">assignment_turned_in</span>
+                </div>
+            </div>
+
+            <!-- Block 4: Future Tasks Module -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add future tasks module integration
+                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
+                $future_class = 'hhdl-future-tasks hhdl-tasks-none';
+                $future_title = __('No current tasks', 'hhdl');
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
+                    <span class="material-symbols-outlined">checklist_rtl</span>
+                </div>
+            </div>
+
+            <!-- Block 5: Spoilt Linen Module -->
+            <div class="hhdl-stat-block">
+                <?php
+                // TODO: Add spoilt linen module integration
+                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
+                $linen_class = 'hhdl-linen-status hhdl-linen-none';
+                $linen_title = __('No linen data', 'hhdl');
+                ?>
+                <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                </div>
             </div>
         </div>
         <?php
