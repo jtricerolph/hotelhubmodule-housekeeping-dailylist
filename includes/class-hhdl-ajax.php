@@ -977,8 +977,8 @@ class HHDL_Ajax {
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
-                    <?php elseif ($is_viewing_today && !$booking_data && strtolower($room_details['site_status']) !== 'unknown'): ?>
-                        <!-- Show site status for vacant rooms on today's date -->
+                    <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights'])) && strtolower($room_details['site_status']) !== 'unknown'): ?>
+                        <!-- Show site status for vacant rooms and DEPART flow on today's date -->
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
