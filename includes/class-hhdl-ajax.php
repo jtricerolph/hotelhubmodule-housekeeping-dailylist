@@ -110,7 +110,7 @@ class HHDL_Ajax {
 
         // Prepare data
         $booking_data = $this->filter_booking_data($room_details['booking']);
-        $tasks = $this->build_tasks_list($room_details, $task_description_mappings, $date);
+        $tasks = $this->build_tasks_list($room_details, $task_description_mappings, $date, $location_id);
 
         // Render modal body HTML
         ob_start();
@@ -357,6 +357,7 @@ class HHDL_Ajax {
                 'id'               => $task['task_id'],
                 'task_description' => isset($task['task_description']) ? $task['task_description'] : '',
                 'task_period'      => $task_period,
+                'task_type_id'     => isset($task['task_type_id']) ? $task['task_type_id'] : '',
                 'task_location_type' => isset($task['task_location_type']) ? $task['task_location_type'] : '',
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
@@ -420,8 +421,17 @@ class HHDL_Ajax {
     /**
      * Build tasks list from NewBook tasks filtered by task description
      */
-    private function build_tasks_list($room_details, $task_description_mappings, $date) {
+    private function build_tasks_list($room_details, $task_description_mappings, $date, $location_id) {
         $tasks = array();
+
+        // Get task types for this location
+        $task_types = HHDL_Settings::get_task_types($location_id);
+        $task_types_map = array();
+        foreach ($task_types as $task_type) {
+            if (isset($task_type['id'])) {
+                $task_types_map[$task_type['id']] = isset($task_type['name']) ? $task_type['name'] : '';
+            }
+        }
 
         // Show NewBook tasks that match configured task description filters
         if (!empty($room_details['newbook_tasks'])) {
@@ -440,8 +450,11 @@ class HHDL_Ajax {
                 // Check if already completed locally (for user attribution)
                 $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
 
-                // Format task type for display
-                $task_type_display = isset($nb_task['task_location_type']) ? ucfirst($nb_task['task_location_type']) : 'Task';
+                // Get task type name from task_type_id
+                $task_type_display = 'Task';
+                if (!empty($nb_task['task_type_id']) && isset($task_types_map[$nb_task['task_type_id']])) {
+                    $task_type_display = $task_types_map[$nb_task['task_type_id']];
+                }
 
                 $tasks[] = array(
                     'id'          => $nb_task['id'],
@@ -734,7 +747,7 @@ class HHDL_Ajax {
 
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
-            <h3><?php _e('Tasks', 'hhdl'); ?></h3>
+            <h3><?php _e('NewBook Tasks', 'hhdl'); ?></h3>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
                 <?php foreach ($tasks as $task): ?>

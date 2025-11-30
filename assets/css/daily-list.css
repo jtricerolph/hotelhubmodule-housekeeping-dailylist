@@ -946,9 +946,9 @@
 
 .hhdl-task-item {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-    padding: 12px;
+    padding: 8px 8px 4px 8px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-left: 4px solid #10b981;
@@ -956,14 +956,13 @@
 }
 
 .hhdl-task-item .hhdl-task-checkbox {
-    margin-top: 2px;
     flex-shrink: 0;
 }
 
 .hhdl-task-content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex: 1;
 }
 
@@ -974,7 +973,7 @@
 }
 
 .hhdl-task-meta {
-    font-size: 8px;
+    font-size: 10px;
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.5px;
