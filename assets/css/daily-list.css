@@ -2,6 +2,16 @@
  * Daily List Module - Frontend Styles
  */
 
+/* Hide scrollbar for main module container */
+.hha-module-container:has(#hhdl-room-list) {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hha-module-container:has(#hhdl-room-list)::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 /* Header */
 .hhdl-header {
     position: sticky;
