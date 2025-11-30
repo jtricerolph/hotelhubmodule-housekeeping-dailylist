@@ -256,16 +256,34 @@ class HHDL_Ajax {
             }
         }
 
-        // Get bookings for this room/date - check both staying and arriving/departing for back-to-back detection
-        $bookings_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), null, true);
-        $bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
+        // Get all bookings that might affect this room on this date
+        // We need to check both arriving and staying to detect back-to-back scenarios
+        $all_bookings = array();
 
-        $booking_data = null;
+        // Get staying bookings (covers the date)
+        $staying_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), 'staying', true);
+        if (isset($staying_response['data'])) {
+            $all_bookings = array_merge($all_bookings, $staying_response['data']);
+        }
+
+        // Get arriving bookings (checkin on this date)
+        $arriving_response = $api->get_bookings($date, $date, 'arriving', true);
+        if (isset($arriving_response['data'])) {
+            $all_bookings = array_merge($all_bookings, $arriving_response['data']);
+        }
+
+        // Get departing bookings (checkout on this date)
+        $departing_response = $api->get_bookings($date, $date, 'departing', true);
+        if (isset($departing_response['data'])) {
+            $all_bookings = array_merge($all_bookings, $departing_response['data']);
+        }
+
+        $staying_booking = null;
         $departing_booking = null;
         $arriving_booking = null;
 
-        // First pass: identify departing and arriving bookings
-        foreach ($bookings as $booking) {
+        // First pass: identify departing, arriving, and staying bookings for this room
+        foreach ($all_bookings as $booking) {
             if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
                 $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
                 $departure = date('Y-m-d', strtotime($booking['booking_departure']));
@@ -281,8 +299,8 @@ class HHDL_Ajax {
                 }
 
                 // Check for staying booking (covers this date)
-                if ($arrival <= $date && $departure > $date) {
-                    $booking_data = $booking;
+                if ($arrival < $date && $departure > $date) {
+                    $staying_booking = $booking;
                 }
             }
         }
@@ -301,9 +319,9 @@ class HHDL_Ajax {
         } elseif ($departing_booking) {
             $booking_flow_type = 'depart';
             $primary_booking = $departing_booking;
-        } elseif ($booking_data) {
+        } elseif ($staying_booking) {
             $booking_flow_type = 'stay_over';
-            $primary_booking = $booking_data;
+            $primary_booking = $staying_booking;
         }
 
         // Process the primary booking
