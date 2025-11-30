@@ -945,13 +945,38 @@
 
 .hhdl-task-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 12px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-left: 4px solid #10b981;
     border-radius: 6px;
+}
+
+.hhdl-task-item .hhdl-task-checkbox {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.hhdl-task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.hhdl-task-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+}
+
+.hhdl-task-meta {
+    font-size: 8px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .hhdl-loading {

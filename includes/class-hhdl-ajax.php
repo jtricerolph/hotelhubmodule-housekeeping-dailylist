@@ -299,9 +299,12 @@ class HHDL_Ajax {
         }
 
         // Get tasks for this room/date using all configured task types
-        $from_datetime = $date . ' 00:00:00';
+        // Use wider date range to capture rollover tasks (yesterday to today)
+        $yesterday = date('Y-m-d', strtotime($date . ' -1 day'));
+        $from_datetime = $yesterday . ' 00:00:00';
         $to_datetime = $date . ' 23:59:59';
-        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, false, null, true);
+        // show_uncomplete=true includes outstanding tasks from before today (rollover tasks)
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
         $newbook_tasks = array();
@@ -322,15 +325,39 @@ class HHDL_Ajax {
                 continue;
             }
 
-            // Check if task is for this date
+            // Check if task applies to this date
             $task_dates = $this->get_task_dates($task);
-            if (!in_array($date, $task_dates)) {
+
+            // Include task if:
+            // 1. Today's date is in the task dates (current task)
+            // 2. OR task's latest date is before today (rollover/outstanding task)
+            $include_task = false;
+            if (in_array($date, $task_dates)) {
+                $include_task = true;
+            } elseif (!empty($task_dates)) {
+                $latest_task_date = max($task_dates);
+                if ($latest_task_date < $date) {
+                    $include_task = true; // Rollover task
+                }
+            }
+
+            if (!$include_task) {
                 continue;
+            }
+
+            // Get task period for display
+            $task_period = '';
+            if (!empty($task['task_when_date'])) {
+                $task_period = date('Y-m-d', strtotime($task['task_when_date']));
+            } elseif (!empty($task['task_period_from'])) {
+                $task_period = date('Y-m-d', strtotime($task['task_period_from']));
             }
 
             $newbook_tasks[] = array(
                 'id'               => $task['task_id'],
                 'task_description' => isset($task['task_description']) ? $task['task_description'] : '',
+                'task_period'      => $task_period,
+                'task_location_type' => isset($task['task_location_type']) ? $task['task_location_type'] : '',
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
         }
@@ -413,12 +440,17 @@ class HHDL_Ajax {
                 // Check if already completed locally (for user attribution)
                 $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
 
+                // Format task type for display
+                $task_type_display = isset($nb_task['task_location_type']) ? ucfirst($nb_task['task_location_type']) : 'Task';
+
                 $tasks[] = array(
-                    'id'        => $nb_task['id'],
-                    'name'      => $task_description, // Use actual task description from NewBook
-                    'color'     => $matched_color,
-                    'completed' => $nb_task['completed'] || $locally_completed, // NewBook or local completion
-                    'source'    => 'newbook'
+                    'id'          => $nb_task['id'],
+                    'name'        => $task_description, // Use actual task description from NewBook
+                    'task_type'   => $task_type_display,
+                    'task_period' => isset($nb_task['task_period']) ? $nb_task['task_period'] : '',
+                    'color'       => $matched_color,
+                    'completed'   => $nb_task['completed'] || $locally_completed, // NewBook or local completion
+                    'source'      => 'newbook'
                 );
             }
         }
@@ -716,7 +748,23 @@ class HHDL_Ajax {
                            data-task-id="<?php echo esc_attr($task['id']); ?>"
                            data-task-type="<?php echo esc_attr($task['name']); ?>"
                            data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>">
-                    <span class="hhdl-task-name"><?php echo esc_html($task['name']); ?></span>
+                    <div class="hhdl-task-content">
+                        <span class="hhdl-task-name"><?php echo esc_html($task['name']); ?></span>
+                        <?php if (!empty($task['task_type']) || !empty($task['task_period'])): ?>
+                        <span class="hhdl-task-meta">
+                            <?php
+                            $meta_parts = array();
+                            if (!empty($task['task_type'])) {
+                                $meta_parts[] = esc_html($task['task_type']);
+                            }
+                            if (!empty($task['task_period'])) {
+                                $meta_parts[] = esc_html($task['task_period']);
+                            }
+                            echo implode(' - ', $meta_parts);
+                            ?>
+                        </span>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
