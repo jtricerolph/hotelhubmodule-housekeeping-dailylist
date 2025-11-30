@@ -724,6 +724,50 @@
     transform: scale(1.05);
 }
 
+/* Task Counter Badge */
+.hhdl-task-count {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.hhdl-task-count-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    color: white;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+/* Counter colors based on task state */
+.hhdl-task-late .hhdl-task-count-badge {
+    background: #dc2626;
+}
+
+.hhdl-task-return .hhdl-task-count-badge {
+    background: #f59e0b;
+}
+
+.hhdl-task-complete .hhdl-task-count-badge {
+    background: #10b981;
+}
+
+.hhdl-tasks-waiting .hhdl-task-count-badge {
+    background: #dc2626;
+}
+
+.hhdl-tasks-complete .hhdl-task-count-badge {
+    background: #10b981;
+}
+
 /* Future Tasks Module Icons */
 .hhdl-stat-content.hhdl-future-tasks {
     padding: 3px 6px;

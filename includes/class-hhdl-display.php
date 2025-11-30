@@ -305,9 +305,15 @@ class HHDL_Display {
                 // assignment_turned_in - no outstanding tasks (green)
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
+                $task_count = 0; // TODO: Set actual count from task data
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
-                    <span class="material-symbols-outlined">assignment_turned_in</span>
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined">assignment_turned_in</span>
+                        <?php if ($task_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
 
@@ -318,9 +324,15 @@ class HHDL_Display {
                 // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
                 $future_class = 'hhdl-future-tasks hhdl-tasks-none';
                 $future_title = __('No current tasks', 'hhdl');
+                $future_count = 0; // TODO: Set actual count from future tasks module
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
-                    <span class="material-symbols-outlined">checklist_rtl</span>
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined">checklist_rtl</span>
+                        <?php if ($future_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($future_count); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
 
@@ -510,9 +522,15 @@ class HHDL_Display {
                 // assignment_turned_in - no outstanding tasks (green)
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
+                $task_count = 0; // TODO: Set actual count from task data
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
-                    <span class="material-symbols-outlined">assignment_turned_in</span>
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined">assignment_turned_in</span>
+                        <?php if ($task_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
 
@@ -523,9 +541,15 @@ class HHDL_Display {
                 // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
                 $future_class = 'hhdl-future-tasks hhdl-tasks-none';
                 $future_title = __('No current tasks', 'hhdl');
+                $future_count = 0; // TODO: Set actual count from future tasks module
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
-                    <span class="material-symbols-outlined">checklist_rtl</span>
+                    <span class="hhdl-task-count">
+                        <span class="material-symbols-outlined">checklist_rtl</span>
+                        <?php if ($future_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($future_count); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
 
