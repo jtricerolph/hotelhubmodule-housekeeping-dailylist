@@ -284,22 +284,67 @@ class HHDL_Ajax {
                         }
                     }
 
+                    // Detect twin/sofabed configuration
+                    $twin_detection = $this->detect_twin($booking, $location_id);
+                    $has_twin = ($twin_detection['type'] === 'confirmed' || $twin_detection['type'] === 'potential');
+
+                    // Detect extra bed
+                    $extra_bed_detection = $this->detect_extra_bed($booking, $location_id);
+
+                    // Early arrival detection (only for arrivals)
+                    $is_arriving = ($arrival === $date);
+                    $checkin_time = '';
+                    $is_early_arrival = false;
+
+                    if ($is_arriving && $hotel) {
+                        $default_arrival_time = isset($hotel->default_arrival_time) ? $hotel->default_arrival_time : '15:00';
+
+                        // Extract time from booking_eta
+                        $eta_time = null;
+                        if (isset($booking['booking_eta']) && !empty($booking['booking_eta'])) {
+                            $eta_time = date('H:i', strtotime($booking['booking_eta']));
+                        }
+
+                        // Extract time from booking_arrival
+                        $arrival_time = null;
+                        if (isset($booking['booking_arrival']) && !empty($booking['booking_arrival'])) {
+                            $arrival_time = date('H:i', strtotime($booking['booking_arrival']));
+                        }
+
+                        // Check if either is before default time
+                        if ($eta_time && $eta_time < $default_arrival_time) {
+                            $is_early_arrival = true;
+                            $checkin_time = $eta_time;
+                        } elseif ($arrival_time && $arrival_time < $default_arrival_time) {
+                            $is_early_arrival = true;
+                            $checkin_time = $arrival_time;
+                        } elseif ($eta_time) {
+                            $checkin_time = $eta_time;
+                        } elseif ($arrival_time) {
+                            $checkin_time = $arrival_time;
+                        }
+                    }
+
                     $booking_data = array(
-                        'reference'     => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
-                        'guest_name'    => $guest_name,
-                        'email'         => isset($booking['guest_email']) ? $booking['guest_email'] : '',
-                        'phone'         => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
-                        'checkin_date'  => $arrival,
-                        'checkout_date' => $departure,
-                        'checkin_time'  => isset($booking['booking_eta']) ? date('H:i', strtotime($booking['booking_eta'])) : '',
-                        'checkout_time' => '10:00', // Default checkout
-                        'pax'           => isset($booking['pax']) ? $booking['pax'] : 0,
-                        'nights'        => $total_nights,
-                        'current_night' => $current_night,
-                        'room_type'     => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
-                        'rate_plan'     => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
-                        'rate_amount'   => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
-                        'notes'         => isset($booking['notes']) ? $this->format_notes($booking['notes']) : ''
+                        'reference'         => isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : '',
+                        'guest_name'        => $guest_name,
+                        'email'             => isset($booking['guest_email']) ? $booking['guest_email'] : '',
+                        'phone'             => isset($booking['guest_phone']) ? $booking['guest_phone'] : '',
+                        'checkin_date'      => $arrival,
+                        'checkout_date'     => $departure,
+                        'checkin_time'      => $checkin_time,
+                        'is_early_arrival'  => $is_early_arrival,
+                        'checkout_time'     => '10:00', // Default checkout
+                        'pax'               => isset($booking['pax']) ? $booking['pax'] : 0,
+                        'nights'            => $total_nights,
+                        'current_night'     => $current_night,
+                        'room_type'         => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
+                        'rate_plan'         => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
+                        'rate_amount'       => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
+                        'notes'             => isset($booking['notes']) ? $this->format_notes($booking['notes']) : '',
+                        'has_twin'          => $has_twin,
+                        'twin_info'         => $twin_detection,
+                        'extra_bed_info'    => $extra_bed_detection
                     );
                     break;
                 }
@@ -741,13 +786,10 @@ class HHDL_Ajax {
     private function render_room_modal_header($room_details, $booking_data, $date) {
         // Calculate booking status
         $is_arriving = false;
-        $is_departing = false;
-        $is_stopover = false;
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
 
         if ($booking_data) {
             $is_arriving = ($booking_data['checkin_date'] === $date);
-            $is_departing = ($booking_data['checkout_date'] === $date);
-            $is_stopover = !$is_arriving && !$is_departing;
         }
 
         // Format occupancy (for now just show pax, can be enhanced with adults/children later)
@@ -761,12 +803,10 @@ class HHDL_Ajax {
             <div class="hhdl-modal-room-info">
                 <span class="hhdl-modal-room-number"><?php echo esc_html($room_details['room_number']); ?></span>
                 <?php if ($booking_data): ?>
-                    <?php if (isset($booking_data['guest_name']) && !empty($booking_data['guest_name'])): ?>
-                        <span class="hhdl-modal-guest-name"><?php echo esc_html($booking_data['guest_name']); ?></span>
-                    <?php elseif (isset($booking_data['reference'])): ?>
-                        <span class="hhdl-modal-ref-number"><?php echo esc_html($booking_data['reference']); ?></span>
-                    <?php endif; ?>
-                    <span class="hhdl-modal-nights"><?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']) . ' nights'; ?></span>
+                    <span class="hhdl-modal-nights">
+                        <span class="material-symbols-outlined">bedtime</span>
+                        <?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']); ?>
+                    </span>
                 <?php else: ?>
                     <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                 <?php endif; ?>
@@ -777,23 +817,94 @@ class HHDL_Ajax {
 
             <?php if ($booking_data): ?>
             <div class="hhdl-modal-room-stats">
-                <?php if (!empty($booking_data['checkin_time'])): ?>
-                    <span class="hhdl-modal-stat hhdl-modal-checkin-time <?php echo $is_arriving ? 'hhdl-modal-is-arriving' : ''; ?>">
-                        <span class="material-symbols-outlined">schedule</span>
-                        <?php echo esc_html($booking_data['checkin_time']); ?>
-                    </span>
+                <!-- Arrival Time -->
+                <?php if ($is_arriving && !empty($booking_data['checkin_time'])): ?>
+                    <?php
+                    $early_class = 'hhdl-modal-stat-content hhdl-modal-checkin-time';
+                    if (isset($booking_data['is_early_arrival']) && $booking_data['is_early_arrival']) {
+                        $early_class .= ' hhdl-modal-early-arrival';
+                    }
+                    ?>
+                    <div class="hhdl-modal-stat-block">
+                        <div class="<?php echo esc_attr($early_class); ?>">
+                            <span class="material-symbols-outlined">schedule</span>
+                            <span class="hhdl-time-text"><?php echo esc_html($booking_data['checkin_time']); ?></span>
+                        </div>
+                    </div>
                 <?php endif; ?>
 
-                <!-- Bedding type placeholder - to be implemented -->
-                <span class="hhdl-modal-stat hhdl-modal-bedding">
-                    <span class="material-symbols-outlined">bed</span>
-                </span>
+                <!-- Bed Type Indicator -->
+                <?php if ($is_arriving): ?>
+                    <?php
+                    // Get location settings for bed colors
+                    $bed_settings = HHDL_Settings::get_location_settings($location_id);
 
+                    // Get detection info
+                    $twin_info = isset($booking_data['twin_info']) ? $booking_data['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
+                    $extra_bed_info = isset($booking_data['extra_bed_info']) ? $booking_data['extra_bed_info'] : array('has_extra_bed' => false, 'matched_term' => '', 'source' => '');
+                    $has_twin = isset($booking_data['has_twin']) ? $booking_data['has_twin'] : false;
+
+                    // Determine bed type and color based on priority
+                    $bed_color = $bed_settings['bed_color_default']; // Default
+                    $bed_title_parts = array();
+
+                    // Check twin status
+                    if ($twin_info['type'] === 'confirmed') {
+                        $bed_color = $bed_settings['bed_color_twin_confirmed'];
+                        $source_display = ($twin_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Confirmed Twin - Found "%s" in %s', 'hhdl'), $twin_info['matched_term'], $source_display);
+                    } elseif ($extra_bed_info['has_extra_bed']) {
+                        $bed_color = $bed_settings['bed_color_extra'];
+                        $source_display = ($extra_bed_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Extra Bed - Found "%s" in %s', 'hhdl'), $extra_bed_info['matched_term'], $source_display);
+                    } elseif ($twin_info['type'] === 'potential') {
+                        $bed_color = $bed_settings['bed_color_twin_potential'];
+                        $source_display = ($twin_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Potential Twin - Found "%s" in %s (verify bed type)', 'hhdl'), $twin_info['matched_term'], $source_display);
+                    } else {
+                        $bed_title_parts[] = __('Standard Double Bed', 'hhdl');
+                    }
+
+                    // Add extra bed to title if detected (in addition to bed type)
+                    if ($extra_bed_info['has_extra_bed'] && $twin_info['type'] !== 'none') {
+                        $source_display = ($extra_bed_info['source'] === 'custom_field') ? 'custom field' : 'booking notes';
+                        $bed_title_parts[] = sprintf(__('Extra Bed - Found "%s" in %s', 'hhdl'), $extra_bed_info['matched_term'], $source_display);
+                    }
+
+                    $bed_title = implode(' | ', $bed_title_parts);
+
+                    // Build inline style for color
+                    $bed_inline_style = sprintf('color: %s; border-color: %s;', $bed_color, $bed_color);
+                    ?>
+                    <div class="hhdl-modal-stat-block">
+                        <div class="hhdl-modal-stat-content hhdl-modal-bed-type"
+                             title="<?php echo esc_attr($bed_title); ?>"
+                             style="<?php echo esc_attr($bed_inline_style); ?>">
+                            <?php if ($has_twin): ?>
+                                <!-- Twin beds: 2x single_bed symbols -->
+                                <span class="material-symbols-outlined">single_bed</span>
+                                <span class="material-symbols-outlined">single_bed</span>
+                            <?php else: ?>
+                                <!-- Default double bed: king_bed symbol -->
+                                <span class="material-symbols-outlined">king_bed</span>
+                            <?php endif; ?>
+                            <?php if ($extra_bed_info['has_extra_bed']): ?>
+                                <!-- Extra bed indicator: + chair symbol -->
+                                <span class="hhdl-extra-bed-separator">+</span>
+                                <span class="material-symbols-outlined">chair</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Occupancy -->
                 <?php if (!empty($occupancy_text)): ?>
-                    <span class="hhdl-modal-stat hhdl-modal-occupancy">
-                        <span class="material-symbols-outlined">group</span>
-                        <?php echo esc_html($occupancy_text); ?>
-                    </span>
+                    <div class="hhdl-modal-stat-block">
+                        <div class="hhdl-modal-stat-content hhdl-modal-occupancy">
+                            <span class="material-symbols-outlined">group</span>
+                            <?php echo esc_html($occupancy_text); ?>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
@@ -864,5 +975,169 @@ class HHDL_Ajax {
             <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
         </section>
         <?php
+    }
+
+    /**
+     * Detect twin/sofabed from booking using Daily List module settings
+     *
+     * @param array $booking Booking data from NewBook API
+     * @param int $hotel_id Hotel Hub hotel ID
+     * @return array Detection result with 'type' and 'matched_term' keys
+     */
+    private function detect_twin($booking, $hotel_id) {
+        // Get Daily List settings for this location
+        $settings = HHDL_Settings::get_location_settings($hotel_id);
+
+        // Parse settings into arrays
+        $custom_field_names = !empty($settings['twin_custom_field_names']) ?
+            array_map('trim', explode(',', $settings['twin_custom_field_names'])) : array();
+        $custom_field_values = !empty($settings['twin_custom_field_values']) ?
+            array_map('trim', explode(',', $settings['twin_custom_field_values'])) : array();
+        $notes_search_terms = !empty($settings['twin_notes_search_terms']) ?
+            array_map('trim', explode(',', $settings['twin_notes_search_terms'])) : array();
+        $excluded_terms = !empty($settings['twin_excluded_terms']) ?
+            array_map('trim', explode(',', $settings['twin_excluded_terms'])) : array();
+
+        // PRIMARY DETECTION: Check booking custom fields with configured field names and values
+        if (!empty($booking['custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            foreach ($booking['custom_fields'] as $custom_field) {
+                // Get field label (NewBook uses 'label' for field name)
+                $field_label = isset($custom_field['label']) ? $custom_field['label'] : '';
+
+                // Check if this field label matches any configured names
+                foreach ($custom_field_names as $field_name) {
+                    if ($field_label === $field_name) {
+                        // Check if field value contains any configured search values
+                        $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+                        foreach ($custom_field_values as $search_value) {
+                            $search_value_lower = strtolower($search_value);
+                            if (strpos($field_value, $search_value_lower) !== false) {
+                                return array(
+                                    'type' => 'confirmed',
+                                    'matched_term' => $search_value,
+                                    'source' => 'custom_field'
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // POTENTIAL DETECTION: Check booking notes for configured search terms
+        // First apply excluded terms logic, then search for match terms
+        if (!empty($booking['notes']) && !empty($notes_search_terms)) {
+            foreach ($booking['notes'] as $note) {
+                $note_content = isset($note['content']) ? $note['content'] : '';
+                if (empty($note_content)) {
+                    continue;
+                }
+
+                // Apply excluded terms logic (case-sensitive removal)
+                $cleaned_note = $note_content;
+                if (!empty($excluded_terms)) {
+                    foreach ($excluded_terms as $excluded_term) {
+                        // Remove excluded term (case-sensitive)
+                        $cleaned_note = str_replace($excluded_term, '', $cleaned_note);
+                    }
+                }
+
+                // Now search for match terms in the cleaned note (case-insensitive)
+                $cleaned_note_lower = strtolower($cleaned_note);
+                foreach ($notes_search_terms as $search_term) {
+                    $search_term_lower = strtolower($search_term);
+                    if (strpos($cleaned_note_lower, $search_term_lower) !== false) {
+                        return array(
+                            'type' => 'potential',
+                            'matched_term' => $search_term,
+                            'source' => 'booking_notes'
+                        );
+                    }
+                }
+            }
+        }
+
+        // No twin detected
+        return array(
+            'type' => 'none',
+            'matched_term' => '',
+            'source' => ''
+        );
+    }
+
+    /**
+     * Detect extra bed/sofabed from booking using Daily List module settings
+     *
+     * @param array $booking Booking data from NewBook API
+     * @param int $hotel_id Hotel Hub hotel ID
+     * @return array Detection result with 'has_extra_bed' and 'matched_term' keys
+     */
+    private function detect_extra_bed($booking, $hotel_id) {
+        // Get Daily List settings for this location
+        $settings = HHDL_Settings::get_location_settings($hotel_id);
+
+        // Parse settings into arrays
+        $custom_field_names = !empty($settings['extra_bed_custom_field_names']) ?
+            array_map('trim', explode(',', $settings['extra_bed_custom_field_names'])) : array();
+        $custom_field_values = !empty($settings['extra_bed_custom_field_values']) ?
+            array_map('trim', explode(',', $settings['extra_bed_custom_field_values'])) : array();
+        $notes_search_terms = !empty($settings['extra_bed_notes_search_terms']) ?
+            array_map('trim', explode(',', $settings['extra_bed_notes_search_terms'])) : array();
+
+        // Check booking custom fields with configured field names and values
+        if (!empty($booking['custom_fields']) && !empty($custom_field_names) && !empty($custom_field_values)) {
+            foreach ($booking['custom_fields'] as $custom_field) {
+                // Get field label (NewBook uses 'label' for field name)
+                $field_label = isset($custom_field['label']) ? $custom_field['label'] : '';
+
+                // Check if this field label matches any configured names
+                foreach ($custom_field_names as $field_name) {
+                    if ($field_label === $field_name) {
+                        // Check if field value contains any configured search values
+                        $field_value = isset($custom_field['value']) ? strtolower($custom_field['value']) : '';
+                        foreach ($custom_field_values as $search_value) {
+                            $search_value_lower = strtolower($search_value);
+                            if (strpos($field_value, $search_value_lower) !== false) {
+                                return array(
+                                    'has_extra_bed' => true,
+                                    'matched_term' => $search_value,
+                                    'source' => 'custom_field'
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check booking notes for configured search terms
+        if (!empty($booking['notes']) && !empty($notes_search_terms)) {
+            foreach ($booking['notes'] as $note) {
+                $note_content = isset($note['content']) ? $note['content'] : '';
+                if (empty($note_content)) {
+                    continue;
+                }
+
+                // Search for match terms in notes (case-insensitive)
+                $note_content_lower = strtolower($note_content);
+                foreach ($notes_search_terms as $search_term) {
+                    $search_term_lower = strtolower($search_term);
+                    if (strpos($note_content_lower, $search_term_lower) !== false) {
+                        return array(
+                            'has_extra_bed' => true,
+                            'matched_term' => $search_term,
+                            'source' => 'booking_notes'
+                        );
+                    }
+                }
+            }
+        }
+
+        // No extra bed detected
+        return array(
+            'has_extra_bed' => false,
+            'matched_term' => '',
+            'source' => ''
+        );
     }
 }
