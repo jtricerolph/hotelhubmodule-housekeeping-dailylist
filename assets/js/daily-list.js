@@ -812,7 +812,8 @@
     // Listen for HHA custom module load event
     $(document).on('hha-module-loaded', function(e, moduleId) {
         if (moduleId === 'daily_list') {
-            console.log('[HHDL] Received HHA module-loaded event');
+            console.log('[HHDL] Received HHA module-loaded event, resetting initialization');
+            initialized = false; // Reset flag to allow re-initialization
             setTimeout(checkAndInit, 100); // Small delay to ensure DOM is ready
         }
     });
