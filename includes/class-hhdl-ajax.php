@@ -802,17 +802,19 @@ class HHDL_Ajax {
         <div class="hhdl-modal-header-content">
             <div class="hhdl-modal-room-info">
                 <span class="hhdl-modal-room-number"><?php echo esc_html($room_details['room_number']); ?></span>
-                <?php if ($booking_data): ?>
-                    <span class="hhdl-modal-nights">
-                        <span class="material-symbols-outlined">bedtime</span>
-                        <?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']); ?>
+                <div class="hhdl-modal-right-group">
+                    <?php if ($booking_data): ?>
+                        <span class="hhdl-modal-nights">
+                            <span class="material-symbols-outlined">bedtime</span>
+                            <?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']); ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
+                    <?php endif; ?>
+                    <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                        <?php echo esc_html($room_details['site_status']); ?>
                     </span>
-                <?php else: ?>
-                    <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
-                <?php endif; ?>
-                <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
-                    <?php echo esc_html($room_details['site_status']); ?>
-                </span>
+                </div>
             </div>
 
             <?php if ($booking_data): ?>
@@ -833,8 +835,8 @@ class HHDL_Ajax {
                     </div>
                 <?php endif; ?>
 
-                <!-- Bed Type Indicator -->
-                <?php if ($is_arriving): ?>
+                <!-- Bed Type Indicator (show for all bookings, not just arrivals) -->
+                <?php if (true): ?>
                     <?php
                     // Get location settings for bed colors
                     $bed_settings = HHDL_Settings::get_location_settings($location_id);

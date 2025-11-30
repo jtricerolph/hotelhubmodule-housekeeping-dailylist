@@ -922,7 +922,7 @@
     padding: 16px 20px;
     border-bottom: 1px solid #e5e7eb;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
 }
@@ -937,13 +937,14 @@
 .hhdl-modal-close {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 32px;
     cursor: pointer;
     flex-shrink: 0;
     padding: 0;
     line-height: 1;
     color: #6b7280;
     transition: color 0.2s;
+    align-self: center;
 }
 
 .hhdl-modal-close:hover {
@@ -962,6 +963,14 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    width: 100%;
+}
+
+.hhdl-modal-right-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
 }
 
 .hhdl-modal-room-number {
