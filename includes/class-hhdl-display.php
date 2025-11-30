@@ -591,6 +591,15 @@ class HHDL_Display {
             <?php else: ?>
                 <span class="hhdl-guest-name hhdl-guest-blurred">Guest Name</span>
             <?php endif; ?>
+            <?php
+            // Check for locked booking
+            $is_locked = isset($booking['booking_locked']) && $booking['booking_locked'] == '1';
+            if ($is_locked):
+            ?>
+                <span class="hhdl-locked-icon" title="Locked to Room">
+                    <span class="material-symbols-outlined">lock</span>
+                </span>
+            <?php endif; ?>
             <?php if (!empty($booking['night_info'])): ?>
                 <span class="hhdl-nights">
                     <span class="material-symbols-outlined">bedtime</span>

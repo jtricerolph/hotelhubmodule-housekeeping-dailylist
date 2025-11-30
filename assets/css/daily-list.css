@@ -542,6 +542,20 @@
     gap: 8px;
 }
 
+/* Locked Booking Icon */
+.hhdl-locked-icon {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: 6px;
+}
+
+.hhdl-locked-icon .material-symbols-outlined {
+    font-size: 14px;
+    color: #f59e0b;
+    opacity: 0.9;
+}
+
 .hhdl-nights {
     display: flex;
     align-items: center;
@@ -549,7 +563,7 @@
     font-size: 11px;
     font-weight: 500;
     color: #6b7280;
-    margin-left: auto;
+    margin-left: 0;
     margin-right: 6px;
 }
 
