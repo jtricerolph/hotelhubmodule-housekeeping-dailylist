@@ -1207,6 +1207,8 @@
 
 .hhdl-task-item .hhdl-task-checkbox {
     flex-shrink: 0;
+    order: 2;
+    align-self: center;
 }
 
 .hhdl-task-content {
@@ -1214,6 +1216,7 @@
     flex-direction: column;
     gap: 2px;
     flex: 1;
+    order: 1;
 }
 
 .hhdl-task-name {
