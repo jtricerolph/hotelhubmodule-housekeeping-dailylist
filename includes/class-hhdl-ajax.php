@@ -264,8 +264,9 @@ class HHDL_Ajax {
         $tomorrow = date('Y-m-d', strtotime($date . ' +1 day'));
 
         // Single API call to get all bookings in range
-        // NewBook API returns all bookings regardless of status filter - we filter by dates instead
-        $bookings_response = $api->get_bookings($yesterday, $tomorrow, null, true);
+        // 'staying' returns all active bookings (confirmed, unconfirmed, arrived, departed)
+        // and excludes cancelled, no_show, quote, waitlist, owner_occupied
+        $bookings_response = $api->get_bookings($yesterday, $tomorrow, 'staying', true);
         $all_bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
 
         // DEBUG: Log what bookings we got
