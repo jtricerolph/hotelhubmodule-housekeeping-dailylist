@@ -291,15 +291,18 @@
                     }
 
                     // Fade out and remove task
-                    taskItem.addClass('completed');
                     taskItem.fadeOut(400, function() {
                         $(this).remove();
+
+                        // Update task count after removal
+                        updateTaskCount();
                     });
 
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
                 } else {
                     // Rollback on error with detailed message
                     checkbox.prop('checked', false);
+                    checkbox.prop('disabled', false);
                     var errorMsg = response.data && response.data.message ? response.data.message : hhdlAjax.strings.error;
                     showToast('NewBook Error: ' + errorMsg, 'error');
                     overlay.remove();
@@ -308,11 +311,9 @@
             error: function() {
                 // Rollback on error
                 checkbox.prop('checked', false);
+                checkbox.prop('disabled', false);
                 showToast(hhdlAjax.strings.error, 'error');
                 overlay.remove();
-            },
-            complete: function() {
-                checkbox.prop('disabled', false);
             }
         });
     }
@@ -342,6 +343,36 @@
                 modalStatusBadge.removeClass('clean dirty inspected unknown arrived')
                     .addClass(siteStatus.toLowerCase())
                     .text(siteStatus);
+            }
+        }
+    }
+
+    /**
+     * Update task count badge in modal header
+     */
+    function updateTaskCount() {
+        var taskList = $('.hhdl-task-list');
+        if (!taskList.length) return;
+
+        // Count remaining incomplete tasks (not completed)
+        var incompleteTasks = taskList.find('.hhdl-task-item:not(.completed)').length;
+
+        // Update the task count badge in modal header
+        var taskCountBadge = $('.hhdl-modal-header .hhdl-task-count-badge');
+        if (taskCountBadge.length) {
+            if (incompleteTasks > 0) {
+                taskCountBadge.text(incompleteTasks).show();
+            } else {
+                taskCountBadge.hide();
+            }
+        }
+
+        // Update the section header status indicator
+        var sectionHeader = $('.hhdl-section-header .hhdl-status-indicator');
+        if (sectionHeader.length) {
+            if (incompleteTasks === 0) {
+                sectionHeader.removeClass('hhdl-status-waiting hhdl-status-late hhdl-status-return')
+                    .addClass('hhdl-status-complete');
             }
         }
     }
