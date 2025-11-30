@@ -1081,6 +1081,12 @@ class HHDL_Display {
                 } elseif ($task_date === $date) {
                     error_log('HHDL Display - Marking room ' . $site_id . ' as BLOCKED on TODAY (' . $date . ') due to task ' . $task_id);
                     $rooms_by_id[$site_id]['bookings']['today'] = $task_info;
+
+                    // Also add occupy task to newbook_tasks array for task count stats
+                    if (!isset($rooms_by_id[$site_id]['newbook_tasks'])) {
+                        $rooms_by_id[$site_id]['newbook_tasks'] = array();
+                    }
+                    $rooms_by_id[$site_id]['newbook_tasks'][] = $task;
                 } elseif ($task_date === $tomorrow) {
                     error_log('HHDL Display - Marking room ' . $site_id . ' as BLOCKED on TOMORROW (' . $tomorrow . ') due to task ' . $task_id);
                     $rooms_by_id[$site_id]['bookings']['tomorrow'] = $task_info;
