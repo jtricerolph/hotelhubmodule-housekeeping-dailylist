@@ -1435,8 +1435,18 @@ class HHDL_Ajax {
         error_log('HHDL Notes: Applicable note types: ' . print_r(array_keys($applicable_note_types), true));
         error_log('HHDL Notes: Booking notes data: ' . (isset($booking_data['notes']) ? count($booking_data['notes']) . ' notes found' : 'no notes key in booking data'));
 
-        // Group notes by type_id
+        // Initialize permissions for ALL applicable note types first
         $notes_by_type = array();
+        foreach ($applicable_note_types as $type_id => $note_type) {
+            $can_view = $this->user_can_view_note_type($type_id);
+            error_log('HHDL Notes: Permission check for type_id ' . $type_id . ': ' . ($can_view ? 'YES' : 'NO'));
+            $notes_by_type[$type_id] = array(
+                'can_view' => $can_view,
+                'notes' => array()
+            );
+        }
+
+        // Group notes by type_id
         if (isset($booking_data['notes']) && is_array($booking_data['notes'])) {
             error_log('HHDL Notes: Processing ' . count($booking_data['notes']) . ' notes from booking data');
             foreach ($booking_data['notes'] as $note) {
@@ -1449,19 +1459,8 @@ class HHDL_Ajax {
                     continue;
                 }
 
-                // Check permission for this note type
-                $can_view = $this->user_can_view_note_type($type_id);
-                error_log('HHDL Notes: Permission check for type_id ' . $type_id . ': ' . ($can_view ? 'YES' : 'NO'));
-
-                if (!isset($notes_by_type[$type_id])) {
-                    $notes_by_type[$type_id] = array(
-                        'can_view' => $can_view,
-                        'notes' => array()
-                    );
-                }
-
                 // Add note if user has permission
-                if ($can_view) {
+                if ($notes_by_type[$type_id]['can_view']) {
                     $notes_by_type[$type_id]['notes'][] = $note;
                     error_log('HHDL Notes: Added note to type_id ' . $type_id);
                 }
