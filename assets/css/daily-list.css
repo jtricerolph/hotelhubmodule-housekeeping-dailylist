@@ -721,6 +721,15 @@
     color: #9ca3af;
 }
 
+/* Future tasks (grey) */
+.hhdl-stat-content.hhdl-task-future {
+    border-color: #d1d5db;
+}
+
+.hhdl-stat-content.hhdl-task-future .material-symbols-outlined {
+    color: #9ca3af;
+}
+
 .hhdl-stat-content.hhdl-task-status:hover {
     transform: scale(1.05);
 }
@@ -758,6 +767,10 @@
 
 .hhdl-task-complete .hhdl-task-count-badge {
     background: #10b981;
+}
+
+.hhdl-task-future .hhdl-task-count-badge {
+    background: #9ca3af;
 }
 
 .hhdl-tasks-waiting .hhdl-task-count-badge {

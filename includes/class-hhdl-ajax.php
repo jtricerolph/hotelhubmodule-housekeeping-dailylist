@@ -486,6 +486,10 @@ class HHDL_Ajax {
     private function build_tasks_list($room_details, $task_description_mappings, $date, $location_id) {
         $tasks = array();
 
+        // Check if viewing a future date
+        $today = date('Y-m-d');
+        $is_future_date = ($date > $today);
+
         // Get task types for this location
         $task_types = HHDL_Settings::get_task_types($location_id);
         $task_types_map = array();
@@ -499,6 +503,18 @@ class HHDL_Ajax {
         if (!empty($room_details['newbook_tasks'])) {
             foreach ($room_details['newbook_tasks'] as $nb_task) {
                 $task_description = $nb_task['task_description'];
+
+                // Check if task is a rollover (task period is before the viewing date)
+                $is_rollover = false;
+                if (!empty($nb_task['task_period']) && $nb_task['task_period'] < $date) {
+                    $is_rollover = true;
+                }
+
+                // Skip rollover tasks when viewing future dates
+                if ($is_future_date && $is_rollover) {
+                    continue;
+                }
+
                 $matched_color = '#10b981'; // Default color
 
                 // Check if this task description matches any of our filter patterns
@@ -516,12 +532,6 @@ class HHDL_Ajax {
                 $task_type_display = 'Task';
                 if (!empty($nb_task['task_type_id']) && isset($task_types_map[$nb_task['task_type_id']])) {
                     $task_type_display = $task_types_map[$nb_task['task_type_id']];
-                }
-
-                // Check if task is a rollover (task period is before the viewing date)
-                $is_rollover = false;
-                if (!empty($nb_task['task_period']) && $nb_task['task_period'] < $date) {
-                    $is_rollover = true;
                 }
 
                 $tasks[] = array(

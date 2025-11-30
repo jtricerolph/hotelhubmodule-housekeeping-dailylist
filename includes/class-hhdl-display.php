@@ -564,41 +564,68 @@ class HHDL_Display {
                 error_log('HHDL Render Booked - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
 
                 if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
-                    $newbook_tasks = count($room['newbook_tasks']);
+                    $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
+                    $today = date('Y-m-d');
+                    $is_future_date = ($viewing_date > $today);
 
-                    if ($newbook_tasks > 0) {
-                        // Check if tasks are current (for today) or rollover (from before today)
-                        $has_late = false;
-                        $has_rollover = false;
-                        $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
-
+                    // For future dates, only count tasks for that specific date (no rollover)
+                    if ($is_future_date) {
+                        $future_tasks = 0;
                         foreach ($room['newbook_tasks'] as $task) {
                             $task_dates = $this->get_task_dates($task);
-                            if (!empty($task_dates)) {
-                                $latest_task_date = max($task_dates);
-                                if ($latest_task_date < $viewing_date) {
-                                    // Task is from before today - rollover (amber)
-                                    $has_rollover = true;
-                                } elseif (in_array($viewing_date, $task_dates)) {
-                                    // Task is for today - outstanding (red)
-                                    $has_late = true;
-                                }
+                            if (!empty($task_dates) && in_array($viewing_date, $task_dates)) {
+                                $future_tasks++;
                             }
                         }
+                        $newbook_tasks = $future_tasks;
 
-                        if ($has_late) {
-                            $task_class = 'hhdl-task-status hhdl-task-late';
-                            $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
-                            $task_icon = 'assignment_late';
-                        } elseif ($has_rollover) {
-                            $task_class = 'hhdl-task-status hhdl-task-return';
-                            $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
-                            $task_icon = 'assignment_late';
+                        // Future dates always show grey styling
+                        if ($newbook_tasks > 0) {
+                            $task_class = 'hhdl-task-status hhdl-task-future';
+                            $task_title = sprintf(_n('%d scheduled task', '%d scheduled tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon = 'assignment';
+                        } else {
+                            $task_class = 'hhdl-task-status hhdl-task-none';
+                            $task_title = __('No tasks scheduled', 'hhdl');
+                            $task_icon = 'assignment_turned_in';
                         }
                     } else {
-                        $task_class = 'hhdl-task-status hhdl-task-complete';
-                        $task_title = __('All tasks complete', 'hhdl');
-                        $task_icon = 'assignment_turned_in';
+                        // Today or past: count all tasks including rollover
+                        $newbook_tasks = count($room['newbook_tasks']);
+
+                        if ($newbook_tasks > 0) {
+                            // Check if tasks are current (for today) or rollover (from before today)
+                            $has_late = false;
+                            $has_rollover = false;
+
+                            foreach ($room['newbook_tasks'] as $task) {
+                                $task_dates = $this->get_task_dates($task);
+                                if (!empty($task_dates)) {
+                                    $latest_task_date = max($task_dates);
+                                    if ($latest_task_date < $viewing_date) {
+                                        // Task is from before today - rollover (amber)
+                                        $has_rollover = true;
+                                    } elseif (in_array($viewing_date, $task_dates)) {
+                                        // Task is for today - outstanding (red)
+                                        $has_late = true;
+                                    }
+                                }
+                            }
+
+                            if ($has_late) {
+                                $task_class = 'hhdl-task-status hhdl-task-late';
+                                $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                                $task_icon = 'assignment_late';
+                            } elseif ($has_rollover) {
+                                $task_class = 'hhdl-task-status hhdl-task-return';
+                                $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                                $task_icon = 'assignment_late';
+                            }
+                        } else {
+                            $task_class = 'hhdl-task-status hhdl-task-complete';
+                            $task_title = __('All tasks complete', 'hhdl');
+                            $task_icon = 'assignment_turned_in';
+                        }
                     }
                 }
                 ?>
