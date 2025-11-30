@@ -256,18 +256,64 @@ class HHDL_Ajax {
             }
         }
 
-        // Get booking for this room/date
-        $bookings_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), 'staying', true);
+        // Get bookings for this room/date - check both staying and arriving/departing for back-to-back detection
+        $bookings_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), null, true);
         $bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
 
         $booking_data = null;
+        $departing_booking = null;
+        $arriving_booking = null;
+
+        // First pass: identify departing and arriving bookings
         foreach ($bookings as $booking) {
             if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
                 $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
                 $departure = date('Y-m-d', strtotime($booking['booking_departure']));
 
-                // Check if booking covers this date
+                // Check for departing booking (checkout today)
+                if ($departure === $date && $arrival < $date) {
+                    $departing_booking = $booking;
+                }
+
+                // Check for arriving booking (checkin today)
+                if ($arrival === $date) {
+                    $arriving_booking = $booking;
+                }
+
+                // Check for staying booking (covers this date)
                 if ($arrival <= $date && $departure > $date) {
+                    $booking_data = $booking;
+                }
+            }
+        }
+
+        // Determine booking flow type
+        $booking_flow_type = null;
+        $primary_booking = null;
+
+        if ($departing_booking && $arriving_booking) {
+            // Back-to-back scenario
+            $booking_flow_type = 'depart_arrive';
+            $primary_booking = $arriving_booking; // Use arriving booking as primary
+        } elseif ($arriving_booking) {
+            $booking_flow_type = 'arrive';
+            $primary_booking = $arriving_booking;
+        } elseif ($departing_booking) {
+            $booking_flow_type = 'depart';
+            $primary_booking = $departing_booking;
+        } elseif ($booking_data) {
+            $booking_flow_type = 'stay_over';
+            $primary_booking = $booking_data;
+        }
+
+        // Process the primary booking
+        $booking_data = null;
+        if ($primary_booking) {
+            $booking = $primary_booking;
+            $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
+            $departure = date('Y-m-d', strtotime($booking['booking_departure']));
+
+            if (true) { // Always process
                     $total_nights = (strtotime($departure) - strtotime($arrival)) / 86400;
                     $current_night = (strtotime($date) - strtotime($arrival)) / 86400 + 1;
 
@@ -345,9 +391,10 @@ class HHDL_Ajax {
                         'booking_status'    => isset($booking['booking_status']) ? strtolower($booking['booking_status']) : 'unconfirmed',
                         'has_twin'          => $has_twin,
                         'twin_info'         => $twin_detection,
-                        'extra_bed_info'    => $extra_bed_detection
+                        'extra_bed_info'    => $extra_bed_detection,
+                        'booking_flow_type' => $booking_flow_type
                     );
-                    break;
+                    // Don't break - we've already selected the primary booking above
                 }
             }
         }
@@ -459,6 +506,7 @@ class HHDL_Ajax {
         $filtered['current_night'] = $booking['current_night'];
         $filtered['room_type'] = $booking['room_type'];
         $filtered['booking_status'] = isset($booking['booking_status']) ? $booking['booking_status'] : 'unconfirmed';
+        $filtered['booking_flow_type'] = isset($booking['booking_flow_type']) ? $booking['booking_flow_type'] : null;
 
         // Bed type detection data (always visible for housekeeping)
         $filtered['has_twin'] = isset($booking['has_twin']) ? $booking['has_twin'] : false;
@@ -825,10 +873,39 @@ class HHDL_Ajax {
         $booking_status = $booking_data && isset($booking_data['booking_status']) ? $booking_data['booking_status'] : '';
         $show_arrived = ($booking_status === 'arrived');
 
+        // Get booking flow type
+        $booking_flow_type = $booking_data && isset($booking_data['booking_flow_type']) ? $booking_data['booking_flow_type'] : null;
+        $flow_label = '';
+        $flow_class = '';
+
+        if ($booking_flow_type) {
+            switch ($booking_flow_type) {
+                case 'stay_over':
+                    $flow_label = __('STAY OVER', 'hhdl');
+                    $flow_class = 'stay-over';
+                    break;
+                case 'depart_arrive':
+                    $flow_label = __('DEPART/ARRIVE', 'hhdl');
+                    $flow_class = 'depart-arrive';
+                    break;
+                case 'arrive':
+                    $flow_label = __('ARRIVE', 'hhdl');
+                    $flow_class = 'arrive';
+                    break;
+                case 'depart':
+                    $flow_label = __('DEPART', 'hhdl');
+                    $flow_class = 'depart';
+                    break;
+            }
+        }
+
         ?>
         <div class="hhdl-modal-header-content">
             <div class="hhdl-modal-room-info">
                 <span class="hhdl-modal-room-number"><?php echo esc_html($room_details['room_number']); ?></span>
+                <?php if ($flow_label): ?>
+                    <span class="hhdl-modal-flow-label <?php echo esc_attr($flow_class); ?>"><?php echo esc_html($flow_label); ?></span>
+                <?php endif; ?>
                 <div class="hhdl-modal-right-group">
                     <?php if ($booking_data): ?>
                         <span class="hhdl-modal-nights">
@@ -846,6 +923,11 @@ class HHDL_Ajax {
                         <span class="hhdl-modal-site-status arrived">ARRIVED</span>
                     <?php elseif ($is_viewing_today && $is_arriving && strtolower($room_details['site_status']) !== 'unknown'): ?>
                         <!-- Show site status for today's arrivals -->
+                        <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                            <?php echo esc_html($room_details['site_status']); ?>
+                        </span>
+                    <?php elseif ($is_viewing_today && !$booking_data && strtolower($room_details['site_status']) !== 'unknown'): ?>
+                        <!-- Show site status for vacant rooms on today's date -->
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>

@@ -992,6 +992,35 @@
     color: #111827;
 }
 
+.hhdl-modal-flow-label {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hhdl-modal-flow-label.stay-over {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.hhdl-modal-flow-label.depart-arrive {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.hhdl-modal-flow-label.arrive {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.hhdl-modal-flow-label.depart {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 .hhdl-modal-guest-name {
     font-size: 15px;
     font-weight: 600;
