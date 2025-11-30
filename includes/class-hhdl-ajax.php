@@ -257,8 +257,9 @@ class HHDL_Ajax {
         }
 
         // Get all bookings that might affect this room on this date
-        // We need to check both arriving and staying to detect back-to-back scenarios
+        // We need to check arrivals, stays, and departures (including already departed guests)
         $all_bookings = array();
+        $yesterday = date('Y-m-d', strtotime($date . ' -1 day'));
 
         // Get staying bookings (covers the date)
         $staying_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), 'staying', true);
@@ -272,8 +273,9 @@ class HHDL_Ajax {
             $all_bookings = array_merge($all_bookings, $arriving_response['data']);
         }
 
-        // Get departing bookings (checkout on this date)
-        $departing_response = $api->get_bookings($date, $date, 'departing', true);
+        // Get departing bookings - query from yesterday to today to capture already departed guests
+        // The 'departing' filter with today's date only doesn't return guests who have already checked out
+        $departing_response = $api->get_bookings($yesterday, $date, 'departing', true);
         if (isset($departing_response['data'])) {
             $all_bookings = array_merge($all_bookings, $departing_response['data']);
         }
@@ -282,7 +284,7 @@ class HHDL_Ajax {
         error_log("HHDL Flow Detection - Room $room_id on $date:");
         error_log("  Staying bookings: " . (isset($staying_response['data']) ? count($staying_response['data']) : 0));
         error_log("  Arriving bookings: " . (isset($arriving_response['data']) ? count($arriving_response['data']) : 0));
-        error_log("  Departing bookings: " . (isset($departing_response['data']) ? count($departing_response['data']) : 0));
+        error_log("  Departing bookings (yesterday-today): " . (isset($departing_response['data']) ? count($departing_response['data']) : 0));
         error_log("  Total bookings for analysis: " . count($all_bookings));
 
         $staying_booking = null;
