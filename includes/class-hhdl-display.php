@@ -424,6 +424,9 @@ class HHDL_Display {
         $task_color = isset($task['color']) ? $task['color'] : '#ef4444';
         $task_description = isset($task['description']) ? $task['description'] : 'Blocked';
         $task_icon = isset($task['icon']) ? $task['icon'] : 'construction';
+
+        // Apply titlecase to task description
+        $task_description_display = ucwords(strtolower($task_description));
         ?>
         <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
@@ -431,7 +434,7 @@ class HHDL_Display {
                 <span class="material-symbols-outlined hhdl-task-icon">
                     <?php echo esc_html($task_icon); ?>
                 </span>
-                <?php echo esc_html($task_description); ?>
+                <?php echo esc_html($task_description_display); ?>
             </span>
             <div class="hhdl-status-wrapper">
                 <?php if ($is_viewing_today && strtolower($room['site_status']) !== 'unknown'): ?>
