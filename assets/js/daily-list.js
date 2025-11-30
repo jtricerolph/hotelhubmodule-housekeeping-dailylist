@@ -282,12 +282,19 @@
             },
             success: function(response) {
                 if (response.success) {
-                    taskItem.addClass('completed');
+                    // Remove overlay immediately
+                    overlay.remove();
 
                     // Update room status badge if NewBook returned site_status
                     if (response.data.site_status) {
                         updateRoomStatusBadge(taskData.roomId, response.data.site_status);
                     }
+
+                    // Fade out and remove task
+                    taskItem.addClass('completed');
+                    taskItem.fadeOut(400, function() {
+                        $(this).remove();
+                    });
 
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
                 } else {
@@ -295,16 +302,16 @@
                     checkbox.prop('checked', false);
                     var errorMsg = response.data && response.data.message ? response.data.message : hhdlAjax.strings.error;
                     showToast('NewBook Error: ' + errorMsg, 'error');
+                    overlay.remove();
                 }
             },
             error: function() {
                 // Rollback on error
                 checkbox.prop('checked', false);
                 showToast(hhdlAjax.strings.error, 'error');
+                overlay.remove();
             },
             complete: function() {
-                // Remove processing overlay
-                overlay.remove();
                 checkbox.prop('disabled', false);
             }
         });
