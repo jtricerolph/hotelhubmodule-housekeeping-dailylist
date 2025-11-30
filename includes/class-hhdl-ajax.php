@@ -904,7 +904,7 @@ class HHDL_Ajax {
         $is_arriving = false;
         $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
 
-        if ($booking_data) {
+        if ($booking_data && isset($booking_data['checkin_date'])) {
             $is_arriving = ($booking_data['checkin_date'] === $date);
         }
 
@@ -957,7 +957,7 @@ class HHDL_Ajax {
                     <span class="hhdl-modal-flow-label <?php echo esc_attr($flow_class); ?>"><?php echo esc_html($flow_label); ?></span>
                 <?php endif; ?>
                 <div class="hhdl-modal-right-group">
-                    <?php if ($booking_data): ?>
+                    <?php if ($booking_data && isset($booking_data['nights'])): ?>
                         <span class="hhdl-modal-nights">
                             <span class="material-symbols-outlined">bedtime</span>
                             <?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']); ?>
@@ -985,7 +985,7 @@ class HHDL_Ajax {
                 </div>
             </div>
 
-            <?php if ($booking_data): ?>
+            <?php if ($booking_data && isset($booking_data['nights'])): ?>
             <div class="hhdl-modal-room-stats">
                 <!-- Arrival Time -->
                 <?php if ($is_arriving && !empty($booking_data['checkin_time'])): ?>
