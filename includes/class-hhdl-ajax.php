@@ -1069,7 +1069,32 @@ class HHDL_Ajax {
         ?>
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
-            <h3><?php _e('NewBook Tasks', 'hhdl'); ?></h3>
+            <h3>
+                <?php _e('NewBook Tasks', 'hhdl'); ?>
+                <?php if (!empty($tasks)): ?>
+                    <?php
+                    // Determine task status and count
+                    $task_count = count($tasks);
+                    $has_rollover = false;
+                    foreach ($tasks as $task) {
+                        if (!empty($task['is_rollover'])) {
+                            $has_rollover = true;
+                            break;
+                        }
+                    }
+
+                    // Set icon and class based on status
+                    $icon_class = $has_rollover ? 'hhdl-task-late' : 'hhdl-task-status';
+                    $icon_name = $has_rollover ? 'assignment_late' : 'assignment';
+                    ?>
+                    <div class="hhdl-stat-content <?php echo esc_attr($icon_class); ?>">
+                        <span class="hhdl-task-count">
+                            <span class="material-symbols-outlined"><?php echo esc_html($icon_name); ?></span>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        </span>
+                    </div>
+                <?php endif; ?>
+            </h3>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
                 <?php foreach ($tasks as $task): ?>
@@ -1109,7 +1134,7 @@ class HHDL_Ajax {
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <p><?php _e('No outstanding NewBook housekeeping tasks for this room.', 'hhdl'); ?></p>
+            <p><?php _e('No outstanding housekeeping tasks', 'hhdl'); ?></p>
             <?php endif; ?>
         </section>
 

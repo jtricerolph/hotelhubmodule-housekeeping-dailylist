@@ -973,6 +973,12 @@
 .hhdl-modal-body h3 {
     margin-top: 0;
     margin-bottom: 8px;
+    font-size: 14px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .hhdl-tasks-section {
