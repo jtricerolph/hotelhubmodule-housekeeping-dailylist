@@ -1109,7 +1109,7 @@ class HHDL_Ajax {
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <p><?php _e('No tasks configured for this room.', 'hhdl'); ?></p>
+            <p><?php _e('No outstanding NewBook housekeeping tasks for this room.', 'hhdl'); ?></p>
             <?php endif; ?>
         </section>
 

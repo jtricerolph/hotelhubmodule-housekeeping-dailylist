@@ -977,6 +977,10 @@
 
 .hhdl-tasks-section {
     margin-bottom: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
 }
 
 .hhdl-placeholder {
