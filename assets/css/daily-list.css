@@ -1345,3 +1345,126 @@
 .hhdl-toast.hhdl-toast-error {
     background: #dc2626;
 }
+
+/* Confirmation Modal */
+.hhdl-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.hhdl-confirm-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.hhdl-confirm-modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.2s;
+}
+
+.hhdl-confirm-overlay.active .hhdl-confirm-modal {
+    transform: scale(1);
+}
+
+.hhdl-confirm-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hhdl-confirm-icon {
+    font-size: 32px;
+    color: #f59e0b;
+}
+
+.hhdl-confirm-icon.warning {
+    color: #f59e0b;
+}
+
+.hhdl-confirm-icon.danger {
+    color: #ef4444;
+}
+
+.hhdl-confirm-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.hhdl-confirm-body {
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.hhdl-confirm-task-name {
+    font-weight: 600;
+    color: #111827;
+    margin-top: 8px;
+}
+
+.hhdl-confirm-footer {
+    padding: 16px 24px;
+    background: #f9fafb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.hhdl-confirm-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.hhdl-confirm-btn-cancel {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.hhdl-confirm-btn-cancel:hover {
+    background: #f3f4f6;
+}
+
+.hhdl-confirm-btn-confirm {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.hhdl-confirm-btn-confirm:hover {
+    background: #2563eb;
+}
+
+.hhdl-confirm-btn-confirm.danger {
+    background: #ef4444;
+}
+
+.hhdl-confirm-btn-confirm.danger:hover {
+    background: #dc2626;
+}
