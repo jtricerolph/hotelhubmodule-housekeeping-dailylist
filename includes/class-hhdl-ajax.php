@@ -956,14 +956,15 @@ class HHDL_Ajax {
                 <?php if ($flow_label): ?>
                     <span class="hhdl-modal-flow-label <?php echo esc_attr($flow_class); ?>"><?php echo esc_html($flow_label); ?></span>
                 <?php endif; ?>
+                <?php if (!$booking_data || !isset($booking_data['nights'])): ?>
+                    <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
+                <?php endif; ?>
                 <div class="hhdl-modal-right-group">
                     <?php if ($booking_data && isset($booking_data['nights'])): ?>
                         <span class="hhdl-modal-nights">
                             <span class="material-symbols-outlined">bedtime</span>
                             <?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']); ?>
                         </span>
-                    <?php else: ?>
-                        <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                     <?php endif; ?>
                     <?php if ($is_future_date): ?>
                         <!-- Empty spacer for future dates (like main list) -->
