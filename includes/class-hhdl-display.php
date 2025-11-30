@@ -304,6 +304,8 @@ class HHDL_Display {
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
 
+                error_log('HHDL Render Vacant - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
+
                 if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
                     $newbook_tasks = count($room['newbook_tasks']);
 
@@ -544,6 +546,8 @@ class HHDL_Display {
                 $newbook_tasks = 0;
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
+
+                error_log('HHDL Render Booked - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
 
                 if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
                     $newbook_tasks = count($room['newbook_tasks']);
@@ -858,22 +862,38 @@ class HHDL_Display {
         error_log('HHDL Display - Total occupy tasks found: ' . $occupy_task_count);
 
         // Process non-blocking NewBook tasks and group by site for today's date
+        $non_blocking_count = 0;
+        $tasks_added = 0;
         foreach ($tasks as $task) {
             // Skip occupy/blocking tasks (already processed above)
             if (!empty($task['task_location_occupy']) && $task['task_location_occupy'] == 1) {
                 continue;
             }
 
+            $non_blocking_count++;
+            $task_id = isset($task['task_id']) ? $task['task_id'] : 'unknown';
+            $task_desc = isset($task['task_description']) ? $task['task_description'] : 'no description';
+
             // Get site ID
             $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
                        (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
 
-            if (empty($site_id) || !isset($rooms_by_id[$site_id])) {
+            error_log('HHDL Display - Non-blocking task ' . $task_id . ': site_id=' . $site_id . ', desc=' . $task_desc);
+
+            if (empty($site_id)) {
+                error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: empty site_id');
+                continue;
+            }
+
+            if (!isset($rooms_by_id[$site_id])) {
+                error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: site_id=' . $site_id . ' not in rooms_by_id');
                 continue;
             }
 
             // Check if this task applies to today's date
             $task_dates = $this->get_task_dates($task);
+            error_log('HHDL Display - Task ' . $task_id . ' dates: ' . json_encode($task_dates) . ', checking for date: ' . $date);
+
             if (in_array($date, $task_dates)) {
                 // Initialize newbook_tasks array if not exists
                 if (!isset($rooms_by_id[$site_id]['newbook_tasks'])) {
@@ -882,8 +902,13 @@ class HHDL_Display {
 
                 // Add task to room
                 $rooms_by_id[$site_id]['newbook_tasks'][] = $task;
+                $tasks_added++;
+                error_log('HHDL Display - Task ' . $task_id . ' ADDED to room ' . $site_id);
+            } else {
+                error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: date ' . $date . ' not in task dates');
             }
         }
+        error_log('HHDL Display - Total non-blocking tasks: ' . $non_blocking_count . ', tasks added to rooms: ' . $tasks_added);
 
         // Build final room cards array for the selected date
         $room_cards = array();
