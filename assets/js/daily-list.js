@@ -371,8 +371,8 @@
 
                 // Force active class immediately and force display to flex (workaround for cache issue)
                 modal.addClass('active');
-                // Force display property inline to override any cached CSS
-                modal.css('display', 'flex');
+                // Force display property inline with !important to override any CSS
+                modal[0].style.setProperty('display', 'flex', 'important');
                 console.log('HHDL: Modal active class added and display forced to flex');
                 console.log('HHDL: Modal has active class:', modal.hasClass('active'));
                 console.log('HHDL: Modal opacity:', modal.css('opacity'));
