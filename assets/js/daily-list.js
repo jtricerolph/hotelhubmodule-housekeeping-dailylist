@@ -206,7 +206,11 @@
                 date: date
             },
             success: function(response) {
+                console.log('HHDL: Modal AJAX response received', response);
+
                 if (response.success) {
+                    console.log('HHDL: Modal loaded successfully, updating content');
+
                     // Update modal header
                     if (response.data.header) {
                         modalHeader.html(response.data.header);
@@ -215,8 +219,11 @@
                     if (response.data.body) {
                         modalBody.html(response.data.body);
                     }
+
+                    console.log('HHDL: About to call initTaskCheckboxes');
                     initTaskCheckboxes();
                 } else {
+                    console.error('HHDL: Modal load failed', response);
                     modalBody.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');
                 }
             },
@@ -237,7 +244,19 @@
      * Initialize task checkbox handlers
      */
     function initTaskCheckboxes() {
-        $('.hhdl-task-checkbox').off('change').on('change', function() {
+        console.log('HHDL: initTaskCheckboxes called');
+
+        const checkboxes = $('.hhdl-task-checkbox');
+        console.log('HHDL: Found', checkboxes.length, 'task checkboxes');
+
+        if (checkboxes.length === 0) {
+            console.warn('HHDL: No task checkboxes found in DOM!');
+            return;
+        }
+
+        checkboxes.off('change').on('change', function(e) {
+            console.log('HHDL: Task checkbox changed');
+
             const checkbox = $(this);
             const taskItem = checkbox.closest('.hhdl-task-item');
             const taskData = {
@@ -249,16 +268,26 @@
                 isOccupy: checkbox.data('is-occupy') == '1'
             };
 
+            console.log('HHDL: Task data:', taskData);
+
             if (checkbox.prop('checked')) {
+                console.log('HHDL: Checkbox is checked, checking for confirmations needed');
+
                 // Show confirmation dialogs if needed
                 if (!taskData.isDefault || taskData.isOccupy) {
+                    console.log('HHDL: Confirmation needed - isDefault:', taskData.isDefault, 'isOccupy:', taskData.isOccupy);
+
                     if (!confirmTaskCompletion(taskData, checkbox)) {
                         // User cancelled, uncheck the box
+                        console.log('HHDL: User cancelled confirmation, unchecking');
                         checkbox.prop('checked', false);
                         return;
                     }
+
+                    console.log('HHDL: Confirmations passed');
                 }
 
+                console.log('HHDL: Calling completeTask');
                 completeTask(taskData, checkbox, taskItem);
             }
         });
@@ -289,6 +318,9 @@
      * Complete a task
      */
     function completeTask(taskData, checkbox, taskItem) {
+        console.log('HHDL: completeTask called with data:', taskData);
+        console.log('HHDL: taskItem element:', taskItem);
+
         // Disable checkbox during request
         checkbox.prop('disabled', true);
 
@@ -298,6 +330,8 @@
             '<div class="hhdl-processing-text">Completing task on NewBook</div>' +
             '</div>');
         taskItem.append(overlay);
+
+        console.log('HHDL: Sending AJAX request to complete task');
 
         $.ajax({
             url: hhdlAjax.ajaxUrl,
@@ -313,8 +347,11 @@
                 service_date: currentDate
             },
             success: function(response) {
+                console.log('HHDL: AJAX response received:', response);
+
                 if (response.success) {
                     console.log('HHDL: Task completed successfully, starting fade out');
+                    console.log('HHDL: taskItem before fadeOut:', taskItem, 'is visible:', taskItem.is(':visible'));
 
                     // Remove overlay immediately
                     overlay.remove();
@@ -325,11 +362,13 @@
                     }
 
                     // Fade out and remove task
+                    console.log('HHDL: Calling fadeOut on taskItem');
                     taskItem.fadeOut(400, function() {
                         console.log('HHDL: Fade complete, removing task from DOM');
                         $(this).remove();
 
                         // Update task count after removal
+                        console.log('HHDL: Calling updateTaskCount with roomId:', taskData.roomId);
                         updateTaskCount(taskData.roomId);
                     });
 
@@ -386,16 +425,28 @@
      * Update task count badge in modal header and room card
      */
     function updateTaskCount(roomId) {
+        console.log('HHDL: updateTaskCount called with roomId:', roomId);
+
         var taskList = $('.hhdl-task-list');
-        if (!taskList.length) return;
+        console.log('HHDL: Found taskList:', taskList.length);
+
+        if (!taskList.length) {
+            console.warn('HHDL: No task list found!');
+            return;
+        }
 
         // Count remaining incomplete tasks (visible items only, not fading out)
-        var incompleteTasks = taskList.find('.hhdl-task-item:visible').length;
+        var allTaskItems = taskList.find('.hhdl-task-item');
+        var visibleTaskItems = taskList.find('.hhdl-task-item:visible');
+        var incompleteTasks = visibleTaskItems.length;
 
+        console.log('HHDL: Total task items:', allTaskItems.length);
+        console.log('HHDL: Visible task items:', visibleTaskItems.length);
         console.log('HHDL: Updating task count - ' + incompleteTasks + ' tasks remaining');
 
         // Update the task count badge in modal header
         var modalBadge = $('.hhdl-modal-header .hhdl-task-count-badge');
+        console.log('HHDL: Found modal badge:', modalBadge.length);
         if (modalBadge.length) {
             if (incompleteTasks > 0) {
                 modalBadge.text(incompleteTasks);
@@ -408,13 +459,20 @@
 
         // Update the task count badge on the room card in main list
         if (roomId) {
+            console.log('HHDL: Looking for room card with id:', roomId);
             var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+            console.log('HHDL: Found room card:', roomCard.length);
+
             if (roomCard.length) {
                 var roomBadge = roomCard.find('.hhdl-task-count-badge');
+                console.log('HHDL: Found room badge:', roomBadge.length);
+
                 if (roomBadge.length) {
                     if (incompleteTasks > 0) {
+                        console.log('HHDL: Setting room badge to', incompleteTasks);
                         roomBadge.text(incompleteTasks).show();
                     } else {
+                        console.log('HHDL: Hiding room badge and updating icon to completed');
                         roomBadge.hide();
                         // Update icon to show completion
                         var taskIcon = roomCard.find('.hhdl-stat-content .material-symbols-outlined').first();
@@ -425,6 +483,8 @@
                     }
                 }
             }
+        } else {
+            console.warn('HHDL: No roomId provided to updateTaskCount');
         }
     }
 
