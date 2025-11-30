@@ -425,8 +425,8 @@ class HHDL_Display {
         $task_description = isset($task['description']) ? $task['description'] : 'Blocked';
         $task_icon = isset($task['icon']) ? $task['icon'] : 'construction';
 
-        // Apply titlecase to task description
-        $task_description_display = ucwords(strtolower($task_description));
+        // Apply uppercase to task description
+        $task_description_display = strtoupper($task_description);
         ?>
         <div class="hhdl-room-header">
             <span class="hhdl-room-number"><?php echo esc_html($room['room_number']); ?></span>
