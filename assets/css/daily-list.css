@@ -733,17 +733,17 @@
 
 .hhdl-task-count-badge {
     position: absolute;
-    top: -6px;
-    right: -8px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    font-size: 10px;
+    top: -4px;
+    right: -6px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 9px;
     font-weight: 700;
-    line-height: 16px;
+    line-height: 14px;
     text-align: center;
     color: white;
-    border-radius: 8px;
+    border-radius: 7px;
     pointer-events: none;
 }
 

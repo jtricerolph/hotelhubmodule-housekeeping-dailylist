@@ -303,6 +303,7 @@ class HHDL_Display {
                 $newbook_tasks = 0;
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
+                $task_icon = 'assignment_turned_in';
 
                 error_log('HHDL Render Vacant - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
 
@@ -323,19 +324,22 @@ class HHDL_Display {
                         if ($has_late) {
                             $task_class = 'hhdl-task-status hhdl-task-late';
                             $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon = 'assignment_late';
                         } elseif ($has_rollover) {
                             $task_class = 'hhdl-task-status hhdl-task-return';
                             $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon = 'assignment_late';
                         }
                     } else {
                         $task_class = 'hhdl-task-status hhdl-task-complete';
                         $task_title = __('All tasks complete', 'hhdl');
+                        $task_icon = 'assignment_turned_in';
                     }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
                     <span class="hhdl-task-count">
-                        <span class="material-symbols-outlined">assignment_turned_in</span>
+                        <span class="material-symbols-outlined"><?php echo esc_html($task_icon); ?></span>
                         <?php if ($newbook_tasks > 0): ?>
                             <span class="hhdl-task-count-badge"><?php echo esc_html($newbook_tasks); ?></span>
                         <?php endif; ?>
@@ -546,6 +550,7 @@ class HHDL_Display {
                 $newbook_tasks = 0;
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
+                $task_icon = 'assignment_turned_in';
 
                 error_log('HHDL Render Booked - Room ' . $room['room_number'] . ': newbook_tasks=' . (isset($room['newbook_tasks']) && is_array($room['newbook_tasks']) ? count($room['newbook_tasks']) : '0/missing'));
 
@@ -566,19 +571,22 @@ class HHDL_Display {
                         if ($has_late) {
                             $task_class = 'hhdl-task-status hhdl-task-late';
                             $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon = 'assignment_late';
                         } elseif ($has_rollover) {
                             $task_class = 'hhdl-task-status hhdl-task-return';
                             $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                            $task_icon = 'assignment_late';
                         }
                     } else {
                         $task_class = 'hhdl-task-status hhdl-task-complete';
                         $task_title = __('All tasks complete', 'hhdl');
+                        $task_icon = 'assignment_turned_in';
                     }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
                     <span class="hhdl-task-count">
-                        <span class="material-symbols-outlined">assignment_turned_in</span>
+                        <span class="material-symbols-outlined"><?php echo esc_html($task_icon); ?></span>
                         <?php if ($newbook_tasks > 0): ?>
                             <span class="hhdl-task-count-badge"><?php echo esc_html($newbook_tasks); ?></span>
                         <?php endif; ?>
