@@ -563,8 +563,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
-    min-height: 24px;
+    min-width: 22px;
+    min-height: 22px;
 }
 
 /* Arrival Time Block */
@@ -574,8 +574,10 @@
     font-weight: 500;
     color: #6b7280;
     padding: 2px 6px;
-    background: #f3f4f6;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s;
 }
 
 .hhdl-stat-content.hhdl-checkin-time .material-symbols-outlined {
@@ -584,7 +586,7 @@
 }
 
 .hhdl-stat-content.hhdl-early-arrival {
-    background: #fef3c7;
+    border: 1px solid #f59e0b;
     color: #92400e;
     font-weight: 600;
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.2);
@@ -593,6 +595,10 @@
 
 .hhdl-stat-content.hhdl-early-arrival .material-symbols-outlined {
     color: #f59e0b;
+}
+
+.hhdl-stat-content.hhdl-checkin-time:hover {
+    transform: scale(1.05);
 }
 
 /* Bed Type Indicator (New System) */
@@ -669,6 +675,8 @@
 .hhdl-stat-content.hhdl-task-status {
     padding: 3px 6px;
     border-radius: 4px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.5);
     transition: all 0.2s;
 }
 
@@ -678,7 +686,7 @@
 
 /* Outstanding tasks (red) */
 .hhdl-stat-content.hhdl-task-late {
-    background: #fee2e2;
+    border-color: #dc2626;
 }
 
 .hhdl-stat-content.hhdl-task-late .material-symbols-outlined {
@@ -687,7 +695,7 @@
 
 /* Rollover tasks from previous dates (amber) */
 .hhdl-stat-content.hhdl-task-return {
-    background: #fef3c7;
+    border-color: #f59e0b;
 }
 
 .hhdl-stat-content.hhdl-task-return .material-symbols-outlined {
@@ -696,7 +704,7 @@
 
 /* No outstanding tasks (green) */
 .hhdl-stat-content.hhdl-task-complete {
-    background: #d1fae5;
+    border-color: #10b981;
 }
 
 .hhdl-stat-content.hhdl-task-complete .material-symbols-outlined {
@@ -705,7 +713,7 @@
 
 /* No tasks (grey) */
 .hhdl-stat-content.hhdl-task-none {
-    background: #f3f4f6;
+    border-color: #d1d5db;
 }
 
 .hhdl-stat-content.hhdl-task-none .material-symbols-outlined {
@@ -713,13 +721,15 @@
 }
 
 .hhdl-stat-content.hhdl-task-status:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 /* Future Tasks Module Icons */
 .hhdl-stat-content.hhdl-future-tasks {
     padding: 3px 6px;
     border-radius: 4px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.5);
     transition: all 0.2s;
 }
 
@@ -729,7 +739,7 @@
 
 /* Waiting tasks (red) */
 .hhdl-stat-content.hhdl-tasks-waiting {
-    background: #fee2e2;
+    border-color: #dc2626;
 }
 
 .hhdl-stat-content.hhdl-tasks-waiting .material-symbols-outlined {
@@ -738,7 +748,7 @@
 
 /* All tasks complete (green) */
 .hhdl-stat-content.hhdl-tasks-complete {
-    background: #d1fae5;
+    border-color: #10b981;
 }
 
 .hhdl-stat-content.hhdl-tasks-complete .material-symbols-outlined {
@@ -747,7 +757,7 @@
 
 /* No current tasks (grey) */
 .hhdl-stat-content.hhdl-tasks-none {
-    background: #f3f4f6;
+    border-color: #d1d5db;
 }
 
 .hhdl-stat-content.hhdl-tasks-none .material-symbols-outlined {
@@ -755,13 +765,15 @@
 }
 
 .hhdl-stat-content.hhdl-future-tasks:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 /* Spoilt Linen Module Icons */
 .hhdl-stat-content.hhdl-linen-status {
     padding: 3px 6px;
     border-radius: 4px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.5);
     transition: all 0.2s;
 }
 
@@ -771,7 +783,7 @@
 
 /* Unsubmitted count (amber) */
 .hhdl-stat-content.hhdl-linen-pending {
-    background: #fef3c7;
+    border-color: #f59e0b;
 }
 
 .hhdl-stat-content.hhdl-linen-pending .material-symbols-outlined {
@@ -780,7 +792,7 @@
 
 /* Submitted count (green) */
 .hhdl-stat-content.hhdl-linen-submitted {
-    background: #d1fae5;
+    border-color: #10b981;
 }
 
 .hhdl-stat-content.hhdl-linen-submitted .material-symbols-outlined {
@@ -789,7 +801,7 @@
 
 /* No values (grey) */
 .hhdl-stat-content.hhdl-linen-none {
-    background: #f3f4f6;
+    border-color: #d1d5db;
 }
 
 .hhdl-stat-content.hhdl-linen-none .material-symbols-outlined {
@@ -797,7 +809,7 @@
 }
 
 .hhdl-stat-content.hhdl-linen-status:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 .hhdl-occupancy-badge {
