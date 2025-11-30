@@ -254,14 +254,30 @@
             return;
         }
 
-        checkboxes.off('change').on('change', function(e) {
+        // COMPLETELY remove all event handlers first
+        console.log('HHDL: Removing all existing change handlers');
+        checkboxes.off('change');
+
+        // Attach new handler with ONE event
+        console.log('HHDL: Attaching ONE new change handler');
+        checkboxes.one('change', function(e) {
             console.log('HHDL: Task checkbox changed');
 
             const checkbox = $(this);
 
-            // Prevent duplicate events - if already disabled, ignore this event
+            // Prevent duplicate events - check processing flag first
+            if (checkbox.data('processing') === true) {
+                console.log('HHDL: Task already processing, ignoring duplicate event');
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                checkbox.prop('checked', false); // Force uncheck
+                return false;
+            }
+
+            // Also check if disabled (belt and suspenders)
             if (checkbox.prop('disabled')) {
-                console.log('HHDL: Checkbox already disabled, ignoring duplicate event');
+                console.log('HHDL: Checkbox already disabled, ignoring event');
+                e.preventDefault();
                 e.stopImmediatePropagation();
                 return false;
             }
@@ -281,8 +297,9 @@
             if (checkbox.prop('checked')) {
                 console.log('HHDL: Checkbox is checked, checking for confirmations needed');
 
-                // Disable checkbox IMMEDIATELY to prevent duplicate events
-                console.log('HHDL: Disabling checkbox immediately to prevent duplicates');
+                // Set processing flag IMMEDIATELY to prevent duplicate events
+                console.log('HHDL: Setting processing flag and disabling checkbox');
+                checkbox.data('processing', true);
                 checkbox.prop('disabled', true);
 
                 // Show confirmation dialogs if needed
@@ -290,8 +307,9 @@
                     console.log('HHDL: Confirmation needed - isDefault:', taskData.isDefault, 'isOccupy:', taskData.isOccupy);
 
                     if (!confirmTaskCompletion(taskData, checkbox)) {
-                        // User cancelled, uncheck and re-enable the box
-                        console.log('HHDL: User cancelled confirmation, unchecking and re-enabling');
+                        // User cancelled, clear processing flag and re-enable
+                        console.log('HHDL: User cancelled confirmation, clearing flag and re-enabling');
+                        checkbox.data('processing', false);
                         checkbox.prop('checked', false);
                         checkbox.prop('disabled', false);
                         return;
