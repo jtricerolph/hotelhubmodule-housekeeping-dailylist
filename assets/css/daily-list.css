@@ -970,6 +970,19 @@
     flex: 1;
 }
 
+.hhdl-modal-body h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.hhdl-tasks-section {
+    margin-bottom: 8px;
+}
+
+.hhdl-placeholder {
+    margin-bottom: 8px;
+}
+
 /* Modal Room Info (now in header) */
 .hhdl-modal-room-info {
     display: flex;
