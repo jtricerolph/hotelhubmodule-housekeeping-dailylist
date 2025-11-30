@@ -112,12 +112,20 @@ class HHDL_Ajax {
         $booking_data = $this->filter_booking_data($room_details['booking']);
         $tasks = $this->build_tasks_list($room_details, $task_description_mappings, $date, $location_id);
 
+        // Render modal header HTML
+        ob_start();
+        $this->render_room_modal_header($room_details, $booking_data, $date);
+        $header_html = ob_get_clean();
+
         // Render modal body HTML
         ob_start();
         $this->render_room_modal_body($room_details, $booking_data, $tasks, $date);
-        $html = ob_get_clean();
+        $body_html = ob_get_clean();
 
-        wp_send_json_success($html);
+        wp_send_json_success(array(
+            'header' => $header_html,
+            'body' => $body_html
+        ));
     }
 
     /**
@@ -364,6 +372,7 @@ class HHDL_Ajax {
         }
 
         return array(
+            'room_id'       => $room_id,
             'room_number'   => $site_name,
             'site_status'   => $site_status,
             'booking'       => $booking_data,
@@ -727,9 +736,9 @@ class HHDL_Ajax {
     }
 
     /**
-     * Render room modal body HTML
+     * Render room modal header HTML
      */
-    private function render_room_modal_body($room_details, $booking_data, $tasks, $date) {
+    private function render_room_modal_header($room_details, $booking_data, $date) {
         // Calculate booking status
         $is_arriving = false;
         $is_departing = false;
@@ -748,8 +757,7 @@ class HHDL_Ajax {
         }
 
         ?>
-        <!-- Room Card Header -->
-        <div class="hhdl-modal-room-header">
+        <div class="hhdl-modal-header-content">
             <div class="hhdl-modal-room-info">
                 <span class="hhdl-modal-room-number"><?php echo esc_html($room_details['room_number']); ?></span>
                 <?php if ($booking_data): ?>
@@ -790,7 +798,15 @@ class HHDL_Ajax {
             </div>
             <?php endif; ?>
         </div>
+        <button class="hhdl-modal-close" aria-label="<?php esc_attr_e('Close', 'hhdl'); ?>">&times;</button>
+        <?php
+    }
 
+    /**
+     * Render room modal body HTML
+     */
+    private function render_room_modal_body($room_details, $booking_data, $tasks, $date) {
+        ?>
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
             <h3><?php _e('NewBook Tasks', 'hhdl'); ?></h3>

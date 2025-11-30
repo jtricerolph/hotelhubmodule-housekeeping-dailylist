@@ -186,6 +186,7 @@
      */
     function openRoomModal(roomId, date) {
         const modal = $('#hhdl-modal');
+        const modalHeader = modal.find('.hhdl-modal-header');
         const modalBody = $('#hhdl-modal-body');
 
         // Show loading state
@@ -205,7 +206,14 @@
             },
             success: function(response) {
                 if (response.success) {
-                    modalBody.html(response.data);
+                    // Update modal header
+                    if (response.data.header) {
+                        modalHeader.html(response.data.header);
+                    }
+                    // Update modal body
+                    if (response.data.body) {
+                        modalBody.html(response.data.body);
+                    }
                     initTaskCheckboxes();
                 } else {
                     modalBody.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');

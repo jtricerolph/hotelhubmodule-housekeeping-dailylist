@@ -699,8 +699,7 @@ class HHDL_Display {
         <div class="hhdl-modal-overlay" id="hhdl-modal">
             <div class="hhdl-modal">
                 <div class="hhdl-modal-header">
-                    <h2 id="hhdl-modal-title"><?php _e('Room Details', 'hhdl'); ?></h2>
-                    <button class="hhdl-modal-close" aria-label="<?php esc_attr_e('Close', 'hhdl'); ?>">&times;</button>
+                    <!-- Header content will be populated via AJAX -->
                 </div>
                 <div class="hhdl-modal-body" id="hhdl-modal-body">
                     <div class="hhdl-loading">
