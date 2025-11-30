@@ -1006,6 +1006,8 @@
     border: 1px solid #e5e7eb;
     border-radius: 6px;
     padding: 12px;
+    max-height: 250px;
+    overflow-y: auto;
 }
 
 .hhdl-placeholder {
@@ -1014,6 +1016,8 @@
     border: 1px solid #e5e7eb;
     border-radius: 6px;
     padding: 12px;
+    max-height: 250px;
+    overflow-y: auto;
 }
 
 /* Modal Room Info (now in header) */
