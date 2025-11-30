@@ -311,14 +311,23 @@ class HHDL_Display {
                     $newbook_tasks = count($room['newbook_tasks']);
 
                     if ($newbook_tasks > 0) {
-                        // Check if any tasks are late or rollover
+                        // Check if tasks are current (for today) or rollover (from before today)
                         $has_late = false;
                         $has_rollover = false;
+                        $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
 
                         foreach ($room['newbook_tasks'] as $task) {
-                            // TODO: Implement late/rollover detection based on task dates
-                            // For now, all tasks with count > 0 are considered outstanding (red)
-                            $has_late = true;
+                            $task_dates = $this->get_task_dates($task);
+                            if (!empty($task_dates)) {
+                                $latest_task_date = max($task_dates);
+                                if ($latest_task_date < $viewing_date) {
+                                    // Task is from before today - rollover (amber)
+                                    $has_rollover = true;
+                                } elseif (in_array($viewing_date, $task_dates)) {
+                                    // Task is for today - outstanding (red)
+                                    $has_late = true;
+                                }
+                            }
                         }
 
                         if ($has_late) {
@@ -558,14 +567,23 @@ class HHDL_Display {
                     $newbook_tasks = count($room['newbook_tasks']);
 
                     if ($newbook_tasks > 0) {
-                        // Check if any tasks are late or rollover
+                        // Check if tasks are current (for today) or rollover (from before today)
                         $has_late = false;
                         $has_rollover = false;
+                        $viewing_date = isset($room['date']) ? $room['date'] : date('Y-m-d');
 
                         foreach ($room['newbook_tasks'] as $task) {
-                            // TODO: Implement late/rollover detection based on task dates
-                            // For now, all tasks with count > 0 are considered outstanding (red)
-                            $has_late = true;
+                            $task_dates = $this->get_task_dates($task);
+                            if (!empty($task_dates)) {
+                                $latest_task_date = max($task_dates);
+                                if ($latest_task_date < $viewing_date) {
+                                    // Task is from before today - rollover (amber)
+                                    $has_rollover = true;
+                                } elseif (in_array($viewing_date, $task_dates)) {
+                                    // Task is for today - outstanding (red)
+                                    $has_late = true;
+                                }
+                            }
                         }
 
                         if ($has_late) {
@@ -726,7 +744,8 @@ class HHDL_Display {
         $sites_response = $api->get_sites(true);
         $bookings_response = $api->get_bookings($yesterday, $tomorrow_end, 'staying', true);
         // Query ALL task types from hotel integration settings (includes housekeeping, occupy site, custom types)
-        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', $task_type_ids, false, null, true);
+        // show_uncomplete=true includes outstanding tasks from before today (rollover tasks)
+        $tasks_response = $api->get_tasks($yesterday . ' 00:00:00', $tomorrow_end . ' 00:00:00', $task_type_ids, true, null, true);
 
         // Process responses
         $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
@@ -914,7 +933,22 @@ class HHDL_Display {
             $task_dates = $this->get_task_dates($task);
             error_log('HHDL Display - Task ' . $task_id . ' dates: ' . json_encode($task_dates) . ', checking for date: ' . $date);
 
+            // Include task if:
+            // 1. Today's date is in the task dates (current task)
+            // 2. OR task's latest date is before today (rollover/outstanding task)
+            $include_task = false;
             if (in_array($date, $task_dates)) {
+                $include_task = true;
+                error_log('HHDL Display - Task ' . $task_id . ' applies to today');
+            } elseif (!empty($task_dates)) {
+                $latest_task_date = max($task_dates);
+                if ($latest_task_date < $date) {
+                    $include_task = true;
+                    error_log('HHDL Display - Task ' . $task_id . ' is ROLLOVER (latest date: ' . $latest_task_date . ' < today: ' . $date . ')');
+                }
+            }
+
+            if ($include_task) {
                 // Initialize newbook_tasks array if not exists
                 if (!isset($rooms_by_id[$site_id]['newbook_tasks'])) {
                     $rooms_by_id[$site_id]['newbook_tasks'] = array();
@@ -925,7 +959,7 @@ class HHDL_Display {
                 $tasks_added++;
                 error_log('HHDL Display - Task ' . $task_id . ' ADDED to room ' . $site_id);
             } else {
-                error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: date ' . $date . ' not in task dates');
+                error_log('HHDL Display - Task ' . $task_id . ' SKIPPED: date ' . $date . ' not in task dates and not a rollover');
             }
         }
         error_log('HHDL Display - Total non-blocking tasks: ' . $non_blocking_count . ', tasks added to rooms: ' . $tasks_added);
@@ -1071,6 +1105,7 @@ class HHDL_Display {
                 'booking'              => $booking_data,
                 'blocking_task'        => $blocking_task,
                 'newbook_tasks'        => isset($room['newbook_tasks']) ? $room['newbook_tasks'] : array(),
+                'date'                 => $date,  // Add viewing date for task rollover detection
                 'order'                => $room['order']
             );
         }
