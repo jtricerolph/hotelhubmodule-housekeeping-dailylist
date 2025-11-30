@@ -1083,16 +1083,15 @@ class HHDL_Ajax {
                         }
                     }
 
-                    // Set icon and class based on status
-                    $icon_class = $has_rollover ? 'hhdl-task-late' : 'hhdl-task-status';
+                    // Set icon and badge class based on status
+                    $badge_class = $has_rollover ? 'hhdl-task-late' : 'hhdl-task-status';
                     $icon_name = $has_rollover ? 'assignment_late' : 'assignment';
+                    $icon_color = $has_rollover ? '#dc2626' : '#9ca3af';
                     ?>
-                    <div class="hhdl-stat-content <?php echo esc_attr($icon_class); ?>">
-                        <span class="hhdl-task-count">
-                            <span class="material-symbols-outlined"><?php echo esc_html($icon_name); ?></span>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
-                        </span>
-                    </div>
+                    <span class="hhdl-task-count <?php echo esc_attr($badge_class); ?>" style="position: relative;">
+                        <span class="material-symbols-outlined" style="color: <?php echo esc_attr($icon_color); ?>; font-size: 16px;"><?php echo esc_html($icon_name); ?></span>
+                        <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                    </span>
                 <?php endif; ?>
             </h3>
             <?php if (!empty($tasks)): ?>
