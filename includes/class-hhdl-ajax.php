@@ -134,11 +134,14 @@ class HHDL_Ajax {
     public function complete_task() {
         global $wpdb;
 
+        error_log('HHDL: complete_task called');
+
         // Verify nonce
         check_ajax_referer('hhdl_ajax_nonce', 'nonce');
 
         // Check permissions
         if (!$this->user_can_access()) {
+            error_log('HHDL: Permission denied');
             wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
         }
 
@@ -150,27 +153,38 @@ class HHDL_Ajax {
         $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
         $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
 
+        error_log('HHDL: Parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_id: ' . $task_id . ', task_type: ' . $task_type);
+
         if (!$location_id || !$room_id || !$task_type) {
+            error_log('HHDL: Invalid parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_type: ' . $task_type);
             wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
         }
 
         // STEP 1: Update task in NewBook FIRST (if task_id provided)
         $site_status = '';
         if ($task_id > 0) {
+            error_log('HHDL: Task ID provided, updating in NewBook');
+
             // Get NewBook API client
             $api = $this->get_newbook_api($location_id);
             if (!$api) {
+                error_log('HHDL: NewBook API not configured');
                 wp_send_json_error(array('message' => __('NewBook API not configured', 'hhdl')));
             }
 
             // Call NewBook API using the new update_task method
+            error_log('HHDL: Calling NewBook API update_task for task_id: ' . $task_id);
             $response = $api->update_task($task_id, current_time('mysql'));
+            error_log('HHDL: NewBook API response: ' . print_r($response, true));
 
             // Check NewBook response
             if (!$response['success'] || $response['message'] !== 'Updated Task') {
                 $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
+                error_log('HHDL: NewBook update failed: ' . $error_msg);
                 wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
             }
+
+            error_log('HHDL: NewBook update successful');
 
             // Extract site_status from response
             if (isset($response['data'][0]['site_status'])) {
@@ -179,6 +193,7 @@ class HHDL_Ajax {
         }
 
         // STEP 2: ONLY NOW save to local database after NewBook confirms success
+        error_log('HHDL: Starting database transaction');
         $wpdb->query('START TRANSACTION');
 
         try {
@@ -194,9 +209,12 @@ class HHDL_Ajax {
             ));
 
             if ($exists) {
+                error_log('HHDL: Task already completed (exists: ' . $exists . ')');
                 $wpdb->query('ROLLBACK');
                 wp_send_json_error(array('message' => __('Task already completed', 'hhdl')));
             }
+
+            error_log('HHDL: No existing completion found, inserting new record');
 
             // Insert completion record
             $inserted = $wpdb->insert(
@@ -222,8 +240,12 @@ class HHDL_Ajax {
             // Commit transaction
             $wpdb->query('COMMIT');
 
+            error_log('HHDL: Transaction committed successfully');
+
             // Get user info for response
             $user = wp_get_current_user();
+
+            error_log('HHDL: Sending success response with site_status: ' . $site_status);
 
             wp_send_json_success(array(
                 'message'       => __('Task completed successfully', 'hhdl'),

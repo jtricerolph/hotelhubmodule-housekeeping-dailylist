@@ -347,7 +347,11 @@
                 service_date: currentDate
             },
             success: function(response) {
-                console.log('HHDL: AJAX response received:', response);
+                console.log('HHDL: AJAX response received');
+                console.log('HHDL: Response type:', typeof response);
+                console.log('HHDL: Response object:', response);
+                console.log('HHDL: response.success value:', response.success);
+                console.log('HHDL: response.data:', response.data);
 
                 if (response.success) {
                     console.log('HHDL: Task completed successfully, starting fade out');
@@ -375,6 +379,10 @@
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
                 } else {
                     // Rollback on error with detailed message
+                    console.error('HHDL: Task completion failed!');
+                    console.error('HHDL: Full response:', response);
+                    console.error('HHDL: Error message:', response.data && response.data.message ? response.data.message : 'No error message provided');
+
                     checkbox.prop('checked', false);
                     checkbox.prop('disabled', false);
                     var errorMsg = response.data && response.data.message ? response.data.message : hhdlAjax.strings.error;
