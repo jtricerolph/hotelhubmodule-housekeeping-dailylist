@@ -1396,15 +1396,20 @@ class HHDL_Ajax {
      * @param int $location_id Location ID
      */
     private function render_notes_section($booking_data, $location_id) {
+        error_log('HHDL Notes: render_notes_section called for location_id: ' . $location_id);
+
         // Get Daily List settings for applicable note types
         $dl_settings = HHDL_Settings::get_location_settings($location_id);
         $visible_note_type_ids = isset($dl_settings['visible_note_types']) ? $dl_settings['visible_note_types'] : array();
+        error_log('HHDL Notes: visible_note_type_ids from settings: ' . print_r($visible_note_type_ids, true));
 
         // Get note type configurations from Hotel Hub
         $note_types_config = HHDL_Settings::get_note_types($location_id);
+        error_log('HHDL Notes: note_types_config from Hotel Hub: ' . print_r($note_types_config, true));
 
         // If no note types configured or none selected, don't show section
         if (empty($note_types_config) || empty($visible_note_type_ids)) {
+            error_log('HHDL Notes: Early return - empty note_types_config: ' . (empty($note_types_config) ? 'yes' : 'no') . ', empty visible_note_type_ids: ' . (empty($visible_note_type_ids) ? 'yes' : 'no'));
             return;
         }
 
@@ -1426,22 +1431,30 @@ class HHDL_Ajax {
 
         // If no applicable note types, don't show section
         if (empty($applicable_note_types)) {
+            error_log('HHDL Notes: Early return - no applicable note types');
             return;
         }
+
+        error_log('HHDL Notes: Applicable note types: ' . print_r(array_keys($applicable_note_types), true));
+        error_log('HHDL Notes: Booking notes data: ' . (isset($booking_data['notes']) ? count($booking_data['notes']) . ' notes found' : 'no notes key in booking data'));
 
         // Group notes by type_id
         $notes_by_type = array();
         if (isset($booking_data['notes']) && is_array($booking_data['notes'])) {
+            error_log('HHDL Notes: Processing ' . count($booking_data['notes']) . ' notes from booking data');
             foreach ($booking_data['notes'] as $note) {
                 $type_id = isset($note['type_id']) ? intval($note['type_id']) : 0;
+                error_log('HHDL Notes: Processing note with type_id: ' . $type_id);
 
                 // Skip if not in applicable types
                 if (!isset($applicable_note_types[$type_id])) {
+                    error_log('HHDL Notes: Skipping note with type_id ' . $type_id . ' - not in applicable types');
                     continue;
                 }
 
                 // Check permission for this note type
                 $can_view = $this->user_can_view_note_type($type_id);
+                error_log('HHDL Notes: Permission check for type_id ' . $type_id . ': ' . ($can_view ? 'YES' : 'NO'));
 
                 if (!isset($notes_by_type[$type_id])) {
                     $notes_by_type[$type_id] = array(
@@ -1453,9 +1466,15 @@ class HHDL_Ajax {
                 // Add note if user has permission
                 if ($can_view) {
                     $notes_by_type[$type_id]['notes'][] = $note;
+                    error_log('HHDL Notes: Added note to type_id ' . $type_id);
                 }
             }
+        } else {
+            error_log('HHDL Notes: No notes found in booking data or notes is not an array');
         }
+
+        error_log('HHDL Notes: Final notes_by_type structure: ' . print_r(array_map(function($n) { return count($n['notes']) . ' notes'; }, $notes_by_type), true));
+        error_log('HHDL Notes: Rendering notes section HTML with ' . count($applicable_note_types) . ' tabs');
 
         // Render notes section
         ?>
