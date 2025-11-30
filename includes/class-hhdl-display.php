@@ -299,19 +299,43 @@ class HHDL_Display {
             <!-- Block 3: NewBook/Default Tasks -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add task status logic from NewBook/default tasks
-                // assignment_late - outstanding tasks (red)
-                // assignment_return - rollover tasks from previous dates (amber)
-                // assignment_turned_in - no outstanding tasks (green)
+                // Count NewBook tasks for this room
+                $newbook_tasks = 0;
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
-                $task_count = 0; // TODO: Set actual count from task data
+
+                if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
+                    $newbook_tasks = count($room['newbook_tasks']);
+
+                    if ($newbook_tasks > 0) {
+                        // Check if any tasks are late or rollover
+                        $has_late = false;
+                        $has_rollover = false;
+
+                        foreach ($room['newbook_tasks'] as $task) {
+                            // TODO: Implement late/rollover detection based on task dates
+                            // For now, all tasks with count > 0 are considered outstanding (red)
+                            $has_late = true;
+                        }
+
+                        if ($has_late) {
+                            $task_class = 'hhdl-task-status hhdl-task-late';
+                            $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                        } elseif ($has_rollover) {
+                            $task_class = 'hhdl-task-status hhdl-task-return';
+                            $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                        }
+                    } else {
+                        $task_class = 'hhdl-task-status hhdl-task-complete';
+                        $task_title = __('All tasks complete', 'hhdl');
+                    }
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">assignment_turned_in</span>
-                        <?php if ($task_count > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        <?php if ($newbook_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($newbook_tasks); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -324,13 +348,13 @@ class HHDL_Display {
                 // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
                 $future_class = 'hhdl-future-tasks hhdl-tasks-none';
                 $future_title = __('No current tasks', 'hhdl');
-                $future_count = 0; // TODO: Set actual count from future tasks module
+                $module_tasks = 0; // TODO: Set actual count from future tasks module
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">checklist_rtl</span>
-                        <?php if ($future_count > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($future_count); ?></span>
+                        <?php if ($module_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -516,19 +540,43 @@ class HHDL_Display {
             <!-- Block 3: NewBook/Default Tasks -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add task status logic from NewBook/default tasks
-                // assignment_late - outstanding tasks (red)
-                // assignment_return - rollover tasks from previous dates (amber)
-                // assignment_turned_in - no outstanding tasks (green)
+                // Count NewBook tasks for this room
+                $newbook_tasks = 0;
                 $task_class = 'hhdl-task-status hhdl-task-none';
                 $task_title = __('No tasks', 'hhdl');
-                $task_count = 0; // TODO: Set actual count from task data
+
+                if (isset($room['newbook_tasks']) && is_array($room['newbook_tasks'])) {
+                    $newbook_tasks = count($room['newbook_tasks']);
+
+                    if ($newbook_tasks > 0) {
+                        // Check if any tasks are late or rollover
+                        $has_late = false;
+                        $has_rollover = false;
+
+                        foreach ($room['newbook_tasks'] as $task) {
+                            // TODO: Implement late/rollover detection based on task dates
+                            // For now, all tasks with count > 0 are considered outstanding (red)
+                            $has_late = true;
+                        }
+
+                        if ($has_late) {
+                            $task_class = 'hhdl-task-status hhdl-task-late';
+                            $task_title = sprintf(_n('%d outstanding task', '%d outstanding tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                        } elseif ($has_rollover) {
+                            $task_class = 'hhdl-task-status hhdl-task-return';
+                            $task_title = sprintf(_n('%d rollover task', '%d rollover tasks', $newbook_tasks, 'hhdl'), $newbook_tasks);
+                        }
+                    } else {
+                        $task_class = 'hhdl-task-status hhdl-task-complete';
+                        $task_title = __('All tasks complete', 'hhdl');
+                    }
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($task_class); ?>" title="<?php echo esc_attr($task_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">assignment_turned_in</span>
-                        <?php if ($task_count > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        <?php if ($newbook_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($newbook_tasks); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -541,13 +589,13 @@ class HHDL_Display {
                 // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
                 $future_class = 'hhdl-future-tasks hhdl-tasks-none';
                 $future_title = __('No current tasks', 'hhdl');
-                $future_count = 0; // TODO: Set actual count from future tasks module
+                $module_tasks = 0; // TODO: Set actual count from future tasks module
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">checklist_rtl</span>
-                        <?php if ($future_count > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($future_count); ?></span>
+                        <?php if ($module_tasks > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -809,6 +857,34 @@ class HHDL_Display {
 
         error_log('HHDL Display - Total occupy tasks found: ' . $occupy_task_count);
 
+        // Process non-blocking NewBook tasks and group by site for today's date
+        foreach ($tasks as $task) {
+            // Skip occupy/blocking tasks (already processed above)
+            if (!empty($task['task_location_occupy']) && $task['task_location_occupy'] == 1) {
+                continue;
+            }
+
+            // Get site ID
+            $site_id = !empty($task['task_location_id']) ? $task['task_location_id'] :
+                       (!empty($task['booking_site_id']) ? $task['booking_site_id'] : '');
+
+            if (empty($site_id) || !isset($rooms_by_id[$site_id])) {
+                continue;
+            }
+
+            // Check if this task applies to today's date
+            $task_dates = $this->get_task_dates($task);
+            if (in_array($date, $task_dates)) {
+                // Initialize newbook_tasks array if not exists
+                if (!isset($rooms_by_id[$site_id]['newbook_tasks'])) {
+                    $rooms_by_id[$site_id]['newbook_tasks'] = array();
+                }
+
+                // Add task to room
+                $rooms_by_id[$site_id]['newbook_tasks'][] = $task;
+            }
+        }
+
         // Build final room cards array for the selected date
         $room_cards = array();
         foreach ($rooms_by_id as $room) {
@@ -949,6 +1025,7 @@ class HHDL_Display {
                 'next_is_vacant'       => $next_is_vacant,
                 'booking'              => $booking_data,
                 'blocking_task'        => $blocking_task,
+                'newbook_tasks'        => isset($room['newbook_tasks']) ? $room['newbook_tasks'] : array(),
                 'order'                => $room['order']
             );
         }
