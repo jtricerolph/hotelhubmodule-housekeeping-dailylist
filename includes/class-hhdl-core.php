@@ -61,6 +61,12 @@ class HHDL_Core {
         HHDL_Display::instance();
         HHDL_Ajax::instance();
         HHDL_Heartbeat::instance();
+
+        // Initialize reports (if Hotel Hub is active)
+        if (function_exists('hha')) {
+            require_once HHDL_PLUGIN_DIR . 'admin/class-hhdl-reports.php';
+            HHDL_Reports::instance();
+        }
     }
 
     /**
