@@ -130,7 +130,7 @@ class HHDL_Display {
         ?>
         <div class="hhdl-room-list" id="hhdl-room-list" data-location="<?php echo esc_attr($location_id); ?>" data-date="<?php echo esc_attr($date); ?>">
             <div class="hhdl-loading">
-                <span class="spinner is-active"></span>
+                <span class="spinner"></span>
                 <p><?php _e('Loading rooms...', 'hhdl'); ?></p>
             </div>
         </div>
@@ -757,7 +757,7 @@ class HHDL_Display {
                 </div>
                 <div class="hhdl-modal-body" id="hhdl-modal-body">
                     <div class="hhdl-loading">
-                        <span class="spinner is-active"></span>
+                        <span class="spinner"></span>
                         <p><?php _e('Loading details...', 'hhdl'); ?></p>
                     </div>
                 </div>

@@ -118,7 +118,7 @@
      */
     function loadRoomList(date) {
         const roomList = $('#hhdl-room-list');
-        roomList.html('<div class="hhdl-loading"><span class="spinner is-active"></span><p>' + hhdlAjax.strings.loading + '</p></div>');
+        roomList.html('<div class="hhdl-loading"><span class="spinner"></span><p>' + hhdlAjax.strings.loading + '</p></div>');
 
         $.ajax({
             url: hhdlAjax.ajaxUrl,
@@ -191,7 +191,7 @@
 
         // Clear previous content and show loading state
         modalHeader.html('');
-        modalBody.html('<div class="hhdl-loading"><span class="spinner is-active"></span><p>' + hhdlAjax.strings.loading + '</p></div>');
+        modalBody.html('<div class="hhdl-loading"><span class="spinner"></span><p>' + hhdlAjax.strings.loading + '</p></div>');
         modal.addClass('active');
 
         // Fetch room details
