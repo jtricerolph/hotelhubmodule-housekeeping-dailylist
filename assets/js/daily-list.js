@@ -258,9 +258,9 @@
         console.log('HHDL: Removing all existing change handlers');
         checkboxes.off('change');
 
-        // Attach new handler with ONE event
-        console.log('HHDL: Attaching ONE new change handler');
-        checkboxes.one('change', async function(e) {
+        // Attach new handler (using .on() not .one() so it persists after cancel)
+        console.log('HHDL: Attaching new change handler');
+        checkboxes.on('change', async function(e) {
             console.log('HHDL: Task checkbox changed');
 
             const checkbox = $(this);
