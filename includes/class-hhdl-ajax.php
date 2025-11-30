@@ -451,11 +451,17 @@ class HHDL_Ajax {
         $filtered['checkin_date'] = $booking['checkin_date'];
         $filtered['checkout_date'] = $booking['checkout_date'];
         $filtered['checkin_time'] = $booking['checkin_time'];
+        $filtered['is_early_arrival'] = isset($booking['is_early_arrival']) ? $booking['is_early_arrival'] : false;
         $filtered['checkout_time'] = $booking['checkout_time'];
         $filtered['pax'] = $booking['pax'];
         $filtered['nights'] = $booking['nights'];
         $filtered['current_night'] = $booking['current_night'];
         $filtered['room_type'] = $booking['room_type'];
+
+        // Bed type detection data (always visible for housekeeping)
+        $filtered['has_twin'] = isset($booking['has_twin']) ? $booking['has_twin'] : false;
+        $filtered['twin_info'] = isset($booking['twin_info']) ? $booking['twin_info'] : array('type' => 'none', 'matched_term' => '', 'source' => '');
+        $filtered['extra_bed_info'] = isset($booking['extra_bed_info']) ? $booking['extra_bed_info'] : array('has_extra_bed' => false, 'matched_term' => '', 'source' => '');
 
         if ($can_view_rates) {
             $filtered['rate_plan'] = $booking['rate_plan'];
@@ -798,6 +804,10 @@ class HHDL_Ajax {
             $occupancy_text = $booking_data['pax'] . ' pax';
         }
 
+        // Check if viewing a future date
+        $today = date('Y-m-d');
+        $is_future_date = ($date > $today);
+
         ?>
         <div class="hhdl-modal-header-content">
             <div class="hhdl-modal-room-info">
@@ -811,9 +821,14 @@ class HHDL_Ajax {
                     <?php else: ?>
                         <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                     <?php endif; ?>
-                    <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
-                        <?php echo esc_html($room_details['site_status']); ?>
-                    </span>
+                    <?php if ($is_future_date): ?>
+                        <!-- Empty spacer for future dates (like main list) -->
+                        <span class="hhdl-modal-status-spacer"></span>
+                    <?php else: ?>
+                        <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                            <?php echo esc_html($room_details['site_status']); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
 

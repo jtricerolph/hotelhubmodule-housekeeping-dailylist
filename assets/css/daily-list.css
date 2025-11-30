@@ -1021,6 +1021,12 @@
     letter-spacing: 0.5px;
 }
 
+.hhdl-modal-status-spacer {
+    display: inline-block;
+    width: 60px;
+    height: 24px;
+}
+
 .hhdl-modal-site-status.clean {
     background: #d1fae5;
     color: #065f46;
