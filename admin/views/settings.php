@@ -31,6 +31,7 @@ if (!defined('ABSPATH')) {
                     <th><?php _e('Enabled', 'hhdl'); ?></th>
                     <th><?php _e('Default Tasks', 'hhdl'); ?></th>
                     <th><?php _e('Twin Detection', 'hhdl'); ?></th>
+                    <th><?php _e('Note Types', 'hhdl'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -59,6 +60,10 @@ if (!defined('ABSPATH')) {
 
                     // Get available task types for this location
                     $available_task_types = isset($task_types_by_location[$location_id]) ? $task_types_by_location[$location_id] : array();
+
+                    // Get available note types for this location
+                    $available_note_types = isset($note_types_by_location[$location_id]) ? $note_types_by_location[$location_id] : array();
+                    $visible_note_types = isset($location_settings['visible_note_types']) ? $location_settings['visible_note_types'] : array();
                     ?>
                     <tr class="hhdl-location-row">
                         <td class="location-name">
@@ -233,6 +238,37 @@ if (!defined('ABSPATH')) {
                                     </div>
                                 </fieldset>
                             </div>
+                        </td>
+                        <td class="location-note-types">
+                            <fieldset class="hhdl-fieldset">
+                                <legend><?php _e('Applicable Note Types', 'hhdl'); ?></legend>
+                                <p class="description">
+                                    <?php _e('Select which note types are relevant to the Daily List module. User access is still controlled by permissions.', 'hhdl'); ?>
+                                </p>
+                                <?php if (empty($available_note_types)): ?>
+                                    <p class="hhdl-no-note-types">
+                                        <em><?php _e('No note types configured for this location. Please configure note types in Hotel Hub settings.', 'hhdl'); ?></em>
+                                    </p>
+                                <?php else: ?>
+                                    <div class="hhdl-note-types-list">
+                                        <?php foreach ($available_note_types as $note_type): ?>
+                                            <label class="hhdl-note-type-item" style="display: block; margin-bottom: 8px;">
+                                                <input type="checkbox"
+                                                       name="locations[<?php echo $location_id; ?>][visible_note_types][]"
+                                                       value="<?php echo esc_attr($note_type['id']); ?>"
+                                                       <?php checked(in_array($note_type['id'], $visible_note_types)); ?>>
+                                                <span class="hhdl-note-type-color"
+                                                      style="display: inline-block; width: 16px; height: 16px; background: <?php echo esc_attr($note_type['color']); ?>; border-radius: 3px; vertical-align: middle; margin-right: 4px;"></span>
+                                                <span class="material-symbols-outlined"
+                                                      style="font-size: 16px; vertical-align: middle; margin-right: 4px;">
+                                                    <?php echo esc_html($note_type['icon']); ?>
+                                                </span>
+                                                <span><?php echo esc_html($note_type['name']); ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </fieldset>
                         </td>
                     </tr>
                 <?php endforeach; ?>

@@ -71,6 +71,12 @@ class HHDL_Settings {
             $task_types_by_location[$location['id']] = self::get_task_types($location['id']);
         }
 
+        // Get available note types from Hotel Hub for each location
+        $note_types_by_location = array();
+        foreach ($locations as $location) {
+            $note_types_by_location[$location['id']] = self::get_note_types($location['id']);
+        }
+
         // Load template
         include HHDL_PLUGIN_DIR . 'admin/views/settings.php';
     }
@@ -113,7 +119,9 @@ class HHDL_Settings {
                     // Extra Bed Detection
                     'extra_bed_custom_field_names' => isset($location_data['extra_bed_custom_field_names']) ? sanitize_text_field($location_data['extra_bed_custom_field_names']) : '',
                     'extra_bed_custom_field_values' => isset($location_data['extra_bed_custom_field_values']) ? sanitize_text_field($location_data['extra_bed_custom_field_values']) : '',
-                    'extra_bed_notes_search_terms' => isset($location_data['extra_bed_notes_search_terms']) ? sanitize_text_field($location_data['extra_bed_notes_search_terms']) : ''
+                    'extra_bed_notes_search_terms' => isset($location_data['extra_bed_notes_search_terms']) ? sanitize_text_field($location_data['extra_bed_notes_search_terms']) : '',
+                    // Note Types
+                    'visible_note_types' => isset($location_data['visible_note_types']) && is_array($location_data['visible_note_types']) ? array_map('intval', $location_data['visible_note_types']) : array()
                 );
 
                 // Process tasks if provided
@@ -230,7 +238,9 @@ class HHDL_Settings {
             // Extra Bed Detection
             'extra_bed_custom_field_names' => '',
             'extra_bed_custom_field_values' => '',
-            'extra_bed_notes_search_terms' => ''
+            'extra_bed_notes_search_terms' => '',
+            // Note Types
+            'visible_note_types' => array()
         );
     }
 
@@ -341,6 +351,37 @@ class HHDL_Settings {
             }
         } catch (Exception $e) {
             // Silent fail - return empty array
+        }
+
+        return array();
+    }
+
+    /**
+     * Get note types from Hotel Hub integration for a location
+     *
+     * @param int $location_id Location ID
+     * @return array Note types array
+     */
+    public static function get_note_types($location_id) {
+        // Check if Hotel Hub App integration is available
+        if (!function_exists('hha')) {
+            return array();
+        }
+
+        $hotel = hha()->hotels->get($location_id);
+        if (!$hotel) {
+            return array();
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return array();
+        }
+
+        // Check if note types are configured in integration
+        if (isset($integration['note_types']) && !empty($integration['note_types'])) {
+            return $integration['note_types'];
         }
 
         return array();

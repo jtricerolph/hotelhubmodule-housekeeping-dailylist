@@ -1090,6 +1090,11 @@ class HHDL_Ajax {
      * Render room modal body HTML
      */
     private function render_room_modal_body($room_details, $booking_data, $tasks, $date) {
+        // Get location ID for notes rendering
+        $location_id = isset($room_details['location_id']) ? $room_details['location_id'] : 0;
+
+        // Render notes section (if applicable note types exist)
+        $this->render_notes_section($booking_data, $location_id);
         ?>
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
@@ -1364,5 +1369,161 @@ class HHDL_Ajax {
             'matched_term' => '',
             'source' => ''
         );
+    }
+
+    /**
+     * Check if user can view a specific note type
+     *
+     * @param int $type_id Note type ID
+     * @return bool
+     */
+    private function user_can_view_note_type($type_id) {
+        // Check if specific note type permission exists
+        if (function_exists('wfa_user_can')) {
+            if (wfa_user_can('hhdl_view_note_type_' . $type_id)) {
+                return true;
+            }
+        }
+
+        // Fallback to view all notes permission
+        return $this->user_can_view_all_notes();
+    }
+
+    /**
+     * Render notes section for modal
+     *
+     * @param array $booking_data Booking data with notes
+     * @param int $location_id Location ID
+     */
+    private function render_notes_section($booking_data, $location_id) {
+        // Get Daily List settings for applicable note types
+        $dl_settings = HHDL_Settings::get_location_settings($location_id);
+        $visible_note_type_ids = isset($dl_settings['visible_note_types']) ? $dl_settings['visible_note_types'] : array();
+
+        // Get note type configurations from Hotel Hub
+        $note_types_config = HHDL_Settings::get_note_types($location_id);
+
+        // If no note types configured or none selected, don't show section
+        if (empty($note_types_config) || empty($visible_note_type_ids)) {
+            return;
+        }
+
+        // Create a map of note type ID => config for easy lookup
+        $note_types_map = array();
+        foreach ($note_types_config as $note_type) {
+            if (isset($note_type['id'])) {
+                $note_types_map[$note_type['id']] = $note_type;
+            }
+        }
+
+        // Filter note types to only show applicable ones
+        $applicable_note_types = array();
+        foreach ($visible_note_type_ids as $type_id) {
+            if (isset($note_types_map[$type_id])) {
+                $applicable_note_types[$type_id] = $note_types_map[$type_id];
+            }
+        }
+
+        // If no applicable note types, don't show section
+        if (empty($applicable_note_types)) {
+            return;
+        }
+
+        // Group notes by type_id
+        $notes_by_type = array();
+        if (isset($booking_data['notes']) && is_array($booking_data['notes'])) {
+            foreach ($booking_data['notes'] as $note) {
+                $type_id = isset($note['type_id']) ? intval($note['type_id']) : 0;
+
+                // Skip if not in applicable types
+                if (!isset($applicable_note_types[$type_id])) {
+                    continue;
+                }
+
+                // Check permission for this note type
+                $can_view = $this->user_can_view_note_type($type_id);
+
+                if (!isset($notes_by_type[$type_id])) {
+                    $notes_by_type[$type_id] = array(
+                        'can_view' => $can_view,
+                        'notes' => array()
+                    );
+                }
+
+                // Add note if user has permission
+                if ($can_view) {
+                    $notes_by_type[$type_id]['notes'][] = $note;
+                }
+            }
+        }
+
+        // Render notes section
+        ?>
+        <section class="hhdl-notes-section">
+            <div class="hhdl-notes-tabs">
+                <?php foreach ($applicable_note_types as $type_id => $note_type): ?>
+                    <?php
+                    $has_notes = isset($notes_by_type[$type_id]) && !empty($notes_by_type[$type_id]['notes']);
+                    $can_view = isset($notes_by_type[$type_id]) && $notes_by_type[$type_id]['can_view'];
+                    $tab_class = 'hhdl-note-tab';
+                    $tab_class .= $has_notes ? ' has-notes' : ' no-notes';
+                    $tab_color = $has_notes ? $note_type['color'] : '#9ca3af';
+                    ?>
+                    <div class="<?php echo esc_attr($tab_class); ?>"
+                         data-type-id="<?php echo esc_attr($type_id); ?>"
+                         style="<?php echo $has_notes ? 'color: ' . esc_attr($tab_color) . ';' : ''; ?>">
+                        <span class="material-symbols-outlined"><?php echo esc_html($note_type['icon']); ?></span>
+                        <span><?php echo esc_html($note_type['name']); ?></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <?php foreach ($applicable_note_types as $type_id => $note_type): ?>
+                <div class="hhdl-notes-content" data-type-id="<?php echo esc_attr($type_id); ?>">
+                    <div class="hhdl-notes-content-inner">
+                        <?php
+                        $can_view = isset($notes_by_type[$type_id]) && $notes_by_type[$type_id]['can_view'];
+                        $has_notes = isset($notes_by_type[$type_id]) && !empty($notes_by_type[$type_id]['notes']);
+
+                        if (!$can_view):
+                        ?>
+                            <div class="hhdl-note-no-permission">
+                                <span class="material-symbols-outlined" style="font-size: 48px; color: #d1d5db; margin-bottom: 8px;">lock</span>
+                                <p><?php _e('No permissions for this note type', 'hhdl'); ?></p>
+                            </div>
+                        <?php elseif (!$has_notes): ?>
+                            <div class="hhdl-note-no-permission">
+                                <span class="material-symbols-outlined" style="font-size: 48px; color: #d1d5db; margin-bottom: 8px;">note</span>
+                                <p><?php _e('No notes of this type', 'hhdl'); ?></p>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($notes_by_type[$type_id]['notes'] as $note): ?>
+                                <div class="hhdl-note-card" style="border-left-color: <?php echo esc_attr($note_type['color']); ?>; background: <?php echo esc_attr($note_type['color']); ?>15;">
+                                    <div class="hhdl-note-header">
+                                        <div class="hhdl-note-type-info">
+                                            <span class="material-symbols-outlined" style="color: <?php echo esc_attr($note_type['color']); ?>;"><?php echo esc_html($note_type['icon']); ?></span>
+                                            <span class="hhdl-note-type-name"><?php echo esc_html($note_type['name']); ?></span>
+                                        </div>
+                                        <div class="hhdl-note-updated">
+                                            <?php
+                                            if (isset($note['updated_when']) && !empty($note['updated_when'])) {
+                                                echo esc_html(date('M j, Y g:i A', strtotime($note['updated_when'])));
+                                            } elseif (isset($note['created_when']) && !empty($note['created_when'])) {
+                                                echo esc_html(date('M j, Y g:i A', strtotime($note['created_when'])));
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                    <div class="hhdl-note-content">
+                                        <?php echo esc_html(isset($note['content']) ? $note['content'] : ''); ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </section>
+        <?php
     }
 }

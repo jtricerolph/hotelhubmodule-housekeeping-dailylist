@@ -1001,6 +1001,146 @@
     gap: 8px;
 }
 
+/* Notes Section */
+.hhdl-notes-section {
+    margin-bottom: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.hhdl-notes-tabs {
+    display: flex;
+    gap: 0;
+    background: #f3f4f6;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.hhdl-note-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-right: 1px solid #e5e7eb;
+    font-size: 13px;
+    font-weight: 500;
+    color: #9ca3af;
+    background: #f9fafb;
+}
+
+.hhdl-note-tab:last-child {
+    border-right: none;
+}
+
+.hhdl-note-tab .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.hhdl-note-tab.no-notes {
+    color: #9ca3af;
+}
+
+.hhdl-note-tab.has-notes {
+    font-weight: 600;
+}
+
+.hhdl-note-tab:hover {
+    background: #f3f4f6;
+}
+
+.hhdl-note-tab.active {
+    background: #fff;
+    border-bottom: 2px solid currentColor;
+    margin-bottom: -2px;
+}
+
+.hhdl-notes-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.hhdl-notes-content.active {
+    max-height: 600px;
+    transition: max-height 0.4s ease-in;
+}
+
+.hhdl-notes-content-inner {
+    padding: 16px;
+}
+
+.hhdl-note-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #10b981;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.hhdl-note-card:last-child {
+    margin-bottom: 0;
+}
+
+.hhdl-note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+.hhdl-note-type-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hhdl-note-type-info .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.hhdl-note-type-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.hhdl-note-updated {
+    font-size: 11px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.hhdl-note-content {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1f2937;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.hhdl-note-no-permission {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.hhdl-note-no-permission p {
+    margin: 8px 0 0 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
 .hhdl-tasks-section {
     margin-bottom: 8px;
     background: #f9fafb;
@@ -1040,9 +1180,9 @@
 }
 
 .hhdl-modal-flow-label {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
-    padding: 4px 10px;
+    padding: 4px 8px;
     border: 1px solid #000;
     border-radius: 4px;
     background: transparent;

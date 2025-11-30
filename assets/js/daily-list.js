@@ -222,6 +222,7 @@
 
                     console.log('HHDL: About to call initTaskCheckboxes');
                     initTaskCheckboxes();
+                    initNotesTabs();
                 } else {
                     console.error('HHDL: Modal load failed', response);
                     modalBody.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');
@@ -238,6 +239,44 @@
      */
     function closeModal() {
         $('#hhdl-modal').removeClass('active');
+    }
+
+    /**
+     * Initialize notes tab handlers
+     */
+    function initNotesTabs() {
+        const noteTabs = $('.hhdl-note-tab');
+
+        if (noteTabs.length === 0) {
+            return; // No notes section
+        }
+
+        // Remove any existing handlers
+        noteTabs.off('click');
+
+        // Add click handler for each tab
+        noteTabs.on('click', function() {
+            const clickedTab = $(this);
+            const typeId = clickedTab.data('type-id');
+            const contentSection = $(`.hhdl-notes-content[data-type-id="${typeId}"]`);
+
+            // Check if this tab is already active
+            const isActive = clickedTab.hasClass('active');
+
+            if (isActive) {
+                // Close the active tab
+                clickedTab.removeClass('active');
+                contentSection.removeClass('active');
+            } else {
+                // Close all tabs first
+                noteTabs.removeClass('active');
+                $('.hhdl-notes-content').removeClass('active');
+
+                // Open the clicked tab
+                clickedTab.addClass('active');
+                contentSection.addClass('active');
+            }
+        });
     }
 
     /**
