@@ -342,6 +342,7 @@ class HHDL_Ajax {
                         'rate_plan'         => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
                         'rate_amount'       => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
                         'notes'             => isset($booking['notes']) ? $this->format_notes($booking['notes']) : '',
+                        'booking_status'    => isset($booking['booking_status']) ? strtolower($booking['booking_status']) : 'unconfirmed',
                         'has_twin'          => $has_twin,
                         'twin_info'         => $twin_detection,
                         'extra_bed_info'    => $extra_bed_detection
@@ -457,6 +458,7 @@ class HHDL_Ajax {
         $filtered['nights'] = $booking['nights'];
         $filtered['current_night'] = $booking['current_night'];
         $filtered['room_type'] = $booking['room_type'];
+        $filtered['booking_status'] = isset($booking['booking_status']) ? $booking['booking_status'] : 'unconfirmed';
 
         // Bed type detection data (always visible for housekeeping)
         $filtered['has_twin'] = isset($booking['has_twin']) ? $booking['has_twin'] : false;
@@ -807,6 +809,11 @@ class HHDL_Ajax {
         // Check if viewing a future date
         $today = date('Y-m-d');
         $is_future_date = ($date > $today);
+        $is_viewing_today = ($date === $today);
+
+        // Check if booking is arrived (checked in)
+        $booking_status = $booking_data && isset($booking_data['booking_status']) ? $booking_data['booking_status'] : '';
+        $show_arrived = ($booking_status === 'arrived');
 
         ?>
         <div class="hhdl-modal-header-content">
@@ -824,7 +831,11 @@ class HHDL_Ajax {
                     <?php if ($is_future_date): ?>
                         <!-- Empty spacer for future dates (like main list) -->
                         <span class="hhdl-modal-status-spacer"></span>
-                    <?php else: ?>
+                    <?php elseif ($show_arrived): ?>
+                        <!-- Show ARRIVED for checked-in bookings -->
+                        <span class="hhdl-modal-site-status arrived">ARRIVED</span>
+                    <?php elseif ($is_viewing_today && $is_arriving && strtolower($room_details['site_status']) !== 'unknown'): ?>
+                        <!-- Show site status for today's arrivals -->
                         <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>

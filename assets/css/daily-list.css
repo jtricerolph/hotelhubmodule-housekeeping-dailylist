@@ -1042,6 +1042,11 @@
     color: #1e40af;
 }
 
+.hhdl-modal-site-status.arrived {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
 .hhdl-modal-room-stats {
     display: flex;
     align-items: center;
@@ -1061,7 +1066,7 @@
     justify-content: center;
     gap: 3px;
     min-width: 22px;
-    min-height: 22px;
+    min-height: 25px;
 }
 
 /* Arrival Time - matches main list styling */
