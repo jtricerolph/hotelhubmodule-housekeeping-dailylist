@@ -698,15 +698,15 @@ class HHDL_Ajax {
     /**
      * Check if task is completed
      */
-    private function is_task_completed($room_id, $task_type, $service_date) {
+    private function is_task_completed($room_id, $task_description, $service_date) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'hhdl_task_completions';
 
         $exists = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$table_name}
-             WHERE room_id = %s AND task_type = %s AND service_date = %s",
+             WHERE room_id = %s AND task_description = %s AND service_date = %s",
             $room_id,
-            $task_type,
+            $task_description,
             $service_date
         ));
 

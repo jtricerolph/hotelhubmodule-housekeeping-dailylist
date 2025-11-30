@@ -307,17 +307,27 @@
                 if (!taskData.isDefault || taskData.isOccupy) {
                     console.log('HHDL: Confirmation needed - isDefault:', taskData.isDefault, 'isOccupy:', taskData.isOccupy);
 
-                    const confirmed = await confirmTaskCompletion(taskData);
-                    if (!confirmed) {
-                        // User cancelled, clear processing flag and re-enable
-                        console.log('HHDL: User cancelled confirmation, clearing flag and re-enabling');
+                    try {
+                        const confirmed = await confirmTaskCompletion(taskData);
+                        console.log('HHDL: confirmTaskCompletion returned:', confirmed);
+                        if (!confirmed) {
+                            // User cancelled, clear processing flag and re-enable
+                            console.log('HHDL: User cancelled confirmation, clearing flag and re-enabling');
+                            checkbox.data('processing', false);
+                            checkbox.prop('checked', false);
+                            checkbox.prop('disabled', false);
+                            return;
+                        }
+
+                        console.log('HHDL: Confirmations passed');
+                    } catch (error) {
+                        console.error('HHDL: Error in confirmation process:', error);
                         checkbox.data('processing', false);
                         checkbox.prop('checked', false);
                         checkbox.prop('disabled', false);
+                        showToast('Error: ' + error.message, 'error');
                         return;
                     }
-
-                    console.log('HHDL: Confirmations passed');
                 }
 
                 console.log('HHDL: Calling completeTask');
@@ -330,60 +340,77 @@
      * Show custom confirmation modal
      */
     function showConfirmModal(title, message, iconType, confirmText, confirmClass) {
+        console.log('HHDL: showConfirmModal called with:', {title: title, iconType: iconType, confirmText: confirmText});
+
         return new Promise(function(resolve) {
-            // Create modal HTML
-            var modal = $('<div class="hhdl-confirm-overlay">' +
-                '<div class="hhdl-confirm-modal">' +
-                    '<div class="hhdl-confirm-header">' +
-                        '<span class="material-symbols-outlined hhdl-confirm-icon ' + iconType + '">' +
-                            (iconType === 'danger' ? 'warning' : 'help') +
-                        '</span>' +
-                        '<h3 class="hhdl-confirm-title">' + title + '</h3>' +
+            try {
+                // Create modal HTML
+                var modal = $('<div class="hhdl-confirm-overlay">' +
+                    '<div class="hhdl-confirm-modal">' +
+                        '<div class="hhdl-confirm-header">' +
+                            '<span class="material-symbols-outlined hhdl-confirm-icon ' + iconType + '">' +
+                                (iconType === 'danger' ? 'warning' : 'help') +
+                            '</span>' +
+                            '<h3 class="hhdl-confirm-title">' + title + '</h3>' +
+                        '</div>' +
+                        '<div class="hhdl-confirm-body">' + message + '</div>' +
+                        '<div class="hhdl-confirm-footer">' +
+                            '<button class="hhdl-confirm-btn hhdl-confirm-btn-cancel">Cancel</button>' +
+                            '<button class="hhdl-confirm-btn hhdl-confirm-btn-confirm ' + confirmClass + '">' + confirmText + '</button>' +
+                        '</div>' +
                     '</div>' +
-                    '<div class="hhdl-confirm-body">' + message + '</div>' +
-                    '<div class="hhdl-confirm-footer">' +
-                        '<button class="hhdl-confirm-btn hhdl-confirm-btn-cancel">Cancel</button>' +
-                        '<button class="hhdl-confirm-btn hhdl-confirm-btn-confirm ' + confirmClass + '">' + confirmText + '</button>' +
-                    '</div>' +
-                '</div>' +
-            '</div>');
+                '</div>');
 
-            // Add to page
-            $('body').append(modal);
+                console.log('HHDL: Modal HTML created, appending to body');
 
-            // Show with animation
-            setTimeout(function() {
-                modal.addClass('active');
-            }, 10);
+                // Add to page
+                $('body').append(modal);
 
-            // Handle cancel
-            modal.find('.hhdl-confirm-btn-cancel').on('click', function() {
-                modal.removeClass('active');
+                console.log('HHDL: Modal appended, setting active class in 10ms');
+
+                // Show with animation
                 setTimeout(function() {
-                    modal.remove();
-                    resolve(false);
-                }, 200);
-            });
+                    modal.addClass('active');
+                    console.log('HHDL: Modal active class added');
+                }, 10);
 
-            // Handle confirm
-            modal.find('.hhdl-confirm-btn-confirm').on('click', function() {
-                modal.removeClass('active');
-                setTimeout(function() {
-                    modal.remove();
-                    resolve(true);
-                }, 200);
-            });
-
-            // Handle click outside
-            modal.on('click', function(e) {
-                if ($(e.target).hasClass('hhdl-confirm-overlay')) {
+                // Handle cancel
+                modal.find('.hhdl-confirm-btn-cancel').on('click', function() {
+                    console.log('HHDL: Cancel button clicked');
                     modal.removeClass('active');
                     setTimeout(function() {
                         modal.remove();
                         resolve(false);
                     }, 200);
-                }
-            });
+                });
+
+                // Handle confirm
+                modal.find('.hhdl-confirm-btn-confirm').on('click', function() {
+                    console.log('HHDL: Confirm button clicked');
+                    modal.removeClass('active');
+                    setTimeout(function() {
+                        modal.remove();
+                        resolve(true);
+                    }, 200);
+                });
+
+                // Handle click outside
+                modal.on('click', function(e) {
+                    if ($(e.target).hasClass('hhdl-confirm-overlay')) {
+                        console.log('HHDL: Clicked outside modal');
+                        modal.removeClass('active');
+                        setTimeout(function() {
+                            modal.remove();
+                            resolve(false);
+                        }, 200);
+                    }
+                });
+
+                console.log('HHDL: Event handlers attached');
+            } catch (error) {
+                console.error('HHDL: Error in showConfirmModal:', error);
+                resolve(false);
+            }
         });
     }
 
@@ -391,35 +418,47 @@
      * Show confirmation dialogs for task completion
      */
     async function confirmTaskCompletion(taskData) {
-        // First check: Non-default task confirmation
-        if (!taskData.isDefault) {
-            var confirmed = await showConfirmModal(
-                'Confirm Non-Default Task',
-                'Please confirm you want to mark this non-default task complete.<div class="hhdl-confirm-task-name">' + taskData.taskDescription + '</div>',
-                'warning',
-                'Mark Complete',
-                ''
-            );
-            if (!confirmed) {
-                return false;
-            }
-        }
+        try {
+            console.log('HHDL: confirmTaskCompletion called with taskData:', taskData);
 
-        // Second check: Occupy task confirmation (additional warning)
-        if (taskData.isOccupy) {
-            var confirmed = await showConfirmModal(
-                'Unblock Room',
-                'This task is currently blocking off this room. Completing it will make the room available again.<br><br>Are you sure you wish to mark it as completed?',
-                'danger',
-                'Yes, Complete Task',
-                'danger'
-            );
-            if (!confirmed) {
-                return false;
+            // First check: Non-default task confirmation
+            if (!taskData.isDefault) {
+                console.log('HHDL: Showing non-default task confirmation');
+                var confirmed = await showConfirmModal(
+                    'Confirm Non-Default Task',
+                    'Please confirm you want to mark this non-default task complete.<div class="hhdl-confirm-task-name">' + taskData.taskDescription + '</div>',
+                    'warning',
+                    'Mark Complete',
+                    ''
+                );
+                console.log('HHDL: Non-default confirmation result:', confirmed);
+                if (!confirmed) {
+                    return false;
+                }
             }
-        }
 
-        return true;
+            // Second check: Occupy task confirmation (additional warning)
+            if (taskData.isOccupy) {
+                console.log('HHDL: Showing occupy task confirmation');
+                var confirmedOccupy = await showConfirmModal(
+                    'Unblock Room',
+                    'This task is currently blocking off this room. Completing it will make the room available again.<br><br>Are you sure you wish to mark it as completed?',
+                    'danger',
+                    'Yes, Complete Task',
+                    'danger'
+                );
+                console.log('HHDL: Occupy confirmation result:', confirmedOccupy);
+                if (!confirmedOccupy) {
+                    return false;
+                }
+            }
+
+            console.log('HHDL: All confirmations passed');
+            return true;
+        } catch (error) {
+            console.error('HHDL: Error in confirmTaskCompletion:', error);
+            return false;
+        }
     }
 
     /**
