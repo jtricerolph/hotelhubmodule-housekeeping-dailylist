@@ -258,6 +258,14 @@
             console.log('HHDL: Task checkbox changed');
 
             const checkbox = $(this);
+
+            // Prevent duplicate events - if already disabled, ignore this event
+            if (checkbox.prop('disabled')) {
+                console.log('HHDL: Checkbox already disabled, ignoring duplicate event');
+                e.stopImmediatePropagation();
+                return false;
+            }
+
             const taskItem = checkbox.closest('.hhdl-task-item');
             const taskData = {
                 roomId: checkbox.data('room-id'),
@@ -273,14 +281,19 @@
             if (checkbox.prop('checked')) {
                 console.log('HHDL: Checkbox is checked, checking for confirmations needed');
 
+                // Disable checkbox IMMEDIATELY to prevent duplicate events
+                console.log('HHDL: Disabling checkbox immediately to prevent duplicates');
+                checkbox.prop('disabled', true);
+
                 // Show confirmation dialogs if needed
                 if (!taskData.isDefault || taskData.isOccupy) {
                     console.log('HHDL: Confirmation needed - isDefault:', taskData.isDefault, 'isOccupy:', taskData.isOccupy);
 
                     if (!confirmTaskCompletion(taskData, checkbox)) {
-                        // User cancelled, uncheck the box
-                        console.log('HHDL: User cancelled confirmation, unchecking');
+                        // User cancelled, uncheck and re-enable the box
+                        console.log('HHDL: User cancelled confirmation, unchecking and re-enabling');
                         checkbox.prop('checked', false);
+                        checkbox.prop('disabled', false);
                         return;
                     }
 
@@ -321,7 +334,8 @@
         console.log('HHDL: completeTask called with data:', taskData);
         console.log('HHDL: taskItem element:', taskItem);
 
-        // Disable checkbox during request
+        // Checkbox should already be disabled from change handler, but ensure it
+        // This is a safety measure in case completeTask is called from elsewhere
         checkbox.prop('disabled', true);
 
         // Add processing overlay
