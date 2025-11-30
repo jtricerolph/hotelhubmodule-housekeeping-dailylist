@@ -119,6 +119,9 @@ class HHDL_Display {
             <button class="hhdl-filter-btn" data-filter="twins">
                 <?php _e('Twins', 'hhdl'); ?>
             </button>
+            <button class="hhdl-filter-btn" data-filter="blocked">
+                <?php _e('Blocked', 'hhdl'); ?>
+            </button>
         </div>
         <?php
     }
@@ -163,7 +166,8 @@ class HHDL_Display {
             'departures' => 0,
             'stopovers' => 0,
             'back_to_back' => 0,
-            'twins' => 0
+            'twins' => 0,
+            'blocked' => 0
         );
 
         foreach ($rooms_data as $room) {
@@ -172,6 +176,7 @@ class HHDL_Display {
             if ($room['is_stopover']) $counts['stopovers']++;
             if (isset($room['booking_type']) && $room['booking_type'] === 'back-to-back') $counts['back_to_back']++;
             if ($room['has_twin']) $counts['twins']++;
+            if ($room['booking_status'] === 'blocked') $counts['blocked']++;
         }
 
         // Check if viewing today's date

@@ -37,6 +37,11 @@
         $('#hhdl-date-picker').on('change', function() {
             currentDate = $(this).val();
             updateDateDisplay(currentDate);
+
+            // Reset filter to 'all' when date changes
+            $('.hhdl-filter-btn').removeClass('active');
+            $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
+
             loadRoomList(currentDate);
         });
     }
@@ -53,49 +58,102 @@
 
     /**
      * Initialize filter button handlers
+     * Implements three-state filtering:
+     * - Click 1: Inclusive (green) - show only this type
+     * - Click 2: Exclusive (red) - show everything EXCEPT this type
+     * - Click 3: Clear filter - back to 'all'
      */
     function initFilters() {
         $('.hhdl-filter-btn').on('click', function() {
-            $('.hhdl-filter-btn').removeClass('active');
-            $(this).addClass('active');
-            const filter = $(this).data('filter');
-            filterRooms(filter);
+            const $btn = $(this);
+            const filter = $btn.data('filter');
+
+            // 'All' button always clears all filters
+            if (filter === 'all') {
+                $('.hhdl-filter-btn').removeClass('active filter-exclusive');
+                $btn.addClass('active');
+                filterRooms('all', 'inclusive');
+                return;
+            }
+
+            // Determine current state
+            const isInclusive = $btn.hasClass('active') && !$btn.hasClass('filter-exclusive');
+            const isExclusive = $btn.hasClass('filter-exclusive');
+
+            // Clear all other filters
+            $('.hhdl-filter-btn').not($btn).removeClass('active filter-exclusive');
+            $('.hhdl-filter-btn[data-filter="all"]').removeClass('active');
+
+            // Cycle through states
+            if (!isInclusive && !isExclusive) {
+                // State 1: Set to inclusive (green)
+                $btn.addClass('active').removeClass('filter-exclusive');
+                filterRooms(filter, 'inclusive');
+            } else if (isInclusive) {
+                // State 2: Set to exclusive (red)
+                $btn.addClass('filter-exclusive');
+                filterRooms(filter, 'exclusive');
+            } else {
+                // State 3: Clear filter (back to 'all')
+                $btn.removeClass('active filter-exclusive');
+                $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
+                filterRooms('all', 'inclusive');
+            }
         });
     }
 
     /**
      * Filter visible rooms based on criteria
+     * @param {string} filterType - The filter type (arrivals, departs, etc.)
+     * @param {string} mode - 'inclusive' (show only) or 'exclusive' (show all except)
      */
-    function filterRooms(filterType) {
+    function filterRooms(filterType, mode) {
+        mode = mode || 'inclusive'; // Default to inclusive
+
         $('.hhdl-room-card').each(function() {
             const card = $(this);
-            let shouldShow = false;
+            let matchesFilter = false;
+            const isBlocked = card.data('booking-status') === 'blocked';
 
-            // Always show blocked rooms (maintenance tasks are important)
-            if (card.data('booking-status') === 'blocked') {
-                shouldShow = true;
+            // Determine if room matches the filter criteria
+            switch(filterType) {
+                case 'arrivals':
+                    // Exclude blocked rooms from arrivals
+                    matchesFilter = !isBlocked && card.data('is-arriving') === true;
+                    break;
+                case 'departs':
+                    // Include blocked rooms in departures ONLY if also departing
+                    matchesFilter = card.data('is-departing') === true;
+                    break;
+                case 'stopovers':
+                    // Exclude blocked rooms from stopovers
+                    matchesFilter = !isBlocked && card.data('is-stopover') === true;
+                    break;
+                case 'back-to-back':
+                    // Exclude blocked rooms from back-to-back
+                    matchesFilter = !isBlocked && card.data('booking-type') === 'back-to-back';
+                    break;
+                case 'twins':
+                    // Exclude blocked rooms from twins
+                    matchesFilter = !isBlocked && card.data('has-twin') === true;
+                    break;
+                case 'blocked':
+                    // Show only blocked rooms
+                    matchesFilter = isBlocked;
+                    break;
+                case 'all':
+                default:
+                    matchesFilter = true;
+            }
+
+            // Apply mode logic
+            let shouldShow;
+            if (mode === 'exclusive') {
+                // Exclusive mode: show everything EXCEPT matches
+                shouldShow = !matchesFilter;
             } else {
-                // Apply normal filtering for bookings and vacant rooms
-                switch(filterType) {
-                    case 'arrivals':
-                        shouldShow = card.data('is-arriving') === true;
-                        break;
-                    case 'departs':
-                        shouldShow = card.data('is-departing') === true;
-                        break;
-                    case 'stopovers':
-                        shouldShow = card.data('is-stopover') === true;
-                        break;
-                    case 'back-to-back':
-                        shouldShow = card.data('booking-type') === 'back-to-back';
-                        break;
-                    case 'twins':
-                        shouldShow = card.data('has-twin') === true;
-                        break;
-                    case 'all':
-                    default:
-                        shouldShow = true;
-                }
+                // Inclusive mode: show only matches
+                shouldShow = matchesFilter;
             }
 
             card.toggle(shouldShow);
@@ -111,6 +169,7 @@
         $('.hhdl-filter-btn[data-filter="stopovers"]').html('Stopovers <span class="hhdl-count-badge">' + counts.stopovers + '</span>');
         $('.hhdl-filter-btn[data-filter="back-to-back"]').html('Back to Back <span class="hhdl-count-badge">' + counts.back_to_back + '</span>');
         $('.hhdl-filter-btn[data-filter="twins"]').html('Twins <span class="hhdl-count-badge">' + counts.twins + '</span>');
+        $('.hhdl-filter-btn[data-filter="blocked"]').html('Blocked <span class="hhdl-count-badge">' + counts.blocked + '</span>');
     }
 
     /**
