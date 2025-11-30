@@ -873,6 +873,7 @@ class HHDL_Display {
         foreach ($tasks as $task) {
             $task_id = isset($task['task_id']) ? $task['task_id'] : 'unknown';
             $task_desc = isset($task['task_description']) ? $task['task_description'] : 'no description';
+            $task_type = isset($task['task_type']) ? $task['task_type'] : '';
             $task_occupy = isset($task['task_location_occupy']) ? $task['task_location_occupy'] : 'null';
 
             if (empty($task['task_location_occupy']) || $task['task_location_occupy'] != 1) {
@@ -905,10 +906,10 @@ class HHDL_Display {
                 continue;
             }
 
-            // Get color from task description mapping
+            // Get color from task description mapping - check both task_type and task_description
             $task_color = '#ef4444'; // Default red
             foreach ($task_description_mappings as $filter => $mapping) {
-                if (stripos($task_desc, $filter) !== false) {
+                if (stripos($task_type, $filter) !== false || stripos($task_desc, $filter) !== false) {
                     $task_color = $mapping['color'];
                     break;
                 }
