@@ -114,7 +114,7 @@ class HHDL_Ajax {
 
         // Render modal body HTML
         ob_start();
-        $this->render_room_modal_body($room_details, $booking_data, $tasks);
+        $this->render_room_modal_body($room_details, $booking_data, $tasks, $date);
         $html = ob_get_clean();
 
         wp_send_json_success($html);
@@ -456,6 +456,12 @@ class HHDL_Ajax {
                     $task_type_display = $task_types_map[$nb_task['task_type_id']];
                 }
 
+                // Check if task is a rollover (task period is before the viewing date)
+                $is_rollover = false;
+                if (!empty($nb_task['task_period']) && $nb_task['task_period'] < $date) {
+                    $is_rollover = true;
+                }
+
                 $tasks[] = array(
                     'id'          => $nb_task['id'],
                     'name'        => $task_description, // Use actual task description from NewBook
@@ -463,7 +469,8 @@ class HHDL_Ajax {
                     'task_period' => isset($nb_task['task_period']) ? $nb_task['task_period'] : '',
                     'color'       => $matched_color,
                     'completed'   => $nb_task['completed'] || $locally_completed, // NewBook or local completion
-                    'source'      => 'newbook'
+                    'source'      => 'newbook',
+                    'is_rollover' => $is_rollover
                 );
             }
         }
@@ -722,28 +729,67 @@ class HHDL_Ajax {
     /**
      * Render room modal body HTML
      */
-    private function render_room_modal_body($room_details, $booking_data, $tasks) {
+    private function render_room_modal_body($room_details, $booking_data, $tasks, $date) {
+        // Calculate booking status
+        $is_arriving = false;
+        $is_departing = false;
+        $is_stopover = false;
+
+        if ($booking_data) {
+            $is_arriving = ($booking_data['checkin_date'] === $date);
+            $is_departing = ($booking_data['checkout_date'] === $date);
+            $is_stopover = !$is_arriving && !$is_departing;
+        }
+
+        // Format occupancy (for now just show pax, can be enhanced with adults/children later)
+        $occupancy_text = '';
+        if ($booking_data && isset($booking_data['pax']) && $booking_data['pax'] > 0) {
+            $occupancy_text = $booking_data['pax'] . ' pax';
+        }
+
         ?>
-        <!-- Booking Details Section -->
-        <?php if ($booking_data): ?>
-        <section class="hhdl-booking-section">
-            <h3><?php _e('Booking Details', 'hhdl'); ?></h3>
-            <div class="hhdl-booking-details">
-                <?php if (isset($booking_data['guest_name'])): ?>
-                    <p><strong><?php _e('Guest:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['guest_name']); ?></p>
+        <!-- Room Card Header -->
+        <div class="hhdl-modal-room-header">
+            <div class="hhdl-modal-room-info">
+                <span class="hhdl-modal-room-number"><?php echo esc_html($room_details['room_number']); ?></span>
+                <?php if ($booking_data): ?>
+                    <?php if (isset($booking_data['guest_name']) && !empty($booking_data['guest_name'])): ?>
+                        <span class="hhdl-modal-guest-name"><?php echo esc_html($booking_data['guest_name']); ?></span>
+                    <?php elseif (isset($booking_data['reference'])): ?>
+                        <span class="hhdl-modal-ref-number"><?php echo esc_html($booking_data['reference']); ?></span>
+                    <?php endif; ?>
+                    <span class="hhdl-modal-nights"><?php echo esc_html($booking_data['current_night']) . '/' . esc_html($booking_data['nights']) . ' nights'; ?></span>
+                <?php else: ?>
+                    <span class="hhdl-modal-vacant-label"><?php _e('No booking', 'hhdl'); ?></span>
                 <?php endif; ?>
-                <?php if (isset($booking_data['reference'])): ?>
-                    <p><strong><?php _e('Reference:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['reference']); ?></p>
+                <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                    <?php echo esc_html($room_details['site_status']); ?>
+                </span>
+            </div>
+
+            <?php if ($booking_data): ?>
+            <div class="hhdl-modal-room-stats">
+                <?php if (!empty($booking_data['checkin_time'])): ?>
+                    <span class="hhdl-modal-stat hhdl-modal-checkin-time <?php echo $is_arriving ? 'hhdl-modal-is-arriving' : ''; ?>">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <?php echo esc_html($booking_data['checkin_time']); ?>
+                    </span>
                 <?php endif; ?>
-                <?php if (isset($booking_data['nights'])): ?>
-                    <p><strong><?php _e('Nights:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['nights']); ?></p>
-                <?php endif; ?>
-                <?php if (isset($booking_data['pax'])): ?>
-                    <p><strong><?php _e('Guests:', 'hhdl'); ?></strong> <?php echo esc_html($booking_data['pax']); ?></p>
+
+                <!-- Bedding type placeholder - to be implemented -->
+                <span class="hhdl-modal-stat hhdl-modal-bedding">
+                    <span class="material-symbols-outlined">bed</span>
+                </span>
+
+                <?php if (!empty($occupancy_text)): ?>
+                    <span class="hhdl-modal-stat hhdl-modal-occupancy">
+                        <span class="material-symbols-outlined">group</span>
+                        <?php echo esc_html($occupancy_text); ?>
+                    </span>
                 <?php endif; ?>
             </div>
-        </section>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
 
         <!-- Tasks Section -->
         <section class="hhdl-tasks-section">
@@ -762,7 +808,12 @@ class HHDL_Ajax {
                            data-task-type="<?php echo esc_attr($task['name']); ?>"
                            data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>">
                     <div class="hhdl-task-content">
-                        <span class="hhdl-task-name"><?php echo esc_html($task['name']); ?></span>
+                        <span class="hhdl-task-name">
+                            <?php echo esc_html($task['name']); ?>
+                            <?php if (!empty($task['is_rollover'])): ?>
+                                <span class="material-symbols-outlined hhdl-rollover-icon" title="<?php esc_attr_e('Rollover task from previous day', 'hhdl'); ?>">step_over</span>
+                            <?php endif; ?>
+                        </span>
                         <?php if (!empty($task['task_type']) || !empty($task['task_period'])): ?>
                         <span class="hhdl-task-meta">
                             <?php
