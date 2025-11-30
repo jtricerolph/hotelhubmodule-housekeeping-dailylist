@@ -1071,28 +1071,32 @@ class HHDL_Ajax {
         <section class="hhdl-tasks-section">
             <h3>
                 <?php _e('NewBook Tasks', 'hhdl'); ?>
-                <?php if (!empty($tasks)): ?>
-                    <?php
-                    // Determine task status and count
-                    $task_count = count($tasks);
-                    $has_rollover = false;
+                <?php
+                // Determine task status and count
+                $incomplete_count = 0;
+                if (!empty($tasks)) {
                     foreach ($tasks as $task) {
-                        if (!empty($task['is_rollover'])) {
-                            $has_rollover = true;
-                            break;
+                        if (empty($task['completed'])) {
+                            $incomplete_count++;
                         }
                     }
+                }
 
-                    // Set icon and badge class based on status
-                    $badge_class = $has_rollover ? 'hhdl-task-late' : 'hhdl-task-status';
-                    $icon_name = $has_rollover ? 'assignment_late' : 'assignment';
-                    $icon_color = $has_rollover ? '#dc2626' : '#9ca3af';
+                // Show icon based on incomplete task count
+                if ($incomplete_count > 0) {
+                    // Outstanding tasks - red assignment_late icon with badge
+                    $badge_class = 'hhdl-task-late';
+                    $icon_name = 'assignment_late';
+                    $icon_color = '#dc2626';
                     ?>
-                    <span class="hhdl-task-count <?php echo esc_attr($badge_class); ?>" style="position: relative;">
+                    <span class="<?php echo esc_attr($badge_class); ?>" style="position: relative; display: inline-flex;">
                         <span class="material-symbols-outlined" style="color: <?php echo esc_attr($icon_color); ?>; font-size: 16px;"><?php echo esc_html($icon_name); ?></span>
-                        <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
+                        <span class="hhdl-task-count-badge"><?php echo esc_html($incomplete_count); ?></span>
                     </span>
-                <?php endif; ?>
+                <?php } else { ?>
+                    <!-- All complete or no tasks - green assignment_turned_in icon -->
+                    <span class="material-symbols-outlined" style="color: #10b981; font-size: 16px;">assignment_turned_in</span>
+                <?php } ?>
             </h3>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
