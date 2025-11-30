@@ -256,36 +256,21 @@ class HHDL_Ajax {
             }
         }
 
-        // Get all bookings that might affect this room on this date
-        // We need to check arrivals, stays, and departures (including already departed guests)
-        $all_bookings = array();
+        // Get all bookings for yesterday through tomorrow to capture:
+        // - Departures today (even if already departed)
+        // - Arrivals today
+        // - Staying bookings covering today
         $yesterday = date('Y-m-d', strtotime($date . ' -1 day'));
+        $tomorrow = date('Y-m-d', strtotime($date . ' +1 day'));
 
-        // Get staying bookings (covers the date)
-        $staying_response = $api->get_bookings($date, date('Y-m-d', strtotime($date . ' +1 day')), 'staying', true);
-        if (isset($staying_response['data'])) {
-            $all_bookings = array_merge($all_bookings, $staying_response['data']);
-        }
+        // Single API call to get all bookings in range
+        // NewBook API returns all bookings regardless of status filter - we filter by dates instead
+        $bookings_response = $api->get_bookings($yesterday, $tomorrow, null, true);
+        $all_bookings = isset($bookings_response['data']) ? $bookings_response['data'] : array();
 
-        // Get arriving bookings (checkin on this date)
-        $arriving_response = $api->get_bookings($date, $date, 'arriving', true);
-        if (isset($arriving_response['data'])) {
-            $all_bookings = array_merge($all_bookings, $arriving_response['data']);
-        }
-
-        // Get departing bookings - query from yesterday to today to capture already departed guests
-        // The 'departing' filter with today's date only doesn't return guests who have already checked out
-        $departing_response = $api->get_bookings($yesterday, $date, 'departing', true);
-        if (isset($departing_response['data'])) {
-            $all_bookings = array_merge($all_bookings, $departing_response['data']);
-        }
-
-        // DEBUG: Log what bookings we got for this room
+        // DEBUG: Log what bookings we got
         error_log("HHDL Flow Detection - Room $room_id on $date:");
-        error_log("  Staying bookings: " . (isset($staying_response['data']) ? count($staying_response['data']) : 0));
-        error_log("  Arriving bookings: " . (isset($arriving_response['data']) ? count($arriving_response['data']) : 0));
-        error_log("  Departing bookings (yesterday-today): " . (isset($departing_response['data']) ? count($departing_response['data']) : 0));
-        error_log("  Total bookings for analysis: " . count($all_bookings));
+        error_log("  Total bookings in range ($yesterday to $tomorrow): " . count($all_bookings));
 
         $staying_booking = null;
         $departing_booking = null;
