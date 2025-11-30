@@ -494,6 +494,7 @@ class HHDL_Ajax {
                 'task_period'      => $task_period,
                 'task_type_id'     => isset($task['task_type_id']) ? $task['task_type_id'] : '',
                 'task_location_type' => isset($task['task_location_type']) ? $task['task_location_type'] : '',
+                'task_location_occupy' => isset($task['task_location_occupy']) ? $task['task_location_occupy'] : 0,
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
         }
@@ -605,11 +606,13 @@ class HHDL_Ajax {
                 }
 
                 $matched_color = '#10b981'; // Default color
+                $is_default_task = false;
 
                 // Check if this task description matches any of our filter patterns
                 foreach ($task_description_mappings as $filter => $mapping) {
                     if (stripos($task_description, $filter) !== false) {
                         $matched_color = $mapping['color'];
+                        $is_default_task = true;
                         break;
                     }
                 }
@@ -623,6 +626,9 @@ class HHDL_Ajax {
                     $task_type_display = $task_types_map[$nb_task['task_type_id']];
                 }
 
+                // Check if task occupies the site
+                $is_occupy_task = !empty($nb_task['task_location_occupy']) && $nb_task['task_location_occupy'] == 1;
+
                 $tasks[] = array(
                     'id'          => $nb_task['id'],
                     'name'        => $task_description, // Use actual task description from NewBook
@@ -631,7 +637,9 @@ class HHDL_Ajax {
                     'color'       => $matched_color,
                     'completed'   => $nb_task['completed'] || $locally_completed, // NewBook or local completion
                     'source'      => 'newbook',
-                    'is_rollover' => $is_rollover
+                    'is_rollover' => $is_rollover,
+                    'is_default_task' => $is_default_task,
+                    'is_occupy_task' => $is_occupy_task
                 );
             }
         }
@@ -1117,7 +1125,9 @@ class HHDL_Ajax {
                            data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
                            data-task-id="<?php echo esc_attr($task['id']); ?>"
                            data-task-type="<?php echo esc_attr($task['name']); ?>"
-                           data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>">
+                           data-booking-ref="<?php echo isset($booking_data['reference']) ? esc_attr($booking_data['reference']) : ''; ?>"
+                           data-is-default="<?php echo $task['is_default_task'] ? '1' : '0'; ?>"
+                           data-is-occupy="<?php echo $task['is_occupy_task'] ? '1' : '0'; ?>">
                     <div class="hhdl-task-content">
                         <span class="hhdl-task-name">
                             <?php echo esc_html($task['name']); ?>

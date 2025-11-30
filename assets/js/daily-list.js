@@ -244,13 +244,45 @@
                 roomId: checkbox.data('room-id'),
                 taskId: checkbox.data('task-id'),
                 taskType: checkbox.data('task-type'),
-                bookingRef: checkbox.data('booking-ref') || ''
+                bookingRef: checkbox.data('booking-ref') || '',
+                isDefault: checkbox.data('is-default') == '1',
+                isOccupy: checkbox.data('is-occupy') == '1'
             };
 
             if (checkbox.prop('checked')) {
+                // Show confirmation dialogs if needed
+                if (!taskData.isDefault || taskData.isOccupy) {
+                    if (!confirmTaskCompletion(taskData, checkbox)) {
+                        // User cancelled, uncheck the box
+                        checkbox.prop('checked', false);
+                        return;
+                    }
+                }
+
                 completeTask(taskData, checkbox, taskItem);
             }
         });
+    }
+
+    /**
+     * Show confirmation dialogs for task completion
+     */
+    function confirmTaskCompletion(taskData, checkbox) {
+        // First check: Non-default task confirmation
+        if (!taskData.isDefault) {
+            if (!confirm('Please confirm you want to mark this non-default task complete.\n\nTask: ' + taskData.taskType)) {
+                return false;
+            }
+        }
+
+        // Second check: Occupy task confirmation (additional warning)
+        if (taskData.isOccupy) {
+            if (!confirm('This task is currently blocking off this room. Completing it will make the room available again.\n\nAre you sure you wish to mark it as completed?')) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
