@@ -443,7 +443,7 @@ class HHDL_Ajax {
                 'room_type'         => isset($booking['site_category_name']) ? $booking['site_category_name'] : '',
                 'rate_plan'         => isset($booking['rate_plan_name']) ? $booking['rate_plan_name'] : '',
                 'rate_amount'       => isset($booking['rate_amount']) ? $booking['rate_amount'] : 0,
-                'notes'             => isset($booking['notes']) ? $this->format_notes($booking['notes']) : '',
+                'notes'             => isset($booking['notes']) && is_array($booking['notes']) ? $booking['notes'] : array(),
                 'booking_status'    => isset($booking['booking_status']) ? strtolower($booking['booking_status']) : 'unconfirmed',
                 'has_twin'          => $has_twin,
                 'twin_info'         => $twin_detection,
@@ -585,11 +585,16 @@ class HHDL_Ajax {
             $filtered['rate_amount'] = $booking['rate_amount'];
         }
 
-        if ($can_view_all_notes) {
-            $filtered['notes'] = $booking['notes'];
+        // Always include notes as an array (filter by permission if needed)
+        if (isset($booking['notes']) && is_array($booking['notes'])) {
+            if ($can_view_all_notes) {
+                $filtered['notes'] = $booking['notes'];
+            } else {
+                // Filter to only show notes the user has permission to view
+                $filtered['notes'] = $this->filter_housekeeping_notes($booking['notes']);
+            }
         } else {
-            // Show only housekeeping-related notes
-            $filtered['notes'] = $this->filter_housekeeping_notes($booking['notes']);
+            $filtered['notes'] = array();
         }
 
         return $filtered;
@@ -714,28 +719,26 @@ class HHDL_Ajax {
     }
 
     /**
-     * Filter notes to show only housekeeping-related content
+     * Filter notes to show only those the user has permission to view
      */
     private function filter_housekeeping_notes($notes) {
-        if (empty($notes)) {
-            return '';
+        if (empty($notes) || !is_array($notes)) {
+            return array();
         }
 
-        // Simple keyword filter
-        $keywords = array('housekeeping', 'clean', 'linen', 'towel', 'amenities', 'room');
-        $filtered = '';
+        $filtered = array();
+        foreach ($notes as $note) {
+            if (!isset($note['type_id'])) {
+                continue;
+            }
 
-        $lines = explode("\n", $notes);
-        foreach ($lines as $line) {
-            foreach ($keywords as $keyword) {
-                if (stripos($line, $keyword) !== false) {
-                    $filtered .= $line . "\n";
-                    break;
-                }
+            // Check if user has permission to view this note type
+            if ($this->user_can_view_note_type($note['type_id'])) {
+                $filtered[] = $note;
             }
         }
 
-        return trim($filtered);
+        return $filtered;
     }
 
     /**
