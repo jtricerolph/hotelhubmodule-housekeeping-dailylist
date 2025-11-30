@@ -278,6 +278,13 @@ class HHDL_Ajax {
             $all_bookings = array_merge($all_bookings, $departing_response['data']);
         }
 
+        // DEBUG: Log what bookings we got for this room
+        error_log("HHDL Flow Detection - Room $room_id on $date:");
+        error_log("  Staying bookings: " . (isset($staying_response['data']) ? count($staying_response['data']) : 0));
+        error_log("  Arriving bookings: " . (isset($arriving_response['data']) ? count($arriving_response['data']) : 0));
+        error_log("  Departing bookings: " . (isset($departing_response['data']) ? count($departing_response['data']) : 0));
+        error_log("  Total bookings for analysis: " . count($all_bookings));
+
         $staying_booking = null;
         $departing_booking = null;
         $arriving_booking = null;
@@ -288,23 +295,31 @@ class HHDL_Ajax {
             if (isset($booking['site_id']) && $booking['site_id'] === $room_id) {
                 $arrival = date('Y-m-d', strtotime($booking['booking_arrival']));
                 $departure = date('Y-m-d', strtotime($booking['booking_departure']));
+                $booking_ref = isset($booking['booking_reference_id']) ? $booking['booking_reference_id'] : 'N/A';
+                $booking_status = isset($booking['booking_status']) ? $booking['booking_status'] : 'unknown';
+
+                error_log("  Found booking for room: Ref=$booking_ref, Status=$booking_status, Arrival=$arrival, Departure=$departure");
 
                 // Check for any booking ending today (includes already departed)
                 if ($departure === $date) {
                     $has_departure_today = true;
+                    error_log("    -> Departure today detected! (has_departure_today=true)");
                     if ($arrival < $date) {
                         $departing_booking = $booking;
+                        error_log("    -> Set as departing_booking (arrival before today)");
                     }
                 }
 
                 // Check for arriving booking (checkin today)
                 if ($arrival === $date) {
                     $arriving_booking = $booking;
+                    error_log("    -> Set as arriving_booking");
                 }
 
                 // Check for staying booking (covers this date)
                 if ($arrival < $date && $departure > $date) {
                     $staying_booking = $booking;
+                    error_log("    -> Set as staying_booking");
                 }
             }
         }
@@ -313,21 +328,33 @@ class HHDL_Ajax {
         $booking_flow_type = null;
         $primary_booking = null;
 
+        error_log("  Flow Detection Results:");
+        error_log("    has_departure_today: " . ($has_departure_today ? 'YES' : 'NO'));
+        error_log("    arriving_booking: " . ($arriving_booking ? 'YES' : 'NO'));
+        error_log("    departing_booking: " . ($departing_booking ? 'YES' : 'NO'));
+        error_log("    staying_booking: " . ($staying_booking ? 'YES' : 'NO'));
+
         // If there's an arrival today AND any departure today, it's back-to-back
         // This handles cases where the departing booking has already checked out
         if ($arriving_booking && $has_departure_today) {
             // Back-to-back scenario (even if previous guest already departed)
             $booking_flow_type = 'depart_arrive';
             $primary_booking = $arriving_booking; // Use arriving booking as primary
+            error_log("  -> Final Flow Type: DEPART/ARRIVE");
         } elseif ($arriving_booking) {
             $booking_flow_type = 'arrive';
             $primary_booking = $arriving_booking;
+            error_log("  -> Final Flow Type: ARRIVE");
         } elseif ($departing_booking) {
             $booking_flow_type = 'depart';
             $primary_booking = $departing_booking;
+            error_log("  -> Final Flow Type: DEPART");
         } elseif ($staying_booking) {
             $booking_flow_type = 'stay_over';
             $primary_booking = $staying_booking;
+            error_log("  -> Final Flow Type: STAY OVER");
+        } else {
+            error_log("  -> Final Flow Type: NONE (vacant)");
         }
 
         // Process the primary booking
