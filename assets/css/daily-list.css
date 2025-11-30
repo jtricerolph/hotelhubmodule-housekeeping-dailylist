@@ -619,14 +619,14 @@
 
 /* Twin bed icons - make them overlap slightly */
 .hhdl-stat-content.hhdl-bed-type .material-symbols-outlined:nth-child(2) {
-    margin-left: -2px;
+    margin-left: -5px;
 }
 
 /* Extra bed separator */
 .hhdl-extra-bed-separator {
     font-size: 12px;
     font-weight: 600;
-    margin: 0 2px;
+    margin: 0;
 }
 
 .hhdl-stat-content.hhdl-bed-type:hover {
