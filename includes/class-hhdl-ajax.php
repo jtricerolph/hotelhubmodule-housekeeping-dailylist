@@ -1487,9 +1487,9 @@ class HHDL_Ajax {
                     ?>
                     <div class="<?php echo esc_attr($tab_class); ?>"
                          data-type-id="<?php echo esc_attr($type_id); ?>"
-                         style="<?php echo $has_notes ? 'color: ' . esc_attr($tab_color) . ';' : ''; ?>">
+                         style="<?php echo $has_notes ? 'color: ' . esc_attr($tab_color) . ';' : ''; ?>"
+                         title="<?php echo esc_attr($note_type['name']); ?>">
                         <span class="material-symbols-outlined"><?php echo esc_html($note_type['icon']); ?></span>
-                        <span><?php echo esc_html($note_type['name']); ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>
