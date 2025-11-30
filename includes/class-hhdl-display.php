@@ -1774,7 +1774,8 @@ class HHDL_Display {
             'is_early_arrival'  => $is_early_arrival,
             'pax'               => isset($booking['pax']) ? $booking['pax'] : 0,
             'night_info'        => $current_night . '/' . $total_nights . ' nights',
-            'occupancy'         => isset($booking['occupancy']) ? $booking['occupancy'] : ''
+            'occupancy'         => isset($booking['occupancy']) ? $booking['occupancy'] : '',
+            'booking_locked'    => isset($booking['booking_locked']) ? $booking['booking_locked'] : '0'
         );
     }
 
