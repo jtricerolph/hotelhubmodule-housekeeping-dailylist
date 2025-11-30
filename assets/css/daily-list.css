@@ -567,7 +567,7 @@
     min-height: 24px;
 }
 
-/* Early Arrival Time Block */
+/* Arrival Time Block */
 .hhdl-stat-content.hhdl-checkin-time {
     gap: 3px;
     font-size: 12px;
@@ -580,7 +580,7 @@
 
 .hhdl-stat-content.hhdl-checkin-time .material-symbols-outlined {
     font-size: 14px;
-    color: #f59e0b;
+    color: #6b7280;
 }
 
 .hhdl-stat-content.hhdl-early-arrival {
@@ -589,6 +589,10 @@
     font-weight: 600;
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.2);
     animation: earlyArrivalPulse 3s ease-in-out infinite;
+}
+
+.hhdl-stat-content.hhdl-early-arrival .material-symbols-outlined {
+    color: #f59e0b;
 }
 
 /* Twin Beds Indicator */
