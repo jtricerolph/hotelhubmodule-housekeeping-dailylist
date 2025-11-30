@@ -358,17 +358,23 @@ class HHDL_Display {
         </div>
 
         <div class="hhdl-room-stats">
-            <!-- Block 1: Early Arrival Time -->
+            <!-- Block 1: Arrival Time -->
             <div class="hhdl-stat-block">
                 <?php
-                // Only show glow effect if booking hasn't arrived yet
+                // Show arrival time with glow effect for early arrivals (before default time)
                 $early_class = '';
-                if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])) {
-                    $early_class = $room['booking_status'] === 'arrived' ? 'hhdl-checkin-time' : 'hhdl-checkin-time hhdl-early-arrival';
+                if (!empty($booking['checkin_time'])) {
+                    if (isset($booking['is_early_arrival']) && $booking['is_early_arrival']) {
+                        // Early arrival - show with glow unless already arrived
+                        $early_class = $room['booking_status'] === 'arrived' ? 'hhdl-checkin-time' : 'hhdl-checkin-time hhdl-early-arrival';
+                    } else {
+                        // Regular arrival time - show without glow
+                        $early_class = 'hhdl-checkin-time';
+                    }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($early_class); ?>">
-                    <?php if (isset($booking['is_early_arrival']) && $booking['is_early_arrival'] && !empty($booking['checkin_time'])): ?>
+                    <?php if (!empty($booking['checkin_time'])): ?>
                         <span class="material-symbols-outlined">schedule</span>
                         <span class="hhdl-time-text"><?php echo esc_html($booking['checkin_time']); ?></span>
                     <?php endif; ?>
