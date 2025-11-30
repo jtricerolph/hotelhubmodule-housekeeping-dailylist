@@ -442,26 +442,6 @@
     font-family: monospace;
 }
 
-.hhdl-checkin-time {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #6b7280;
-    padding: 2px 6px;
-    background: #f3f4f6;
-    border-radius: 4px;
-}
-
-.hhdl-checkin-time.hhdl-early-arrival {
-    background: #fef3c7;
-    color: #92400e;
-    font-weight: 600;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.2);
-    animation: earlyArrivalPulse 3s ease-in-out infinite;
-}
-
 @keyframes earlyArrivalPulse {
     0%, 100% {
         box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.2);
@@ -469,11 +449,6 @@
     50% {
         box-shadow: 0 0 12px rgba(245, 158, 11, 0.5), 0 0 20px rgba(245, 158, 11, 0.25);
     }
-}
-
-.hhdl-early-icon {
-    font-size: 14px;
-    color: #f59e0b;
 }
 
 .hhdl-pax-badge {
@@ -592,183 +567,196 @@
     min-height: 24px;
 }
 
+/* Early Arrival Time Block */
+.hhdl-stat-content.hhdl-checkin-time {
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 2px 6px;
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.hhdl-stat-content.hhdl-checkin-time .material-symbols-outlined {
+    font-size: 14px;
+    color: #f59e0b;
+}
+
+.hhdl-stat-content.hhdl-early-arrival {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.2);
+    animation: earlyArrivalPulse 3s ease-in-out infinite;
+}
+
 /* Twin Beds Indicator */
-.hhdl-twin-beds {
-    display: flex;
-    align-items: center;
+.hhdl-stat-content.hhdl-twin-beds {
     gap: 2px;
     padding: 2px 6px;
     border-radius: 4px;
     transition: all 0.2s;
 }
 
-.hhdl-twin-beds .material-symbols-outlined {
+.hhdl-stat-content.hhdl-twin-beds .material-symbols-outlined {
     font-size: 14px;
 }
 
-.hhdl-twin-beds.hhdl-twin-confirmed {
+.hhdl-stat-content.hhdl-twin-confirmed {
     background: #d1fae5;
     border: 1px solid #10b981;
 }
 
-.hhdl-twin-beds.hhdl-twin-confirmed .material-symbols-outlined {
+.hhdl-stat-content.hhdl-twin-confirmed .material-symbols-outlined {
     color: #059669;
 }
 
-.hhdl-twin-beds.hhdl-twin-potential {
+.hhdl-stat-content.hhdl-twin-potential {
     background: #fef3c7;
     border: 1px dashed #f59e0b;
 }
 
-.hhdl-twin-beds.hhdl-twin-potential .material-symbols-outlined {
+.hhdl-stat-content.hhdl-twin-potential .material-symbols-outlined {
     color: #d97706;
 }
 
-.hhdl-twin-beds:hover {
+.hhdl-stat-content.hhdl-twin-beds:hover {
     transform: scale(1.05);
 }
 
 /* Task Status Icons */
-.hhdl-task-status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.hhdl-stat-content.hhdl-task-status {
     padding: 3px 6px;
     border-radius: 4px;
     transition: all 0.2s;
 }
 
-.hhdl-task-status .material-symbols-outlined {
+.hhdl-stat-content.hhdl-task-status .material-symbols-outlined {
     font-size: 16px;
 }
 
 /* Outstanding tasks (red) */
-.hhdl-task-status.hhdl-task-late {
+.hhdl-stat-content.hhdl-task-late {
     background: #fee2e2;
 }
 
-.hhdl-task-status.hhdl-task-late .material-symbols-outlined {
+.hhdl-stat-content.hhdl-task-late .material-symbols-outlined {
     color: #dc2626;
 }
 
 /* Rollover tasks from previous dates (amber) */
-.hhdl-task-status.hhdl-task-return {
+.hhdl-stat-content.hhdl-task-return {
     background: #fef3c7;
 }
 
-.hhdl-task-status.hhdl-task-return .material-symbols-outlined {
+.hhdl-stat-content.hhdl-task-return .material-symbols-outlined {
     color: #f59e0b;
 }
 
 /* No outstanding tasks (green) */
-.hhdl-task-status.hhdl-task-complete {
+.hhdl-stat-content.hhdl-task-complete {
     background: #d1fae5;
 }
 
-.hhdl-task-status.hhdl-task-complete .material-symbols-outlined {
+.hhdl-stat-content.hhdl-task-complete .material-symbols-outlined {
     color: #10b981;
 }
 
 /* No tasks (grey) */
-.hhdl-task-status.hhdl-task-none {
+.hhdl-stat-content.hhdl-task-none {
     background: #f3f4f6;
 }
 
-.hhdl-task-status.hhdl-task-none .material-symbols-outlined {
+.hhdl-stat-content.hhdl-task-none .material-symbols-outlined {
     color: #9ca3af;
 }
 
-.hhdl-task-status:hover {
+.hhdl-stat-content.hhdl-task-status:hover {
     transform: scale(1.1);
 }
 
 /* Future Tasks Module Icons */
-.hhdl-future-tasks {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.hhdl-stat-content.hhdl-future-tasks {
     padding: 3px 6px;
     border-radius: 4px;
     transition: all 0.2s;
 }
 
-.hhdl-future-tasks .material-symbols-outlined {
+.hhdl-stat-content.hhdl-future-tasks .material-symbols-outlined {
     font-size: 16px;
 }
 
 /* Waiting tasks (red) */
-.hhdl-future-tasks.hhdl-tasks-waiting {
+.hhdl-stat-content.hhdl-tasks-waiting {
     background: #fee2e2;
 }
 
-.hhdl-future-tasks.hhdl-tasks-waiting .material-symbols-outlined {
+.hhdl-stat-content.hhdl-tasks-waiting .material-symbols-outlined {
     color: #dc2626;
 }
 
 /* All tasks complete (green) */
-.hhdl-future-tasks.hhdl-tasks-complete {
+.hhdl-stat-content.hhdl-tasks-complete {
     background: #d1fae5;
 }
 
-.hhdl-future-tasks.hhdl-tasks-complete .material-symbols-outlined {
+.hhdl-stat-content.hhdl-tasks-complete .material-symbols-outlined {
     color: #10b981;
 }
 
 /* No current tasks (grey) */
-.hhdl-future-tasks.hhdl-tasks-none {
+.hhdl-stat-content.hhdl-tasks-none {
     background: #f3f4f6;
 }
 
-.hhdl-future-tasks.hhdl-tasks-none .material-symbols-outlined {
+.hhdl-stat-content.hhdl-tasks-none .material-symbols-outlined {
     color: #9ca3af;
 }
 
-.hhdl-future-tasks:hover {
+.hhdl-stat-content.hhdl-future-tasks:hover {
     transform: scale(1.1);
 }
 
 /* Spoilt Linen Module Icons */
-.hhdl-linen-status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.hhdl-stat-content.hhdl-linen-status {
     padding: 3px 6px;
     border-radius: 4px;
     transition: all 0.2s;
 }
 
-.hhdl-linen-status .material-symbols-outlined {
+.hhdl-stat-content.hhdl-linen-status .material-symbols-outlined {
     font-size: 16px;
 }
 
 /* Unsubmitted count (amber) */
-.hhdl-linen-status.hhdl-linen-pending {
+.hhdl-stat-content.hhdl-linen-pending {
     background: #fef3c7;
 }
 
-.hhdl-linen-status.hhdl-linen-pending .material-symbols-outlined {
+.hhdl-stat-content.hhdl-linen-pending .material-symbols-outlined {
     color: #f59e0b;
 }
 
 /* Submitted count (green) */
-.hhdl-linen-status.hhdl-linen-submitted {
+.hhdl-stat-content.hhdl-linen-submitted {
     background: #d1fae5;
 }
 
-.hhdl-linen-status.hhdl-linen-submitted .material-symbols-outlined {
+.hhdl-stat-content.hhdl-linen-submitted .material-symbols-outlined {
     color: #10b981;
 }
 
 /* No values (grey) */
-.hhdl-linen-status.hhdl-linen-none {
+.hhdl-stat-content.hhdl-linen-none {
     background: #f3f4f6;
 }
 
-.hhdl-linen-status.hhdl-linen-none .material-symbols-outlined {
+.hhdl-stat-content.hhdl-linen-none .material-symbols-outlined {
     color: #9ca3af;
 }
 
-.hhdl-linen-status:hover {
+.hhdl-stat-content.hhdl-linen-status:hover {
     transform: scale(1.1);
 }
 
