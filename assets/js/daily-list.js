@@ -227,8 +227,8 @@
                     matchesFilter = isBlocked;
                     break;
                 case 'no-booking':
-                    // Rooms without a booking (vacant or blocked)
-                    matchesFilter = card.data('booking-type') === 'vacant' || isBlocked;
+                    // Rooms without a guest booking for the day (vacant or blocked)
+                    matchesFilter = card.data('booking-type') === 'vacant' || card.data('booking-type') === 'blocked';
                     break;
                 case 'unoccupied':
                     // Rooms without guests currently in them

@@ -186,8 +186,8 @@ class HHDL_Display {
             if ($room['has_twin']) $counts['twins']++;
             if ($room['booking_status'] === 'blocked') $counts['blocked']++;
 
-            // No booking: vacant or blocked (no guest booking)
-            if ($room['booking_type'] === 'vacant' || $room['booking_status'] === 'blocked') {
+            // No booking: vacant or blocked (no guest booking for the day)
+            if ($room['booking_type'] === 'vacant' || $room['booking_type'] === 'blocked') {
                 $counts['no_booking']++;
             }
 
