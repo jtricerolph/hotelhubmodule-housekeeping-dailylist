@@ -62,9 +62,9 @@ class HHDL_Reports {
 
         // Get filter values
         $location_id = isset($_GET['location_id']) ? intval($_GET['location_id']) : 0;
-        $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : date('Y-m-d', strtotime('-7 days'));
-        $num_days = isset($_GET['num_days']) ? intval($_GET['num_days']) : 7;
-        $filter_type = isset($_GET['filter_type']) ? sanitize_text_field($_GET['filter_type']) : 'task_date';
+        $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : date('Y-m-d');
+        $num_days = isset($_GET['num_days']) ? intval($_GET['num_days']) : 1;
+        $filter_type = isset($_GET['filter_type']) ? sanitize_text_field($_GET['filter_type']) : 'completion_date';
         $room_filter = isset($_GET['room_filter']) ? sanitize_text_field($_GET['room_filter']) : '';
         $task_type_filter = isset($_GET['task_type_filter']) ? sanitize_text_field($_GET['task_type_filter']) : '';
         $staff_filter = isset($_GET['staff_filter']) ? intval($_GET['staff_filter']) : 0;
