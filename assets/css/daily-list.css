@@ -205,8 +205,8 @@
     border-color: #3b82f6;
 }
 
-/* Wider left border when yesterday's guest hasn't checked out yet */
-.hhdl-room-card[data-previous-status="arrived"]::before {
+/* Wider left border when yesterday's guest hasn't checked out yet and is departing today */
+.hhdl-room-card[data-previous-status="arrived"][data-is-departing="true"]::before {
     width: 45px;
     left: -53px;
 }
