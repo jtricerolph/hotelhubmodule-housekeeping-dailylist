@@ -10,6 +10,8 @@
     let currentLocationId = 0;
     let currentDate = '';
     let lastCheckTimestamp = new Date().toISOString();
+    let originalFilterCounts = {}; // Store original filter counts
+    let totalRoomCount = 0; // Total number of rooms
 
     /**
      * Initialize Daily List
@@ -70,6 +72,14 @@
 
             // 'All' button always clears all filters
             if (filter === 'all') {
+                // Reset all filter labels to inclusive state
+                $('.hhdl-filter-btn').not($btn).each(function() {
+                    const $otherBtn = $(this);
+                    const otherFilter = $otherBtn.data('filter');
+                    if (otherFilter !== 'all') {
+                        updateFilterButtonLabel($otherBtn, otherFilter, 'inclusive');
+                    }
+                });
                 $('.hhdl-filter-btn').removeClass('active filter-exclusive');
                 $btn.addClass('active');
                 filterRooms('all', 'inclusive');
@@ -80,7 +90,14 @@
             const isInclusive = $btn.hasClass('active') && !$btn.hasClass('filter-exclusive');
             const isExclusive = $btn.hasClass('filter-exclusive');
 
-            // Clear all other filters
+            // Clear all other filters and reset their labels
+            $('.hhdl-filter-btn').not($btn).each(function() {
+                const $otherBtn = $(this);
+                const otherFilter = $otherBtn.data('filter');
+                if (otherFilter !== 'all') {
+                    updateFilterButtonLabel($otherBtn, otherFilter, 'inclusive');
+                }
+            });
             $('.hhdl-filter-btn').not($btn).removeClass('active filter-exclusive');
             $('.hhdl-filter-btn[data-filter="all"]').removeClass('active');
 
@@ -112,19 +129,23 @@
      * @param {string} mode - 'inclusive' or 'exclusive'
      */
     function updateFilterButtonLabel($btn, filter, mode) {
-        const counts = {
-            arrivals: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            departures: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            stopovers: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            back_to_back: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            twins: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            blocked: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            no_booking: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
-            unoccupied: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0
-        };
-
         let label = '';
-        let count = $btn.find('.hhdl-count-badge').text() || '0';
+        let count = 0;
+
+        // Get the original count for this filter
+        let originalCount = 0;
+        if (originalFilterCounts[filter]) {
+            originalCount = originalFilterCounts[filter];
+        }
+
+        // Calculate count based on mode
+        if (mode === 'exclusive') {
+            // Inverse count = total rooms - original count
+            count = totalRoomCount - originalCount;
+        } else {
+            // Use original count
+            count = originalCount;
+        }
 
         if (mode === 'exclusive') {
             // Red state labels
@@ -278,6 +299,22 @@
      * Update filter button counts
      */
     function updateFilterCounts(counts) {
+        // Store original counts and calculate total room count
+        originalFilterCounts = {
+            'arrivals': counts.arrivals || 0,
+            'departs': counts.departures || 0,
+            'stopovers': counts.stopovers || 0,
+            'back-to-back': counts.back_to_back || 0,
+            'twins': counts.twins || 0,
+            'blocked': counts.blocked || 0,
+            'no-booking': counts.no_booking || 0,
+            'unoccupied': counts.unoccupied || 0
+        };
+
+        // Calculate total room count from DOM
+        totalRoomCount = $('.hhdl-room-card').length;
+
+        // Update button labels with counts
         $('.hhdl-filter-btn[data-filter="arrivals"]').html('Arrivals <span class="hhdl-count-badge">' + counts.arrivals + '</span>');
         $('.hhdl-filter-btn[data-filter="departs"]').html('Departs <span class="hhdl-count-badge">' + counts.departures + '</span>');
         $('.hhdl-filter-btn[data-filter="stopovers"]').html('Stopovers <span class="hhdl-count-badge">' + counts.stopovers + '</span>');
