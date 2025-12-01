@@ -220,6 +220,13 @@
             const card = $(this);
             let matchesFilter = false;
             const isBlocked = card.data('booking-status') === 'blocked';
+            const isFilterExcluded = card.data('filter-excluded') === true;
+
+            // If filtering (not "all"), exclude rooms marked as filter-excluded
+            if (filterType !== 'all' && isFilterExcluded) {
+                card.hide();
+                return; // Skip further processing for this room
+            }
 
             // Determine if room matches the filter criteria
             switch(filterType) {

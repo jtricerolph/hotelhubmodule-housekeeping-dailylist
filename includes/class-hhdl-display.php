@@ -259,7 +259,8 @@ class HHDL_Display {
             'data-booking-status'  => $room['booking_status'],
             'data-spans-previous'  => $room['spans_previous'] ? 'true' : 'false',
             'data-spans-next'      => $room['spans_next'] ? 'true' : 'false',
-            'data-early-arrival'   => $is_early_arrival ? 'true' : 'false'
+            'data-early-arrival'   => $is_early_arrival ? 'true' : 'false',
+            'data-filter-excluded' => (isset($room['filter_excluded']) && $room['filter_excluded']) ? 'true' : 'false'
         );
 
         // Add previous night data attributes
