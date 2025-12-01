@@ -207,8 +207,8 @@
 
 /* Wider left border when yesterday's guest hasn't checked out yet and is departing today */
 .hhdl-room-card[data-previous-status="arrived"][data-is-departing="true"]::before {
-    width: 45px;
-    left: -53px;
+    width: 45px !important;
+    left: -53px !important;
 }
 
 /* Previous night - vacant */
