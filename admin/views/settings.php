@@ -32,6 +32,7 @@ if (!defined('ABSPATH')) {
                     <th><?php _e('Default Tasks', 'hhdl'); ?></th>
                     <th><?php _e('Twin Detection', 'hhdl'); ?></th>
                     <th><?php _e('Note Types', 'hhdl'); ?></th>
+                    <th><?php _e('Category Exclusions', 'hhdl'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -64,6 +65,11 @@ if (!defined('ABSPATH')) {
                     // Get available note types for this location
                     $available_note_types = isset($note_types_by_location[$location_id]) ? $note_types_by_location[$location_id] : array();
                     $visible_note_types = isset($location_settings['visible_note_types']) ? $location_settings['visible_note_types'] : array();
+
+                    // Get available categories for this location
+                    $available_categories = isset($categories_by_location[$location_id]) ? $categories_by_location[$location_id] : array();
+                    $excluded_categories = isset($location_settings['excluded_categories']) ? $location_settings['excluded_categories'] : array();
+                    $hide_excluded_categories = isset($location_settings['hide_excluded_categories']) ? $location_settings['hide_excluded_categories'] : false;
                     ?>
                     <tr class="hhdl-location-row">
                         <td class="location-name">
@@ -266,6 +272,48 @@ if (!defined('ABSPATH')) {
                                                 <span><?php echo esc_html($note_type['name']); ?></span>
                                             </label>
                                         <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </fieldset>
+                        </td>
+                        <td class="location-categories">
+                            <fieldset class="hhdl-fieldset">
+                                <legend><?php _e('Room Category Exclusions', 'hhdl'); ?></legend>
+                                <p class="description">
+                                    <?php _e('Exclude specific room categories from filters and optionally from the entire daily list.', 'hhdl'); ?>
+                                </p>
+                                <?php if (empty($available_categories)): ?>
+                                    <p class="hhdl-no-categories">
+                                        <em><?php _e('No room categories configured for this location. Please configure categories in Hotel Hub settings.', 'hhdl'); ?></em>
+                                    </p>
+                                <?php else: ?>
+                                    <div class="hhdl-categories-list">
+                                        <?php foreach ($available_categories as $category): ?>
+                                            <?php
+                                            // Count rooms in category
+                                            $room_count = isset($category['sites']) ? count($category['sites']) : 0;
+                                            ?>
+                                            <label class="hhdl-category-item" style="display: block; margin-bottom: 8px;">
+                                                <input type="checkbox"
+                                                       name="locations[<?php echo $location_id; ?>][excluded_categories][]"
+                                                       value="<?php echo esc_attr($category['id']); ?>"
+                                                       <?php checked(in_array($category['id'], $excluded_categories)); ?>>
+                                                <span><?php echo esc_html($category['name']); ?></span>
+                                                <span class="category-count" style="color: #646970; font-size: 12px;">(<?php echo $room_count; ?> <?php echo _n('room', 'rooms', $room_count, 'hhdl'); ?>)</span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ddd;">
+                                        <label>
+                                            <input type="checkbox"
+                                                   name="locations[<?php echo $location_id; ?>][hide_excluded_categories]"
+                                                   value="1"
+                                                   <?php checked($hide_excluded_categories, true); ?>>
+                                            <strong><?php _e('Hide excluded categories from list entirely', 'hhdl'); ?></strong>
+                                        </label>
+                                        <p class="description" style="margin-left: 24px;">
+                                            <?php _e('When unchecked, excluded categories will only be removed from filter counts but will still appear in "All Rooms" view.', 'hhdl'); ?>
+                                        </p>
                                     </div>
                                 <?php endif; ?>
                             </fieldset>

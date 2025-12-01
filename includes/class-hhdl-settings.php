@@ -77,6 +77,12 @@ class HHDL_Settings {
             $note_types_by_location[$location['id']] = self::get_note_types($location['id']);
         }
 
+        // Get available room categories for each location
+        $categories_by_location = array();
+        foreach ($locations as $location) {
+            $categories_by_location[$location['id']] = self::get_categories($location['id']);
+        }
+
         // Load template
         include HHDL_PLUGIN_DIR . 'admin/views/settings.php';
     }
@@ -121,7 +127,10 @@ class HHDL_Settings {
                     'extra_bed_custom_field_values' => isset($location_data['extra_bed_custom_field_values']) ? sanitize_text_field($location_data['extra_bed_custom_field_values']) : '',
                     'extra_bed_notes_search_terms' => isset($location_data['extra_bed_notes_search_terms']) ? sanitize_text_field($location_data['extra_bed_notes_search_terms']) : '',
                     // Note Types
-                    'visible_note_types' => isset($location_data['visible_note_types']) && is_array($location_data['visible_note_types']) ? array_map('intval', $location_data['visible_note_types']) : array()
+                    'visible_note_types' => isset($location_data['visible_note_types']) && is_array($location_data['visible_note_types']) ? array_map('intval', $location_data['visible_note_types']) : array(),
+                    // Room Category Exclusions
+                    'excluded_categories' => isset($location_data['excluded_categories']) && is_array($location_data['excluded_categories']) ? array_map('sanitize_text_field', $location_data['excluded_categories']) : array(),
+                    'hide_excluded_categories' => isset($location_data['hide_excluded_categories']) ? true : false
                 );
 
                 // Process tasks if provided
@@ -240,7 +249,10 @@ class HHDL_Settings {
             'extra_bed_custom_field_values' => '',
             'extra_bed_notes_search_terms' => '',
             // Note Types
-            'visible_note_types' => array()
+            'visible_note_types' => array(),
+            // Room Category Exclusions
+            'excluded_categories' => array(),
+            'hide_excluded_categories' => false
         );
     }
 
@@ -382,6 +394,37 @@ class HHDL_Settings {
         // Check if note types are configured in integration
         if (isset($integration['note_types']) && !empty($integration['note_types'])) {
             return $integration['note_types'];
+        }
+
+        return array();
+    }
+
+    /**
+     * Get room categories from Hotel Hub integration for a location
+     *
+     * @param int $location_id Location ID
+     * @return array Categories array
+     */
+    public static function get_categories($location_id) {
+        // Check if Hotel Hub App integration is available
+        if (!function_exists('hha')) {
+            return array();
+        }
+
+        $hotel = hha()->hotels->get($location_id);
+        if (!$hotel) {
+            return array();
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return array();
+        }
+
+        // Check if categories are configured in integration
+        if (isset($integration['categories_sort']) && !empty($integration['categories_sort'])) {
+            return $integration['categories_sort'];
         }
 
         return array();
