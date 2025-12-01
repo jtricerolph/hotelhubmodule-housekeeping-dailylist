@@ -555,6 +555,15 @@
 
             console.log('HHDL: Task data:', taskData);
 
+            // DEBUG POINT 5: Log JavaScript reading of data attributes
+            console.log('HHDL DEBUG 5: Reading task data from HTML attributes');
+            console.log('HHDL DEBUG 5: checkbox.data("task-type-id") raw value:', checkbox.data('task-type-id'));
+            console.log('HHDL DEBUG 5: checkbox.data("task-type-id") type:', typeof checkbox.data('task-type-id'));
+            console.log('HHDL DEBUG 5: checkbox.attr("data-task-type-id") value:', checkbox.attr('data-task-type-id'));
+            console.log('HHDL DEBUG 5: taskData.taskTypeId final value:', taskData.taskTypeId);
+            console.log('HHDL DEBUG 5: taskData.taskTypeId type:', typeof taskData.taskTypeId);
+            console.log('HHDL DEBUG 5: Full taskData object:', JSON.stringify(taskData));
+
             if (checkbox.prop('checked')) {
                 console.log('HHDL: Checkbox is checked, checking for confirmations needed');
 

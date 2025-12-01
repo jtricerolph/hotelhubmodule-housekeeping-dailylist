@@ -156,6 +156,16 @@ class HHDL_Ajax {
 
         error_log('HHDL: Parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_id: ' . $task_id . ', task_type_id: ' . $task_type_id . ', task_description: ' . $task_description);
 
+        // DEBUG POINT 6: Log AJAX handler receipt with detailed analysis
+        error_log('HHDL DEBUG 6: AJAX complete_task handler called');
+        error_log('HHDL DEBUG 6: Raw $_POST data: ' . print_r($_POST, true));
+        error_log('HHDL DEBUG 6: isset($_POST[task_type_id]): ' . (isset($_POST['task_type_id']) ? 'YES' : 'NO'));
+        error_log('HHDL DEBUG 6: $_POST[task_type_id] value: ' . (isset($_POST['task_type_id']) ? var_export($_POST['task_type_id'], true) : 'NOT SET'));
+        error_log('HHDL DEBUG 6: $_POST[task_type_id] type: ' . (isset($_POST['task_type_id']) ? gettype($_POST['task_type_id']) : 'N/A'));
+        error_log('HHDL DEBUG 6: After intval() - task_type_id: ' . var_export($task_type_id, true));
+        error_log('HHDL DEBUG 6: task_type_id is null? ' . ($task_type_id === null ? 'YES' : 'NO'));
+        error_log('HHDL DEBUG 6: task_type_id is 0? ' . ($task_type_id === 0 ? 'YES' : 'NO'));
+
         if (!$location_id || !$room_id || !$task_description) {
             error_log('HHDL: Invalid parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_description: ' . $task_description);
             wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
@@ -471,6 +481,14 @@ class HHDL_Ajax {
         $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
+        // DEBUG POINT 1: Log NewBook API response
+        error_log('HHDL DEBUG 1: NewBook get_tasks() returned ' . count($all_tasks) . ' tasks');
+        if (!empty($all_tasks)) {
+            $first_task = $all_tasks[0];
+            error_log('HHDL DEBUG 1: First task data: ' . print_r($first_task, true));
+            error_log('HHDL DEBUG 1: First task has task_type_id? ' . (isset($first_task['task_type_id']) ? 'YES: ' . $first_task['task_type_id'] : 'NO'));
+        }
+
         $newbook_tasks = array();
         foreach ($all_tasks as $task) {
             // Get site ID from task
@@ -526,6 +544,14 @@ class HHDL_Ajax {
                 'task_location_occupy' => isset($task['task_location_occupy']) ? $task['task_location_occupy'] : 0,
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
+        }
+
+        // DEBUG POINT 2: Log after task extraction
+        error_log('HHDL DEBUG 2: Extracted ' . count($newbook_tasks) . ' tasks from API response');
+        if (!empty($newbook_tasks)) {
+            $first_extracted = $newbook_tasks[0];
+            error_log('HHDL DEBUG 2: First extracted task: ' . print_r($first_extracted, true));
+            error_log('HHDL DEBUG 2: First extracted task_type_id: ' . (isset($first_extracted['task_type_id']) && $first_extracted['task_type_id'] !== '' ? $first_extracted['task_type_id'] : 'EMPTY OR NOT SET'));
         }
 
         return array(
@@ -677,6 +703,14 @@ class HHDL_Ajax {
                     'is_occupy_task' => $is_occupy_task
                 );
             }
+        }
+
+        // DEBUG POINT 3: Log after build_tasks_list() processing
+        error_log('HHDL DEBUG 3: build_tasks_list() built ' . count($tasks) . ' tasks');
+        if (!empty($tasks)) {
+            $first_built = $tasks[0];
+            error_log('HHDL DEBUG 3: First built task: ' . print_r($first_built, true));
+            error_log('HHDL DEBUG 3: First built task_type_id: ' . (isset($first_built['task_type_id']) && $first_built['task_type_id'] !== null && $first_built['task_type_id'] !== '' ? $first_built['task_type_id'] : 'NULL OR EMPTY'));
         }
 
         return $tasks;
@@ -1150,7 +1184,19 @@ class HHDL_Ajax {
             </div>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
+                <?php
+                // DEBUG POINT 4: Log before HTML rendering
+                if (!empty($tasks)) {
+                    error_log('HHDL DEBUG 4: About to render ' . count($tasks) . ' tasks to HTML');
+                    $first_render = $tasks[0];
+                    error_log('HHDL DEBUG 4: First task to render - ID: ' . $first_render['id'] . ', task_type_id: ' . (isset($first_render['task_type_id']) && $first_render['task_type_id'] !== null && $first_render['task_type_id'] !== '' ? $first_render['task_type_id'] : 'NULL OR EMPTY'));
+                }
+                ?>
                 <?php foreach ($tasks as $task): ?>
+                <?php
+                // DEBUG POINT 4a: Log each task as it's rendered
+                error_log('HHDL DEBUG 4a: Rendering task ID ' . $task['id'] . ' with task_type_id: ' . (isset($task['task_type_id']) && $task['task_type_id'] !== null && $task['task_type_id'] !== '' ? $task['task_type_id'] : 'NULL OR EMPTY'));
+                ?>
                 <div class="hhdl-task-item <?php echo $task['completed'] ? 'completed' : ''; ?>"
                      style="border-left-color: <?php echo esc_attr($task['color']); ?>;">
                     <input type="checkbox"
