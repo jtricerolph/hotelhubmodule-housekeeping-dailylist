@@ -206,6 +206,10 @@
 }
 
 /* Wider left border when yesterday's guest hasn't checked out yet and is departing today */
+.hhdl-room-card[data-previous-status="arrived"][data-is-departing="true"]:not([data-spans-previous="true"]) {
+    margin-left: 53px !important; /* 23px base + 30px extra for wider border */
+}
+
 .hhdl-room-card[data-previous-status="arrived"][data-is-departing="true"]:not([data-spans-previous="true"])::before {
     width: 45px !important;
 }
