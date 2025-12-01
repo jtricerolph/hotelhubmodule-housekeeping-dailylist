@@ -225,11 +225,19 @@ class HHDL_Core {
             return;
         }
 
+        // Material Symbols for note type icons
+        wp_enqueue_style(
+            'material-symbols',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+            array(),
+            null
+        );
+
         // Admin CSS for settings page
         wp_enqueue_style(
             'hhdl-admin',
             HHDL_PLUGIN_URL . 'assets/css/admin.css',
-            array(),
+            array('material-symbols'),
             HHDL_VERSION
         );
 
