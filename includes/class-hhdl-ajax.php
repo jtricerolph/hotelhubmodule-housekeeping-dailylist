@@ -135,14 +135,11 @@ class HHDL_Ajax {
     public function complete_task() {
         global $wpdb;
 
-        error_log('HHDL: complete_task called');
-
         // Verify nonce
         check_ajax_referer('hhdl_ajax_nonce', 'nonce');
 
         // Check permissions
         if (!$this->user_can_access()) {
-            error_log('HHDL: Permission denied');
             wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
         }
 
@@ -155,61 +152,36 @@ class HHDL_Ajax {
         $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
         $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
 
-        error_log('HHDL: Parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_id: ' . $task_id . ', task_type_id: ' . $task_type_id . ', task_description: ' . $task_description);
-
-        // DEBUG POINT 6: Log AJAX handler receipt with detailed analysis
-        error_log('HHDL DEBUG 6: AJAX complete_task handler called');
-        error_log('HHDL DEBUG 6: Raw $_POST data: ' . print_r($_POST, true));
-        error_log('HHDL DEBUG 6: isset($_POST[task_type_id]): ' . (isset($_POST['task_type_id']) ? 'YES' : 'NO'));
-        error_log('HHDL DEBUG 6: $_POST[task_type_id] value: ' . (isset($_POST['task_type_id']) ? var_export($_POST['task_type_id'], true) : 'NOT SET'));
-        error_log('HHDL DEBUG 6: $_POST[task_type_id] type: ' . (isset($_POST['task_type_id']) ? gettype($_POST['task_type_id']) : 'N/A'));
-        error_log('HHDL DEBUG 6: After intval() - task_type_id: ' . var_export($task_type_id, true));
-        error_log('HHDL DEBUG 6: task_type_id is null? ' . ($task_type_id === null ? 'YES' : 'NO'));
-        error_log('HHDL DEBUG 6: task_type_id is 0? ' . ($task_type_id === 0 ? 'YES' : 'NO'));
-
         if (!$location_id || !$room_id || !$task_description) {
-            error_log('HHDL: Invalid parameters - location_id: ' . $location_id . ', room_id: ' . $room_id . ', task_description: ' . $task_description);
             wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
         }
 
         // STEP 1: Update task in NewBook FIRST (if task_id provided)
         $site_status = '';
         if ($task_id > 0) {
-            error_log('HHDL: Task ID provided, updating in NewBook');
-
             // Get NewBook API client
             $api = $this->get_newbook_api($location_id);
             if (!$api) {
-                error_log('HHDL: NewBook API not configured');
                 wp_send_json_error(array('message' => __('NewBook API not configured', 'hhdl')));
             }
 
             // Call NewBook API using the new update_task method
-            error_log('HHDL: Calling NewBook API update_task for task_id: ' . $task_id);
             $response = $api->update_task($task_id, current_time('mysql'));
-            error_log('HHDL: NewBook API response: ' . print_r($response, true));
 
             // Check NewBook response
             if (!$response['success'] || $response['message'] !== 'Updated Task') {
                 $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
-                error_log('HHDL: NewBook update failed: ' . $error_msg);
+                error_log('HHDL: NewBook task update failed: ' . $error_msg);
                 wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
             }
 
-            error_log('HHDL: NewBook update successful');
-
             // Extract site_status from response
-            // NewBook returns data as direct associative array, not indexed array
             if (isset($response['data']['site_status'])) {
                 $site_status = $response['data']['site_status'];
-                error_log('HHDL: Extracted site_status value: "' . $site_status . '"');
-            } else {
-                error_log('HHDL: site_status NOT found in response data, keeping empty value');
             }
         }
 
         // STEP 2: ONLY NOW save to local database after NewBook confirms success
-        error_log('HHDL: Starting database transaction');
         $wpdb->query('START TRANSACTION');
 
         try {
@@ -226,12 +198,9 @@ class HHDL_Ajax {
             ));
 
             if ($exists) {
-                error_log('HHDL: Task already completed (task_id: ' . $task_id . ', exists: ' . $exists . ')');
                 $wpdb->query('ROLLBACK');
                 wp_send_json_error(array('message' => __('Task already completed', 'hhdl')));
             }
-
-            error_log('HHDL: No existing completion found for task_id ' . $task_id . ', inserting new record');
 
             // Insert completion record
             $inserted = $wpdb->insert(
@@ -258,12 +227,8 @@ class HHDL_Ajax {
             // Commit transaction
             $wpdb->query('COMMIT');
 
-            error_log('HHDL: Transaction committed successfully');
-
             // Get user info for response
             $user = wp_get_current_user();
-
-            error_log('HHDL: Sending success response with site_status: ' . $site_status);
 
             wp_send_json_success(array(
                 'message'       => __('Task completed successfully', 'hhdl'),
@@ -535,14 +500,6 @@ class HHDL_Ajax {
         $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, null, true);
         $all_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
-        // DEBUG POINT 1: Log NewBook API response
-        error_log('HHDL DEBUG 1: NewBook get_tasks() returned ' . count($all_tasks) . ' tasks');
-        if (!empty($all_tasks)) {
-            $first_task = $all_tasks[0];
-            error_log('HHDL DEBUG 1: First task data: ' . print_r($first_task, true));
-            error_log('HHDL DEBUG 1: First task has task_type_id? ' . (isset($first_task['task_type_id']) ? 'YES: ' . $first_task['task_type_id'] : 'NO'));
-        }
-
         $newbook_tasks = array();
         foreach ($all_tasks as $task) {
             // Get site ID from task
@@ -598,14 +555,6 @@ class HHDL_Ajax {
                 'task_location_occupy' => isset($task['task_location_occupy']) ? $task['task_location_occupy'] : 0,
                 'completed'        => isset($task['task_completed_on']) && !empty($task['task_completed_on'])
             );
-        }
-
-        // DEBUG POINT 2: Log after task extraction
-        error_log('HHDL DEBUG 2: Extracted ' . count($newbook_tasks) . ' tasks from API response');
-        if (!empty($newbook_tasks)) {
-            $first_extracted = $newbook_tasks[0];
-            error_log('HHDL DEBUG 2: First extracted task: ' . print_r($first_extracted, true));
-            error_log('HHDL DEBUG 2: First extracted task_type_id: ' . (isset($first_extracted['task_type_id']) && $first_extracted['task_type_id'] !== '' ? $first_extracted['task_type_id'] : 'EMPTY OR NOT SET'));
         }
 
         return array(
@@ -757,14 +706,6 @@ class HHDL_Ajax {
                     'is_occupy_task' => $is_occupy_task
                 );
             }
-        }
-
-        // DEBUG POINT 3: Log after build_tasks_list() processing
-        error_log('HHDL DEBUG 3: build_tasks_list() built ' . count($tasks) . ' tasks');
-        if (!empty($tasks)) {
-            $first_built = $tasks[0];
-            error_log('HHDL DEBUG 3: First built task: ' . print_r($first_built, true));
-            error_log('HHDL DEBUG 3: First built task_type_id: ' . (isset($first_built['task_type_id']) && $first_built['task_type_id'] !== null && $first_built['task_type_id'] !== '' ? $first_built['task_type_id'] : 'NULL OR EMPTY'));
         }
 
         return $tasks;
@@ -1244,19 +1185,7 @@ class HHDL_Ajax {
             </div>
             <?php if (!empty($tasks)): ?>
             <div class="hhdl-task-list">
-                <?php
-                // DEBUG POINT 4: Log before HTML rendering
-                if (!empty($tasks)) {
-                    error_log('HHDL DEBUG 4: About to render ' . count($tasks) . ' tasks to HTML');
-                    $first_render = $tasks[0];
-                    error_log('HHDL DEBUG 4: First task to render - ID: ' . $first_render['id'] . ', task_type_id: ' . (isset($first_render['task_type_id']) && $first_render['task_type_id'] !== null && $first_render['task_type_id'] !== '' ? $first_render['task_type_id'] : 'NULL OR EMPTY'));
-                }
-                ?>
                 <?php foreach ($tasks as $task): ?>
-                <?php
-                // DEBUG POINT 4a: Log each task as it's rendered
-                error_log('HHDL DEBUG 4a: Rendering task ID ' . $task['id'] . ' with task_type_id: ' . (isset($task['task_type_id']) && $task['task_type_id'] !== null && $task['task_type_id'] !== '' ? $task['task_type_id'] : 'NULL OR EMPTY'));
-                ?>
                 <div class="hhdl-task-item <?php echo $task['completed'] ? 'completed' : ''; ?>"
                      style="border-left-color: <?php echo esc_attr($task['color']); ?>;">
                     <input type="checkbox"
@@ -1525,20 +1454,15 @@ class HHDL_Ajax {
      * @param int $location_id Location ID
      */
     private function render_notes_section($booking_data, $location_id) {
-        error_log('HHDL Notes: render_notes_section called for location_id: ' . $location_id);
-
         // Get Daily List settings for applicable note types
         $dl_settings = HHDL_Settings::get_location_settings($location_id);
         $visible_note_type_ids = isset($dl_settings['visible_note_types']) ? $dl_settings['visible_note_types'] : array();
-        error_log('HHDL Notes: visible_note_type_ids from settings: ' . print_r($visible_note_type_ids, true));
 
         // Get note type configurations from Hotel Hub
         $note_types_config = HHDL_Settings::get_note_types($location_id);
-        error_log('HHDL Notes: note_types_config from Hotel Hub: ' . print_r($note_types_config, true));
 
         // If no note types configured or none selected, don't show section
         if (empty($note_types_config) || empty($visible_note_type_ids)) {
-            error_log('HHDL Notes: Early return - empty note_types_config: ' . (empty($note_types_config) ? 'yes' : 'no') . ', empty visible_note_type_ids: ' . (empty($visible_note_type_ids) ? 'yes' : 'no'));
             return;
         }
 
@@ -1560,18 +1484,13 @@ class HHDL_Ajax {
 
         // If no applicable note types, don't show section
         if (empty($applicable_note_types)) {
-            error_log('HHDL Notes: Early return - no applicable note types');
             return;
         }
-
-        error_log('HHDL Notes: Applicable note types: ' . print_r(array_keys($applicable_note_types), true));
-        error_log('HHDL Notes: Booking notes data: ' . (isset($booking_data['notes']) ? count($booking_data['notes']) . ' notes found' : 'no notes key in booking data'));
 
         // Initialize permissions for ALL applicable note types first
         $notes_by_type = array();
         foreach ($applicable_note_types as $type_id => $note_type) {
             $can_view = $this->user_can_view_note_type($type_id);
-            error_log('HHDL Notes: Permission check for type_id ' . $type_id . ': ' . ($can_view ? 'YES' : 'NO'));
             $notes_by_type[$type_id] = array(
                 'can_view' => $can_view,
                 'notes' => array()
@@ -1580,29 +1499,20 @@ class HHDL_Ajax {
 
         // Group notes by type_id
         if (isset($booking_data['notes']) && is_array($booking_data['notes'])) {
-            error_log('HHDL Notes: Processing ' . count($booking_data['notes']) . ' notes from booking data');
             foreach ($booking_data['notes'] as $note) {
                 $type_id = isset($note['type_id']) ? intval($note['type_id']) : 0;
-                error_log('HHDL Notes: Processing note with type_id: ' . $type_id);
 
                 // Skip if not in applicable types
                 if (!isset($applicable_note_types[$type_id])) {
-                    error_log('HHDL Notes: Skipping note with type_id ' . $type_id . ' - not in applicable types');
                     continue;
                 }
 
                 // Add note if user has permission
                 if ($notes_by_type[$type_id]['can_view']) {
                     $notes_by_type[$type_id]['notes'][] = $note;
-                    error_log('HHDL Notes: Added note to type_id ' . $type_id);
                 }
             }
-        } else {
-            error_log('HHDL Notes: No notes found in booking data or notes is not an array');
         }
-
-        error_log('HHDL Notes: Final notes_by_type structure: ' . print_r(array_map(function($n) { return count($n['notes']) . ' notes'; }, $notes_by_type), true));
-        error_log('HHDL Notes: Rendering notes section HTML with ' . count($applicable_note_types) . ' tabs');
 
         // Render notes section
         ?>
