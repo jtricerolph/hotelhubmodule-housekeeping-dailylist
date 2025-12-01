@@ -188,13 +188,9 @@ class HHDL_Ajax {
             error_log('HHDL: NewBook update successful');
 
             // Extract site_status from response
-            error_log('HHDL: Checking for site_status in response data');
-            error_log('HHDL: isset(response[data]): ' . (isset($response['data']) ? 'true' : 'false'));
-            error_log('HHDL: isset(response[data][0]): ' . (isset($response['data'][0]) ? 'true' : 'false'));
-            error_log('HHDL: isset(response[data][0][site_status]): ' . (isset($response['data'][0]['site_status']) ? 'true' : 'false'));
-
-            if (isset($response['data'][0]['site_status'])) {
-                $site_status = $response['data'][0]['site_status'];
+            // NewBook returns data as direct associative array, not indexed array
+            if (isset($response['data']['site_status'])) {
+                $site_status = $response['data']['site_status'];
                 error_log('HHDL: Extracted site_status value: "' . $site_status . '"');
             } else {
                 error_log('HHDL: site_status NOT found in response data, keeping empty value');
