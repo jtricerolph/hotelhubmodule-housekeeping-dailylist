@@ -283,17 +283,12 @@ class HHDL_Ajax {
      * Update room status (AJAX handler)
      */
     public function update_room_status() {
-        // Log all incoming data for debugging
-        error_log('HHDL: update_room_status called');
-        error_log('HHDL: POST data: ' . print_r($_POST, true));
-
         try {
             // Verify nonce
             check_ajax_referer('hhdl_ajax_nonce', 'nonce');
 
             // Check permissions
             if (!$this->user_can_access()) {
-                error_log('HHDL: Permission denied');
                 wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
             }
 
@@ -302,48 +297,37 @@ class HHDL_Ajax {
             $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
             $site_status = isset($_POST['site_status']) ? sanitize_text_field($_POST['site_status']) : '';
 
-            error_log('HHDL: Params - location_id: ' . $location_id . ', room_id: ' . $room_id . ', site_status: ' . $site_status);
-
             // Validate parameters
             if (!$location_id || !$room_id || !$site_status) {
-                error_log('HHDL: Invalid parameters');
                 wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
             }
 
             // Validate status value
             $valid_statuses = array('Clean', 'Dirty', 'Inspected');
             if (!in_array($site_status, $valid_statuses)) {
-                error_log('HHDL: Invalid status value: ' . $site_status);
                 wp_send_json_error(array('message' => __('Invalid status value', 'hhdl')));
             }
 
             // Get NewBook API client
-            error_log('HHDL: Getting NewBook API client');
             $api = $this->get_newbook_api($location_id);
             if (!$api) {
-                error_log('HHDL: NewBook API not configured');
                 wp_send_json_error(array('message' => __('NewBook API not configured', 'hhdl')));
             }
 
             // Call NewBook API to update site status
-            error_log('HHDL: Calling NewBook API update_site_status');
             $response = $api->update_site_status($room_id, $site_status);
-            error_log('HHDL: NewBook API response: ' . print_r($response, true));
 
             if (!$response['success']) {
                 $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
-                error_log('HHDL: NewBook API returned error: ' . $error_msg);
                 wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
             }
 
-            error_log('HHDL: Successfully updated room status');
             wp_send_json_success(array(
                 'message' => sprintf(__('Room status updated to %s', 'hhdl'), $site_status),
                 'site_status' => $site_status
             ));
         } catch (Exception $e) {
             error_log('HHDL: Exception in update_room_status: ' . $e->getMessage());
-            error_log('HHDL: Stack trace: ' . $e->getTraceAsString());
             wp_send_json_error(array('message' => 'Server error: ' . $e->getMessage()));
         }
     }
