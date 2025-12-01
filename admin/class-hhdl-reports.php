@@ -326,16 +326,12 @@ class HHDL_Reports {
             $task_types = isset($integration['task_types']) ? $integration['task_types'] : array();
             $task_type_count = 0;
 
-            // Debug: Log the raw task_types structure
-            error_log('HHDL Reports: Raw task_types data: ' . print_r($task_types, true));
-
             foreach ($task_types as $task_type) {
                 if (isset($task_type['id']) && isset($task_type['name'])) {
                     // Store with both string and int keys for flexibility
                     $task_type_lookup[$location_id][(string)$task_type['id']] = $task_type['name'];
                     $task_type_lookup[$location_id][(int)$task_type['id']] = $task_type['name'];
                     $task_type_count++;
-                    error_log('HHDL Reports: Added task type - ID: ' . $task_type['id'] . ' Name: ' . $task_type['name']);
                 }
             }
 
@@ -358,25 +354,19 @@ class HHDL_Reports {
 
             // Add task type name (try both string and int lookups)
             if (isset($record->task_type_id) && $record->task_type_id) {
-                error_log('HHDL Reports: Looking up task_type_id: ' . $record->task_type_id . ' (type: ' . gettype($record->task_type_id) . ') for location_id: ' . $record->location_id);
-                error_log('HHDL Reports: Available task type IDs: ' . print_r(array_keys($task_type_lookup[$record->location_id] ?? array()), true));
-
                 if (isset($task_type_lookup[$record->location_id][$record->task_type_id])) {
                     $record->task_type_name = $task_type_lookup[$record->location_id][$record->task_type_id];
-                    error_log('HHDL Reports: Found task type name (direct match): ' . $record->task_type_name);
                 } elseif (isset($task_type_lookup[$record->location_id][(string)$record->task_type_id])) {
                     $record->task_type_name = $task_type_lookup[$record->location_id][(string)$record->task_type_id];
-                    error_log('HHDL Reports: Found task type name (string match): ' . $record->task_type_name);
                 } elseif (isset($task_type_lookup[$record->location_id][(int)$record->task_type_id])) {
                     $record->task_type_name = $task_type_lookup[$record->location_id][(int)$record->task_type_id];
-                    error_log('HHDL Reports: Found task type name (int match): ' . $record->task_type_name);
                 } else {
-                    error_log('HHDL Reports: Task type name not found for task_type_id: ' . $record->task_type_id . ' at location_id: ' . $record->location_id);
-                    $record->task_type_name = ''; // Empty if not found
+                    // Fallback to task description if task type not found
+                    $record->task_type_name = isset($record->task_description) ? $record->task_description : '';
                 }
             } else {
-                error_log('HHDL Reports: task_type_id is null or empty for record');
-                $record->task_type_name = ''; // Empty if task_type_id is null
+                // For historical records without task_type_id, use task_description
+                $record->task_type_name = isset($record->task_description) ? $record->task_description : '';
             }
         }
 
