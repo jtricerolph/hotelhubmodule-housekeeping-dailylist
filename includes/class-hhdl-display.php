@@ -179,6 +179,11 @@ class HHDL_Display {
         );
 
         foreach ($rooms_data as $room) {
+            // Skip rooms that are excluded from filters
+            if (isset($room['filter_excluded']) && $room['filter_excluded']) {
+                continue;
+            }
+
             if ($room['is_arriving']) $counts['arrivals']++;
             if ($room['is_departing']) $counts['departures']++;
             if ($room['is_stopover']) $counts['stopovers']++;
@@ -991,7 +996,7 @@ class HHDL_Display {
         $tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
         // Build site-to-category map and exclusion lists
-        list($site_to_category, $excluded_sites, $site_order_map) = $this->build_category_maps($categories_sort);
+        list($site_to_category, $excluded_sites, $site_order_map, $filter_excluded_sites) = $this->build_category_maps($categories_sort, $location_id);
 
         // Build rooms array with all site data
         $rooms_by_id = array();
@@ -1352,6 +1357,7 @@ class HHDL_Display {
                 'booking_type'         => $booking_type,
                 'has_twin'             => $room['has_twin'],
                 'twin_info'            => $room['twin_info'],
+                'filter_excluded'      => in_array($room['room_id'], $filter_excluded_sites),
                 'extra_bed_info'       => $room['extra_bed_info'],
                 'spans_previous'       => $spans_previous,
                 'spans_next'           => $spans_next,
@@ -1488,15 +1494,25 @@ class HHDL_Display {
     /**
      * Build category maps for sorting and exclusion
      */
-    private function build_category_maps($categories_sort) {
+    private function build_category_maps($categories_sort, $location_id) {
         $site_to_category = array();
         $excluded_sites = array();
         $site_order_map = array();
+        $filter_excluded_sites = array();
+
+        // Get Daily List module exclusion settings
+        $dl_settings = HHDL_Settings::get_location_settings($location_id);
+        $dl_excluded_categories = isset($dl_settings['excluded_categories']) ? $dl_settings['excluded_categories'] : array();
+        $hide_excluded_categories = isset($dl_settings['hide_excluded_categories']) ? $dl_settings['hide_excluded_categories'] : false;
 
         foreach ($categories_sort as $cat_index => $category) {
+            // Check if excluded at Hotel Hub App level
             if (!empty($category['excluded'])) {
                 continue; // Skip excluded categories
             }
+
+            // Check if excluded at Daily List module level
+            $is_dl_excluded = in_array($category['id'], $dl_excluded_categories);
 
             foreach ($category['sites'] as $site_index => $site) {
                 $site_id = $site['site_id'];
@@ -1511,13 +1527,25 @@ class HHDL_Display {
                     'site_order' => $site_index
                 );
 
+                // Site-level exclusion (Hotel Hub App level)
                 if (!empty($site['excluded'])) {
                     $excluded_sites[] = $site_id;
+                }
+
+                // Category-level exclusion (Daily List module level)
+                if ($is_dl_excluded) {
+                    if ($hide_excluded_categories) {
+                        // Hide completely from daily list
+                        $excluded_sites[] = $site_id;
+                    } else {
+                        // Only exclude from filter counts
+                        $filter_excluded_sites[] = $site_id;
+                    }
                 }
             }
         }
 
-        return array($site_to_category, $excluded_sites, $site_order_map);
+        return array($site_to_category, $excluded_sites, $site_order_map, $filter_excluded_sites);
     }
 
     /**
