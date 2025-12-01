@@ -1314,6 +1314,27 @@
     opacity: 0.6;
 }
 
+/* Status change card styles (for "No tasks but still dirty" card) */
+.hhdl-status-change-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.hhdl-status-change-card:hover {
+    background-color: rgba(16, 185, 129, 0.05);
+    transform: translateX(4px);
+}
+
+.hhdl-status-change-card .material-symbols-outlined {
+    transition: transform 0.2s;
+}
+
+.hhdl-status-change-card:hover .material-symbols-outlined {
+    transform: translateX(4px);
+}
+
 .hhdl-modal-room-stats {
     display: flex;
     align-items: center;

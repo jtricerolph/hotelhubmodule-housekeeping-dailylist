@@ -419,6 +419,17 @@
             // Show confirmation modal
             showStatusChangeConfirmation(roomId, currentStatus, newStatus, badge);
         });
+
+        // Status change card handler (for "No tasks but still marked Dirty" card)
+        $(document).on('click', '.hhdl-status-change-card', function() {
+            const card = $(this);
+            const roomId = card.data('room-id');
+            const currentStatus = card.data('current-status');
+            const newStatus = card.data('new-status');
+
+            // Show confirmation modal
+            showStatusChangeConfirmation(roomId, currentStatus, newStatus, card);
+        });
     }
 
     /**
@@ -1072,9 +1083,13 @@
     /**
      * Update room status via AJAX
      */
-    function updateRoomStatus(roomId, newStatus, badge) {
-        // Disable badge during update
-        badge.css('opacity', '0.5').css('pointer-events', 'none');
+    function updateRoomStatus(roomId, newStatus, element) {
+        // Determine if this is a badge or a card
+        const isCard = element.hasClass('hhdl-status-change-card');
+        const isBadge = element.hasClass('hhdl-status-toggle-btn');
+
+        // Disable element during update
+        element.css('opacity', '0.5').css('pointer-events', 'none');
 
         $.ajax({
             url: hhdlAjax.ajaxUrl,
@@ -1088,11 +1103,25 @@
             },
             success: function(response) {
                 if (response.success) {
-                    // Update badge
-                    badge.removeClass('clean dirty inspected')
-                        .addClass(newStatus.toLowerCase())
-                        .text(newStatus)
-                        .data('current-status', newStatus);
+                    if (isBadge) {
+                        // Update the status badge in modal header
+                        element.removeClass('clean dirty inspected')
+                            .addClass(newStatus.toLowerCase())
+                            .text(newStatus)
+                            .data('current-status', newStatus);
+                    } else if (isCard) {
+                        // Replace the card with "No outstanding housekeeping tasks" message
+                        element.replaceWith('<p>No outstanding housekeeping tasks</p>');
+
+                        // Update the modal header status badge
+                        var modalBadge = $('.hhdl-status-toggle-btn');
+                        if (modalBadge.length) {
+                            modalBadge.removeClass('clean dirty inspected')
+                                .addClass(newStatus.toLowerCase())
+                                .text(newStatus)
+                                .data('current-status', newStatus);
+                        }
+                    }
 
                     // Update room card status badge in main list
                     updateRoomStatusBadge(roomId, newStatus);
@@ -1107,8 +1136,10 @@
                 showToast('Network error. Please try again.', 'error');
             },
             complete: function() {
-                // Re-enable badge
-                badge.css('opacity', '').css('pointer-events', '');
+                // Re-enable element (if it still exists)
+                if (!isCard) {
+                    element.css('opacity', '').css('pointer-events', '');
+                }
             }
         });
     }

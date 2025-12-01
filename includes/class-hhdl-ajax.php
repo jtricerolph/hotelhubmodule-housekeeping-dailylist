@@ -1312,7 +1312,26 @@ class HHDL_Ajax {
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <p><?php _e('No outstanding housekeeping tasks', 'hhdl'); ?></p>
+                <?php if ($room_details['site_status'] === 'Dirty'): ?>
+                    <!-- Show clickable card to mark room as clean when no tasks and room is dirty -->
+                    <div class="hhdl-task-item hhdl-status-change-card"
+                         data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
+                         data-current-status="Dirty"
+                         data-new-status="Clean"
+                         style="border-left-color: #10b981; cursor: pointer;">
+                        <div class="hhdl-task-content">
+                            <span class="hhdl-task-name" style="font-weight: 600;">
+                                <?php _e('No tasks but still marked Dirty', 'hhdl'); ?>
+                            </span>
+                            <span class="hhdl-task-meta" style="color: #10b981;">
+                                <?php _e('Update NewBook to mark room clean', 'hhdl'); ?>
+                            </span>
+                        </div>
+                        <span class="material-symbols-outlined" style="color: #10b981;">arrow_forward</span>
+                    </div>
+                <?php else: ?>
+                    <p><?php _e('No outstanding housekeeping tasks', 'hhdl'); ?></p>
+                <?php endif; ?>
             <?php endif; ?>
         </section>
 
