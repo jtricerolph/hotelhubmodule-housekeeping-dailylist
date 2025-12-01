@@ -288,47 +288,54 @@ class HHDL_Reports {
                 continue;
             }
 
-            // Get NewBook API instance
+            // Get room and task type data from Hotel Hub integration settings
             $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
-            if (empty($integration) || empty($integration['api_key'])) {
+            if (empty($integration)) {
                 error_log('HHDL Reports: NewBook integration not configured for hotel: ' . $hotel->id);
                 continue;
             }
 
-            require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
-            $api = new HHA_NewBook_API($integration['api_key'], $integration['property_id']);
+            // Build room name lookup from categories_sort
+            $categories_sort = isset($integration['categories_sort']) ? $integration['categories_sort'] : array();
+            $room_count = 0;
 
-            // Fetch sites for room name lookup (NO caching for report accuracy)
-            $sites_response = $api->get_sites(true);
-            $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+            foreach ($categories_sort as $category) {
+                // Skip excluded categories
+                if (!empty($category['excluded'])) {
+                    continue;
+                }
 
-            error_log('HHDL Reports: Fetched ' . count($sites) . ' sites for location_id: ' . $location_id);
+                if (isset($category['sites']) && is_array($category['sites'])) {
+                    foreach ($category['sites'] as $site) {
+                        $site_id = isset($site['site_id']) ? $site['site_id'] : '';
+                        $site_name = isset($site['site_name']) ? $site['site_name'] : '';
 
-            // Build room ID to name mapping (handle both string and int comparisons)
-            foreach ($sites as $site) {
-                if (isset($site['site_id']) && isset($site['site_name'])) {
-                    // Store with both string and int keys for flexibility
-                    $room_name_lookup[$location_id][(string)$site['site_id']] = $site['site_name'];
-                    $room_name_lookup[$location_id][(int)$site['site_id']] = $site['site_name'];
+                        if ($site_id && $site_name) {
+                            // Store with both string and int keys for flexibility
+                            $room_name_lookup[$location_id][(string)$site_id] = $site_name;
+                            $room_name_lookup[$location_id][(int)$site_id] = $site_name;
+                            $room_count++;
+                        }
+                    }
                 }
             }
 
-            // Fetch task types from integration settings (NO caching for report accuracy)
-            if (!class_exists('HHDL_Settings')) {
-                require_once HHDL_PLUGIN_DIR . 'includes/class-hhdl-settings.php';
-            }
-            $task_types = HHDL_Settings::get_task_types($location_id);
+            error_log('HHDL Reports: Loaded ' . $room_count . ' room names from settings for location_id: ' . $location_id);
 
-            error_log('HHDL Reports: Fetched ' . count($task_types) . ' task types for location_id: ' . $location_id);
+            // Build task type name lookup from task_types
+            $task_types = isset($integration['task_types']) ? $integration['task_types'] : array();
+            $task_type_count = 0;
 
-            // Build task type ID to name mapping (handle both string and int comparisons)
             foreach ($task_types as $task_type) {
                 if (isset($task_type['id']) && isset($task_type['name'])) {
                     // Store with both string and int keys for flexibility
                     $task_type_lookup[$location_id][(string)$task_type['id']] = $task_type['name'];
                     $task_type_lookup[$location_id][(int)$task_type['id']] = $task_type['name'];
+                    $task_type_count++;
                 }
             }
+
+            error_log('HHDL Reports: Loaded ' . $task_type_count . ' task types from settings for location_id: ' . $location_id);
         }
 
         // Enhance each record with room name and task type name
