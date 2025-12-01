@@ -88,18 +88,103 @@
             if (!isInclusive && !isExclusive) {
                 // State 1: Set to inclusive (green)
                 $btn.addClass('active').removeClass('filter-exclusive');
+                updateFilterButtonLabel($btn, filter, 'inclusive');
                 filterRooms(filter, 'inclusive');
             } else if (isInclusive) {
                 // State 2: Set to exclusive (red)
                 $btn.addClass('filter-exclusive');
+                updateFilterButtonLabel($btn, filter, 'exclusive');
                 filterRooms(filter, 'exclusive');
             } else {
                 // State 3: Clear filter (back to 'all')
                 $btn.removeClass('active filter-exclusive');
+                updateFilterButtonLabel($btn, filter, 'inclusive');
                 $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
                 filterRooms('all', 'inclusive');
             }
         });
+    }
+
+    /**
+     * Update filter button label based on mode
+     * @param {jQuery} $btn - The button element
+     * @param {string} filter - The filter type
+     * @param {string} mode - 'inclusive' or 'exclusive'
+     */
+    function updateFilterButtonLabel($btn, filter, mode) {
+        const counts = {
+            arrivals: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            departures: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            stopovers: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            back_to_back: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            twins: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            blocked: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            no_booking: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0,
+            unoccupied: $btn.find('.hhdl-count-badge').length ? parseInt($btn.find('.hhdl-count-badge').text()) : 0
+        };
+
+        let label = '';
+        let count = $btn.find('.hhdl-count-badge').text() || '0';
+
+        if (mode === 'exclusive') {
+            // Red state labels
+            switch(filter) {
+                case 'arrivals':
+                    label = 'Not Arrivals';
+                    break;
+                case 'departs':
+                    label = 'Not Departs';
+                    break;
+                case 'stopovers':
+                    label = 'Not Stopover';
+                    break;
+                case 'back-to-back':
+                    label = 'Not Back to Back';
+                    break;
+                case 'twins':
+                    label = 'Not Twin';
+                    break;
+                case 'blocked':
+                    label = 'Not Blocked';
+                    break;
+                case 'no-booking':
+                    label = 'Booked';
+                    break;
+                case 'unoccupied':
+                    label = 'Occupied';
+                    break;
+            }
+        } else {
+            // Normal/inclusive state labels
+            switch(filter) {
+                case 'arrivals':
+                    label = 'Arrivals';
+                    break;
+                case 'departs':
+                    label = 'Departs';
+                    break;
+                case 'stopovers':
+                    label = 'Stopovers';
+                    break;
+                case 'back-to-back':
+                    label = 'Back to Back';
+                    break;
+                case 'twins':
+                    label = 'Twins';
+                    break;
+                case 'blocked':
+                    label = 'Blocked';
+                    break;
+                case 'no-booking':
+                    label = 'No Booking';
+                    break;
+                case 'unoccupied':
+                    label = 'Unoccupied';
+                    break;
+            }
+        }
+
+        $btn.html(label + ' <span class="hhdl-count-badge">' + count + '</span>');
     }
 
     /**
@@ -192,7 +277,7 @@
      */
     function updateFilterCounts(counts) {
         $('.hhdl-filter-btn[data-filter="arrivals"]').html('Arrivals <span class="hhdl-count-badge">' + counts.arrivals + '</span>');
-        $('.hhdl-filter-btn[data-filter="departs"]').html('Departures <span class="hhdl-count-badge">' + counts.departures + '</span>');
+        $('.hhdl-filter-btn[data-filter="departs"]').html('Departs <span class="hhdl-count-badge">' + counts.departures + '</span>');
         $('.hhdl-filter-btn[data-filter="stopovers"]').html('Stopovers <span class="hhdl-count-badge">' + counts.stopovers + '</span>');
         $('.hhdl-filter-btn[data-filter="back-to-back"]').html('Back to Back <span class="hhdl-count-badge">' + counts.back_to_back + '</span>');
         $('.hhdl-filter-btn[data-filter="twins"]').html('Twins <span class="hhdl-count-badge">' + counts.twins + '</span>');

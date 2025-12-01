@@ -108,7 +108,7 @@ class HHDL_Display {
                 <?php _e('Arrivals', 'hhdl'); ?>
             </button>
             <button class="hhdl-filter-btn" data-filter="departs">
-                <?php _e('Departures', 'hhdl'); ?>
+                <?php _e('Departs', 'hhdl'); ?>
             </button>
             <button class="hhdl-filter-btn" data-filter="stopovers">
                 <?php _e('Stopovers', 'hhdl'); ?>
