@@ -24,69 +24,60 @@ if (!defined('ABSPATH')) {
         <input type="hidden" name="action" value="hhdl_save_settings">
         <?php wp_nonce_field('hhdl_save_settings', 'hhdl_settings_nonce'); ?>
 
-        <table class="form-table hhdl-locations-table">
-            <thead>
-                <tr>
-                    <th><?php _e('Location', 'hhdl'); ?></th>
-                    <th><?php _e('Enabled', 'hhdl'); ?></th>
-                    <th><?php _e('Default Tasks', 'hhdl'); ?></th>
-                    <th><?php _e('Twin Detection', 'hhdl'); ?></th>
-                    <th><?php _e('Note Types', 'hhdl'); ?></th>
-                    <th><?php _e('Category Exclusions', 'hhdl'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($locations as $location): ?>
-                    <?php
-                    $location_id = $location['id'];
-                    $location_settings = isset($settings[$location_id]) ? $settings[$location_id] : array(
-                        'enabled' => false,
-                        'default_tasks' => array()
+        <div class="hhdl-locations-list">
+            <?php foreach ($locations as $location): ?>
+                <?php
+                $location_id = $location['id'];
+                $location_settings = isset($settings[$location_id]) ? $settings[$location_id] : array(
+                    'enabled' => false,
+                    'default_tasks' => array()
+                );
+                $is_enabled = $location_settings['enabled'];
+                $tasks = $location_settings['default_tasks'];
+
+                // Ensure tasks have default structure
+                if (empty($tasks)) {
+                    $tasks = array(
+                        array(
+                            'id'                      => uniqid('task_'),
+                            'task_type_id'            => '-1',
+                            'task_description_filter' => 'Housekeeping',
+                            'color'                   => '#10b981',
+                            'order'                   => 0
+                        )
                     );
-                    $is_enabled = $location_settings['enabled'];
-                    $tasks = $location_settings['default_tasks'];
+                }
 
-                    // Ensure tasks have default structure
-                    if (empty($tasks)) {
-                        $tasks = array(
-                            array(
-                                'id'                      => uniqid('task_'),
-                                'task_type_id'            => '-1',
-                                'task_description_filter' => 'Housekeeping',
-                                'color'                   => '#10b981',
-                                'order'                   => 0
-                            )
-                        );
-                    }
+                // Get available task types for this location
+                $available_task_types = isset($task_types_by_location[$location_id]) ? $task_types_by_location[$location_id] : array();
 
-                    // Get available task types for this location
-                    $available_task_types = isset($task_types_by_location[$location_id]) ? $task_types_by_location[$location_id] : array();
+                // Get available note types for this location
+                $available_note_types = isset($note_types_by_location[$location_id]) ? $note_types_by_location[$location_id] : array();
+                $visible_note_types = isset($location_settings['visible_note_types']) ? $location_settings['visible_note_types'] : array();
 
-                    // Get available note types for this location
-                    $available_note_types = isset($note_types_by_location[$location_id]) ? $note_types_by_location[$location_id] : array();
-                    $visible_note_types = isset($location_settings['visible_note_types']) ? $location_settings['visible_note_types'] : array();
+                // Get available categories for this location
+                $available_categories = isset($categories_by_location[$location_id]) ? $categories_by_location[$location_id] : array();
+                $excluded_categories = isset($location_settings['excluded_categories']) ? $location_settings['excluded_categories'] : array();
+                $hide_excluded_categories = isset($location_settings['hide_excluded_categories']) ? $location_settings['hide_excluded_categories'] : false;
+                ?>
 
-                    // Get available categories for this location
-                    $available_categories = isset($categories_by_location[$location_id]) ? $categories_by_location[$location_id] : array();
-                    $excluded_categories = isset($location_settings['excluded_categories']) ? $location_settings['excluded_categories'] : array();
-                    $hide_excluded_categories = isset($location_settings['hide_excluded_categories']) ? $location_settings['hide_excluded_categories'] : false;
-                    ?>
-                    <tr class="hhdl-location-row">
-                        <td class="location-name">
-                            <strong><?php echo esc_html($location['name']); ?></strong>
-                        </td>
-                        <td class="location-enabled">
-                            <label class="hhdl-switch">
-                                <input type="checkbox"
-                                       name="locations[<?php echo $location_id; ?>][enabled]"
-                                       value="1"
-                                       <?php checked($is_enabled, true); ?>>
-                                <span class="hhdl-slider"></span>
-                            </label>
-                        </td>
-                        <td class="location-tasks">
+                <div class="hhdl-location-card">
+                    <div class="hhdl-location-header">
+                        <h2><?php echo esc_html($location['name']); ?></h2>
+                        <label class="hhdl-switch">
+                            <input type="checkbox"
+                                   name="locations[<?php echo $location_id; ?>][enabled]"
+                                   value="1"
+                                   <?php checked($is_enabled, true); ?>>
+                            <span class="hhdl-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="hhdl-location-settings">
+                        <!-- Default Tasks -->
+                        <div class="hhdl-settings-section">
+                            <h3><?php _e('Default Tasks', 'hhdl'); ?></h3>
                             <div class="hhdl-task-manager" data-location-id="<?php echo $location_id; ?>">
-                                <!-- Task List -->
                                 <div class="hhdl-task-list">
                                     <?php foreach ($tasks as $index => $task): ?>
                                         <div class="hhdl-task-item" data-task-id="<?php echo esc_attr($task['id']); ?>">
@@ -112,216 +103,189 @@ if (!defined('ABSPATH')) {
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
-
-                                <!-- Add Task Button -->
                                 <button type="button" class="hhdl-add-task button button-secondary">
                                     <?php _e('+ Add Task', 'hhdl'); ?>
                                 </button>
-
-                                <!-- Hidden field to store tasks JSON -->
                                 <input type="hidden"
                                        name="locations[<?php echo $location_id; ?>][tasks_json]"
                                        class="hhdl-tasks-json"
                                        value="<?php echo esc_attr(json_encode($tasks)); ?>">
                             </div>
-                        </td>
-                        <td class="location-twin-settings">
-                            <div class="hhdl-twin-config">
+                        </div>
+
+                        <!-- Twin Detection -->
+                        <div class="hhdl-settings-section">
+                            <h3><?php _e('Twin & Bed Detection', 'hhdl'); ?></h3>
+                            <div class="hhdl-settings-grid">
                                 <!-- Bed Type Colors -->
                                 <fieldset class="hhdl-fieldset">
                                     <legend><?php _e('Bed Type Colors', 'hhdl'); ?></legend>
-
                                     <div class="hhdl-color-field">
-                                        <label><?php _e('Default Bed Type (Double)', 'hhdl'); ?></label>
+                                        <label><?php _e('Default (Double)', 'hhdl'); ?></label>
                                         <input type="color"
                                                name="locations[<?php echo $location_id; ?>][bed_color_default]"
                                                value="<?php echo esc_attr(isset($location_settings['bed_color_default']) ? $location_settings['bed_color_default'] : '#10b981'); ?>">
-                                        <p class="description"><?php _e('Color for standard double/queen bed rooms', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Standard double/queen', 'hhdl'); ?></p>
                                     </div>
-
                                     <div class="hhdl-color-field">
                                         <label><?php _e('Confirmed Twin', 'hhdl'); ?></label>
                                         <input type="color"
                                                name="locations[<?php echo $location_id; ?>][bed_color_twin_confirmed]"
                                                value="<?php echo esc_attr(isset($location_settings['bed_color_twin_confirmed']) ? $location_settings['bed_color_twin_confirmed'] : '#10b981'); ?>">
-                                        <p class="description"><?php _e('Color for confirmed twin rooms (from custom field match)', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('From custom field', 'hhdl'); ?></p>
                                     </div>
-
                                     <div class="hhdl-color-field">
                                         <label><?php _e('Potential Twin', 'hhdl'); ?></label>
                                         <input type="color"
                                                name="locations[<?php echo $location_id; ?>][bed_color_twin_potential]"
                                                value="<?php echo esc_attr(isset($location_settings['bed_color_twin_potential']) ? $location_settings['bed_color_twin_potential'] : '#f59e0b'); ?>">
-                                        <p class="description"><?php _e('Color for potential twin rooms (from notes search)', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('From notes search', 'hhdl'); ?></p>
                                     </div>
-
                                     <div class="hhdl-color-field">
-                                        <label><?php _e('Extra Bed/Sofabed', 'hhdl'); ?></label>
+                                        <label><?php _e('Extra Bed', 'hhdl'); ?></label>
                                         <input type="color"
                                                name="locations[<?php echo $location_id; ?>][bed_color_extra]"
                                                value="<?php echo esc_attr(isset($location_settings['bed_color_extra']) ? $location_settings['bed_color_extra'] : '#3b82f6'); ?>">
-                                        <p class="description"><?php _e('Color for rooms with extra bed or sofabed', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Extra bed/sofabed', 'hhdl'); ?></p>
                                     </div>
                                 </fieldset>
 
-                                <!-- Twin Bed Detection -->
+                                <!-- Twin Detection -->
                                 <fieldset class="hhdl-fieldset">
                                     <legend><?php _e('Twin Bed Detection', 'hhdl'); ?></legend>
-
-                                    <div class="hhdl-twin-field">
+                                    <div class="hhdl-field">
                                         <label><?php _e('Custom Field Names (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][twin_custom_field_names]"
                                                placeholder="<?php esc_attr_e('e.g., Bed Type,Room Configuration', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['twin_custom_field_names']) ? $location_settings['twin_custom_field_names'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated list of custom field names to check for twin bed configuration', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Custom fields to check for twin config', 'hhdl'); ?></p>
                                     </div>
-
-                                    <div class="hhdl-twin-field">
-                                        <label><?php _e('Confirmed Twin Values (CSV)', 'hhdl'); ?></label>
+                                    <div class="hhdl-field">
+                                        <label><?php _e('Confirmed Values (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][twin_custom_field_values]"
-                                               placeholder="<?php esc_attr_e('e.g., Twin,Twin Beds,2 Single Beds', 'hhdl'); ?>"
+                                               placeholder="<?php esc_attr_e('e.g., Twin,Twin Beds,2 Single', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['twin_custom_field_values']) ? $location_settings['twin_custom_field_values'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated list of values that confirm a twin room', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Values that confirm twin room', 'hhdl'); ?></p>
                                     </div>
-
-                                    <div class="hhdl-twin-field">
+                                    <div class="hhdl-field">
                                         <label><?php _e('Notes Search Terms (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][twin_notes_search_terms]"
                                                placeholder="<?php esc_attr_e('e.g., twin,2 single,two single', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['twin_notes_search_terms']) ? $location_settings['twin_notes_search_terms'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated search terms to find potential twins in booking notes (case insensitive)', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Terms to find potential twins in notes', 'hhdl'); ?></p>
                                     </div>
-
-                                    <div class="hhdl-twin-field">
+                                    <div class="hhdl-field">
                                         <label><?php _e('Excluded Terms (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][twin_excluded_terms]"
-                                               placeholder="<?php esc_attr_e('e.g., Double or Twin:,Not twin', 'hhdl'); ?>"
+                                               placeholder="<?php esc_attr_e('e.g., Double or Twin:', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['twin_excluded_terms']) ? $location_settings['twin_excluded_terms'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Case-sensitive terms to remove from notes before searching (e.g., "Double or Twin: Double" won\'t match "twin")', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('Case-sensitive terms to exclude before searching', 'hhdl'); ?></p>
                                     </div>
                                 </fieldset>
 
-                                <!-- Extra Bed/Sofabed Detection -->
+                                <!-- Extra Bed Detection -->
                                 <fieldset class="hhdl-fieldset">
                                     <legend><?php _e('Extra Bed/Sofabed Detection', 'hhdl'); ?></legend>
-
-                                    <div class="hhdl-twin-field">
+                                    <div class="hhdl-field">
                                         <label><?php _e('Custom Field Names (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][extra_bed_custom_field_names]"
                                                placeholder="<?php esc_attr_e('e.g., Extra Bed,Sofabed', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['extra_bed_custom_field_names']) ? $location_settings['extra_bed_custom_field_names'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated list of custom field names to check for extra bed/sofabed', 'hhdl'); ?></p>
                                     </div>
-
-                                    <div class="hhdl-twin-field">
-                                        <label><?php _e('Custom Field Match Values (CSV)', 'hhdl'); ?></label>
+                                    <div class="hhdl-field">
+                                        <label><?php _e('Match Values (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][extra_bed_custom_field_values]"
                                                placeholder="<?php esc_attr_e('e.g., Yes,Sofabed,Pull-out', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['extra_bed_custom_field_values']) ? $location_settings['extra_bed_custom_field_values'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated list of values that confirm an extra bed/sofabed', 'hhdl'); ?></p>
                                     </div>
-
-                                    <div class="hhdl-twin-field">
+                                    <div class="hhdl-field">
                                         <label><?php _e('Notes Search Terms (CSV)', 'hhdl'); ?></label>
                                         <input type="text"
                                                name="locations[<?php echo $location_id; ?>][extra_bed_notes_search_terms]"
-                                               placeholder="<?php esc_attr_e('e.g., sofabed,sofa bed,extra bed,pull-out', 'hhdl'); ?>"
+                                               placeholder="<?php esc_attr_e('e.g., sofabed,sofa bed,extra bed', 'hhdl'); ?>"
                                                value="<?php echo esc_attr(isset($location_settings['extra_bed_notes_search_terms']) ? $location_settings['extra_bed_notes_search_terms'] : ''); ?>"
                                                class="widefat">
-                                        <p class="description"><?php _e('Comma-separated search terms to find extra bed/sofabed in booking notes (case insensitive)', 'hhdl'); ?></p>
                                     </div>
                                 </fieldset>
                             </div>
-                        </td>
-                        <td class="location-note-types">
-                            <fieldset class="hhdl-fieldset">
-                                <legend><?php _e('Applicable Note Types', 'hhdl'); ?></legend>
-                                <p class="description">
-                                    <?php _e('Select which note types are relevant to the Daily List module. User access is still controlled by permissions.', 'hhdl'); ?>
-                                </p>
-                                <?php if (empty($available_note_types)): ?>
-                                    <p class="hhdl-no-note-types">
-                                        <em><?php _e('No note types configured for this location. Please configure note types in Hotel Hub settings.', 'hhdl'); ?></em>
-                                    </p>
-                                <?php else: ?>
-                                    <div class="hhdl-note-types-list">
-                                        <?php foreach ($available_note_types as $note_type): ?>
-                                            <label class="hhdl-note-type-item" style="display: block; margin-bottom: 8px;">
+                        </div>
+
+                        <!-- Note Types & Categories Grid -->
+                        <div class="hhdl-settings-section">
+                            <div class="hhdl-settings-grid-2col">
+                                <!-- Note Types -->
+                                <fieldset class="hhdl-fieldset">
+                                    <legend><?php _e('Applicable Note Types', 'hhdl'); ?></legend>
+                                    <p class="description"><?php _e('Select note types relevant to Daily List. Access controlled by permissions.', 'hhdl'); ?></p>
+                                    <?php if (empty($available_note_types)): ?>
+                                        <p class="hhdl-empty"><em><?php _e('No note types configured for this location.', 'hhdl'); ?></em></p>
+                                    <?php else: ?>
+                                        <div class="hhdl-checkbox-list">
+                                            <?php foreach ($available_note_types as $note_type): ?>
+                                                <label>
+                                                    <input type="checkbox"
+                                                           name="locations[<?php echo $location_id; ?>][visible_note_types][]"
+                                                           value="<?php echo esc_attr($note_type['id']); ?>"
+                                                           <?php checked(in_array($note_type['id'], $visible_note_types)); ?>>
+                                                    <span class="hhdl-note-color" style="background: <?php echo esc_attr($note_type['color']); ?>;"></span>
+                                                    <span class="material-symbols-outlined"><?php echo esc_html($note_type['icon']); ?></span>
+                                                    <span><?php echo esc_html($note_type['name']); ?></span>
+                                                </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </fieldset>
+
+                                <!-- Category Exclusions -->
+                                <fieldset class="hhdl-fieldset">
+                                    <legend><?php _e('Room Category Exclusions', 'hhdl'); ?></legend>
+                                    <p class="description"><?php _e('Exclude categories from filters and optionally from list.', 'hhdl'); ?></p>
+                                    <?php if (empty($available_categories)): ?>
+                                        <p class="hhdl-empty"><em><?php _e('No categories configured for this location.', 'hhdl'); ?></em></p>
+                                    <?php else: ?>
+                                        <div class="hhdl-checkbox-list">
+                                            <?php foreach ($available_categories as $category): ?>
+                                                <?php $room_count = isset($category['sites']) ? count($category['sites']) : 0; ?>
+                                                <label>
+                                                    <input type="checkbox"
+                                                           name="locations[<?php echo $location_id; ?>][excluded_categories][]"
+                                                           value="<?php echo esc_attr($category['id']); ?>"
+                                                           <?php checked(in_array($category['id'], $excluded_categories)); ?>>
+                                                    <span><?php echo esc_html($category['name']); ?></span>
+                                                    <span class="count">(<?php echo $room_count; ?>)</span>
+                                                </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="hhdl-hide-option">
+                                            <label>
                                                 <input type="checkbox"
-                                                       name="locations[<?php echo $location_id; ?>][visible_note_types][]"
-                                                       value="<?php echo esc_attr($note_type['id']); ?>"
-                                                       <?php checked(in_array($note_type['id'], $visible_note_types)); ?>>
-                                                <span class="hhdl-note-type-color"
-                                                      style="display: inline-block; width: 16px; height: 16px; background: <?php echo esc_attr($note_type['color']); ?>; border-radius: 3px; vertical-align: middle; margin-right: 4px;"></span>
-                                                <span class="material-symbols-outlined"
-                                                      style="font-size: 16px; vertical-align: middle; margin-right: 4px;">
-                                                    <?php echo esc_html($note_type['icon']); ?>
-                                                </span>
-                                                <span><?php echo esc_html($note_type['name']); ?></span>
+                                                       name="locations[<?php echo $location_id; ?>][hide_excluded_categories]"
+                                                       value="1"
+                                                       <?php checked($hide_excluded_categories, true); ?>>
+                                                <strong><?php _e('Hide excluded from list entirely', 'hhdl'); ?></strong>
                                             </label>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </fieldset>
-                        </td>
-                        <td class="location-categories">
-                            <fieldset class="hhdl-fieldset">
-                                <legend><?php _e('Room Category Exclusions', 'hhdl'); ?></legend>
-                                <p class="description">
-                                    <?php _e('Exclude specific room categories from filters and optionally from the entire daily list.', 'hhdl'); ?>
-                                </p>
-                                <?php if (empty($available_categories)): ?>
-                                    <p class="hhdl-no-categories">
-                                        <em><?php _e('No room categories configured for this location. Please configure categories in Hotel Hub settings.', 'hhdl'); ?></em>
-                                    </p>
-                                <?php else: ?>
-                                    <div class="hhdl-categories-list">
-                                        <?php foreach ($available_categories as $category): ?>
-                                            <?php
-                                            // Count rooms in category
-                                            $room_count = isset($category['sites']) ? count($category['sites']) : 0;
-                                            ?>
-                                            <label class="hhdl-category-item" style="display: block; margin-bottom: 8px;">
-                                                <input type="checkbox"
-                                                       name="locations[<?php echo $location_id; ?>][excluded_categories][]"
-                                                       value="<?php echo esc_attr($category['id']); ?>"
-                                                       <?php checked(in_array($category['id'], $excluded_categories)); ?>>
-                                                <span><?php echo esc_html($category['name']); ?></span>
-                                                <span class="category-count" style="color: #646970; font-size: 12px;">(<?php echo $room_count; ?> <?php echo _n('room', 'rooms', $room_count, 'hhdl'); ?>)</span>
-                                            </label>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ddd;">
-                                        <label>
-                                            <input type="checkbox"
-                                                   name="locations[<?php echo $location_id; ?>][hide_excluded_categories]"
-                                                   value="1"
-                                                   <?php checked($hide_excluded_categories, true); ?>>
-                                            <strong><?php _e('Hide excluded categories from list entirely', 'hhdl'); ?></strong>
-                                        </label>
-                                        <p class="description" style="margin-left: 24px;">
-                                            <?php _e('When unchecked, excluded categories will only be removed from filter counts but will still appear in "All Rooms" view.', 'hhdl'); ?>
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
-                            </fieldset>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                                            <p class="description"><?php _e('When unchecked, excluded categories removed from filters but visible in "All Rooms".', 'hhdl'); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
         <?php submit_button(__('Save Settings', 'hhdl')); ?>
     </form>
@@ -329,34 +293,62 @@ if (!defined('ABSPATH')) {
 
 <style>
 .hhdl-settings-wrap {
-    max-width: 1200px;
+    max-width: 1400px;
 }
 
-.hhdl-locations-table {
-    width: 100%;
-    border-collapse: collapse;
+.hhdl-locations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 20px;
 }
 
-.hhdl-locations-table thead th {
-    background: #f0f0f1;
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid #c3c4c7;
+.hhdl-location-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
 }
 
-.hhdl-location-row td {
-    padding: 16px 12px;
+.hhdl-location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
     border-bottom: 1px solid #c3c4c7;
-    vertical-align: top;
+    background: #f6f7f7;
 }
 
-.location-name {
-    width: 200px;
+.hhdl-location-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
 }
 
-.location-enabled {
-    width: 100px;
+.hhdl-location-settings {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.hhdl-settings-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.hhdl-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 16px;
+}
+
+.hhdl-settings-grid-2col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
 }
 
 /* Toggle Switch */
@@ -406,10 +398,6 @@ input:checked + .hhdl-slider:before {
 }
 
 /* Task Manager */
-.hhdl-task-manager {
-    min-width: 400px;
-}
-
 .hhdl-task-list {
     margin-bottom: 12px;
 }
@@ -435,20 +423,20 @@ input:checked + .hhdl-slider:before {
 
 .hhdl-task-type-select {
     flex: 1;
+    min-width: 180px;
     padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
     background: white;
-    min-width: 180px;
 }
 
 .hhdl-task-description-filter {
     flex: 1;
+    min-width: 200px;
     padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
     background: white;
-    min-width: 200px;
 }
 
 .hhdl-task-color {
@@ -473,46 +461,11 @@ input:checked + .hhdl-slider:before {
     color: white;
 }
 
-.hhdl-add-task {
-    margin-top: 8px;
-}
-
-/* Twin Detection Settings */
-.location-twin-settings {
-    min-width: 350px;
-}
-
-.hhdl-twin-config {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.hhdl-twin-field label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #1d2327;
-}
-
-.hhdl-twin-field input[type="text"] {
-    width: 100%;
-    max-width: 100%;
-}
-
-.hhdl-twin-field .description {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #646970;
-    font-style: italic;
-}
-
-/* Fieldset Styling */
+/* Fieldsets */
 .hhdl-fieldset {
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 16px;
-    margin-bottom: 16px;
     background: #fafafa;
 }
 
@@ -523,9 +476,38 @@ input:checked + .hhdl-slider:before {
     padding: 0 8px;
 }
 
-/* Color Field Styling */
+.hhdl-fieldset > .description {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+.hhdl-field {
+    margin-bottom: 16px;
+}
+
+.hhdl-field:last-child {
+    margin-bottom: 0;
+}
+
+.hhdl-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.hhdl-field .description {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #646970;
+}
+
+/* Color Fields */
 .hhdl-color-field {
-    display: flex;
+    display: grid;
+    grid-template-columns: 140px 60px 1fr;
     align-items: center;
     gap: 12px;
     margin-bottom: 12px;
@@ -536,14 +518,12 @@ input:checked + .hhdl-slider:before {
 }
 
 .hhdl-color-field label {
-    min-width: 180px;
     font-weight: 600;
-    margin-bottom: 0;
-    color: #1d2327;
+    margin: 0;
+    font-size: 13px;
 }
 
 .hhdl-color-field input[type="color"] {
-    width: 60px;
     height: 32px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -551,11 +531,70 @@ input:checked + .hhdl-slider:before {
 }
 
 .hhdl-color-field .description {
-    flex: 1;
     margin: 0;
+    font-size: 11px;
+    color: #646970;
+}
+
+/* Checkbox Lists */
+.hhdl-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hhdl-checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.hhdl-checkbox-list label:hover {
+    background: #f0f0f1;
+}
+
+.hhdl-note-color {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+}
+
+.hhdl-checkbox-list .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.hhdl-checkbox-list .count {
+    color: #646970;
     font-size: 12px;
+    margin-left: auto;
+}
+
+.hhdl-hide-option {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
+}
+
+.hhdl-hide-option label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.hhdl-hide-option .description {
+    margin-left: 24px;
+    font-size: 11px;
+    color: #646970;
+}
+
+.hhdl-empty {
     color: #646970;
     font-style: italic;
+    margin: 8px 0;
 }
 </style>
 
