@@ -212,6 +212,7 @@
 
 .hhdl-room-card[data-previous-status="arrived"][data-is-departing="true"]:not([data-spans-previous="true"])::before {
     width: 45px !important;
+    left: -53px !important; /* Compensate for card moving right */
 }
 
 /* Previous night - vacant */
