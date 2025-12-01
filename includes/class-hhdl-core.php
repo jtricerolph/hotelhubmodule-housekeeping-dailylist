@@ -91,7 +91,7 @@ class HHDL_Core {
             'name'           => __('Daily List', 'hhdl'),
             'description'    => __('Daily housekeeping task management', 'hhdl'),
             'department'     => 'housekeeping',
-            'icon'           => 'dashicons-clipboard',
+            'icon'           => 'fact_check',
             'color'          => '#10b981',
             'permissions'    => array(
                 'hhdl_access_module',
