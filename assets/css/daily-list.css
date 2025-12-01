@@ -205,8 +205,8 @@
     border-color: #3b82f6;
 }
 
-/* Wider left border for active multi-night stays (arrived yesterday, still here today) */
-.hhdl-room-card[data-previous-status="arrived"][data-booking-status="arrived"]:not([data-spans-previous="true"])::before {
+/* Wider left border for active multi-night stays (arrived yesterday, still here today, departing) */
+.hhdl-room-card[data-is-departing="true"][data-booking-status="arrived"]::before {
     width: 45px;
     left: -53px;
 }
