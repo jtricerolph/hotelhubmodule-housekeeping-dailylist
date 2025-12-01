@@ -38,6 +38,7 @@ class HHDL_Ajax {
         add_action('wp_ajax_hhdl_get_rooms', array($this, 'get_rooms'));
         add_action('wp_ajax_hhdl_get_room_details', array($this, 'get_room_details'));
         add_action('wp_ajax_hhdl_complete_task', array($this, 'complete_task'));
+        add_action('wp_ajax_hhdl_update_room_status', array($this, 'update_room_status'));
     }
 
     /**
@@ -276,6 +277,54 @@ class HHDL_Ajax {
             $wpdb->query('ROLLBACK');
             wp_send_json_error(array('message' => $e->getMessage()));
         }
+    }
+
+    /**
+     * Update room status (AJAX handler)
+     */
+    public function update_room_status() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+        $site_status = isset($_POST['site_status']) ? sanitize_text_field($_POST['site_status']) : '';
+
+        // Validate parameters
+        if (!$location_id || !$room_id || !$site_status) {
+            wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
+        }
+
+        // Validate status value
+        $valid_statuses = array('Clean', 'Dirty', 'Inspected');
+        if (!in_array($site_status, $valid_statuses)) {
+            wp_send_json_error(array('message' => __('Invalid status value', 'hhdl')));
+        }
+
+        // Get NewBook API client
+        $api = $this->get_newbook_api($location_id);
+        if (!$api) {
+            wp_send_json_error(array('message' => __('NewBook API not configured', 'hhdl')));
+        }
+
+        // Call NewBook API to update site status
+        $response = $api->update_site_status($room_id, $site_status);
+
+        if (!$response['success']) {
+            $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
+            wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf(__('Room status updated to %s', 'hhdl'), $site_status),
+            'site_status' => $site_status
+        ));
     }
 
     /**
@@ -1016,13 +1065,19 @@ class HHDL_Ajax {
                     <?php elseif ($is_viewing_today && $is_arriving): ?>
                         <!-- Show site status for today's arrivals (if not unknown) -->
                         <?php if (strtolower($room_details['site_status']) !== 'unknown'): ?>
-                            <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                            <span class="hhdl-modal-site-status hhdl-status-toggle-btn <?php echo esc_attr(strtolower($room_details['site_status'])); ?>"
+                                  data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
+                                  data-current-status="<?php echo esc_attr($room_details['site_status']); ?>"
+                                  data-has-tasks="<?php echo !empty($tasks) ? 'true' : 'false'; ?>">
                                 <?php echo esc_html($room_details['site_status']); ?>
                             </span>
                         <?php endif; ?>
                     <?php elseif ($is_viewing_today && (!$booking_data || !isset($booking_data['nights']))): ?>
                         <!-- Show site status for vacant rooms and DEPART flow on today's date (always show, even if unknown) -->
-                        <span class="hhdl-modal-site-status <?php echo esc_attr(strtolower($room_details['site_status'])); ?>">
+                        <span class="hhdl-modal-site-status hhdl-status-toggle-btn <?php echo esc_attr(strtolower($room_details['site_status'])); ?>"
+                              data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
+                              data-current-status="<?php echo esc_attr($room_details['site_status']); ?>"
+                              data-has-tasks="<?php echo !empty($tasks) ? 'true' : 'false'; ?>">
                             <?php echo esc_html($room_details['site_status']); ?>
                         </span>
                     <?php endif; ?>

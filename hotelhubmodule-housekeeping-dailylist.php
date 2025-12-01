@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Hub Module - Housekeeping - Daily List
  * Plugin URI: https://github.com/jtricerolph/hotelhubmodule-housekeeping-dailylist
  * Description: Daily housekeeping task management with NewBook integration and real-time sync
- * Version: 1.9.9
+ * Version: 2.0.0
  * Author: JTR
  * License: GPL v2 or later
  * Text Domain: hhdl
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('HHDL_VERSION', '1.9.9');
+define('HHDL_VERSION', '2.0.0');
 define('HHDL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HHDL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HHDL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -102,7 +102,7 @@ class HotelHub_Housekeeping_DailyList {
             location_id BIGINT(20) UNSIGNED NOT NULL,
             room_id VARCHAR(50) NOT NULL,
             task_id BIGINT(20) UNSIGNED DEFAULT NULL,
-            task_type_id BIGINT(20) UNSIGNED DEFAULT NULL COMMENT 'NewBook task type ID',
+            task_type_id BIGINT(20) DEFAULT NULL COMMENT 'NewBook task type ID (supports negative IDs)',
             task_description VARCHAR(255) DEFAULT NULL COMMENT 'Task description/name',
             completed_by BIGINT(20) UNSIGNED NOT NULL COMMENT 'WordPress user ID',
             completed_at DATETIME NOT NULL,
@@ -125,6 +125,13 @@ class HotelHub_Housekeeping_DailyList {
             $wpdb->query("UPDATE {$table_name} SET task_description = task_type WHERE task_description IS NULL");
             // Drop old column
             $wpdb->query("ALTER TABLE {$table_name} DROP COLUMN task_type");
+        }
+
+        // Migration: Change task_type_id to support negative integers (NewBook uses -1, -2, etc.)
+        $column_check = $wpdb->get_row("SHOW COLUMNS FROM {$table_name} LIKE 'task_type_id'");
+        if ($column_check && stripos($column_check->Type, 'unsigned') !== false) {
+            $wpdb->query("ALTER TABLE {$table_name} MODIFY task_type_id BIGINT(20) DEFAULT NULL COMMENT 'NewBook task type ID (supports negative IDs)'");
+            error_log('HHDL: Migrated task_type_id column to support negative integers');
         }
 
         // Store database version

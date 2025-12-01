@@ -1297,6 +1297,23 @@
     color: #1e40af;
 }
 
+/* Clickable status badge styles */
+.hhdl-status-toggle-btn {
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    user-select: none;
+}
+
+.hhdl-status-toggle-btn:hover:not([data-has-tasks="true"]) {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.hhdl-status-toggle-btn[data-has-tasks="true"] {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .hhdl-modal-room-stats {
     display: flex;
     align-items: center;

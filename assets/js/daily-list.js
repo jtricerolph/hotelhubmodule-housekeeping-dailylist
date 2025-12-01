@@ -400,6 +400,25 @@
                 closeModal();
             }
         });
+
+        // Status badge toggle handler
+        $(document).on('click', '.hhdl-status-toggle-btn', function() {
+            const badge = $(this);
+            const hasTasks = badge.data('has-tasks') === true || badge.data('has-tasks') === 'true';
+
+            // Don't allow toggle if there are outstanding tasks
+            if (hasTasks) {
+                showToast('Cannot change status while tasks are outstanding', 'error');
+                return;
+            }
+
+            const roomId = badge.data('room-id');
+            const currentStatus = badge.data('current-status');
+            const newStatus = currentStatus === 'Clean' ? 'Dirty' : 'Clean';
+
+            // Show confirmation modal
+            showStatusChangeConfirmation(roomId, currentStatus, newStatus, badge);
+        });
     }
 
     /**
@@ -910,6 +929,21 @@
                     sectionIcon.text('assignment_turned_in');
                     sectionIcon.css('color', '#10b981'); // Green
                 }
+
+                // Replace empty task list with "No outstanding" message
+                var tasksSection = $('.hhdl-tasks-section');
+                if (tasksSection.length) {
+                    var taskListDiv = tasksSection.find('.hhdl-task-list');
+                    if (taskListDiv.length && taskListDiv.children().length === 0) {
+                        taskListDiv.replaceWith('<p>No outstanding housekeeping tasks</p>');
+                    }
+                }
+
+                // Update status badge to allow clicking (no tasks remaining)
+                var statusBadge = $('.hhdl-status-toggle-btn');
+                if (statusBadge.length) {
+                    statusBadge.attr('data-has-tasks', 'false');
+                }
             }
         }
 
@@ -1016,6 +1050,67 @@
                 toast.remove();
             }, 300);
         }, 3000);
+    }
+
+    /**
+     * Show confirmation modal for status change
+     */
+    async function showStatusChangeConfirmation(roomId, currentStatus, newStatus, badge) {
+        const confirmed = await showConfirmModal(
+            'Change Room Status',
+            'Change room status from <strong>' + currentStatus + '</strong> to <strong>' + newStatus + '</strong> in NewBook?',
+            'warning',
+            'Change to ' + newStatus,
+            ''
+        );
+
+        if (confirmed) {
+            updateRoomStatus(roomId, newStatus, badge);
+        }
+    }
+
+    /**
+     * Update room status via AJAX
+     */
+    function updateRoomStatus(roomId, newStatus, badge) {
+        // Disable badge during update
+        badge.css('opacity', '0.5').css('pointer-events', 'none');
+
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'hhdl_update_room_status',
+                nonce: hhdlAjax.nonce,
+                location_id: currentLocationId,
+                room_id: roomId,
+                site_status: newStatus
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update badge
+                    badge.removeClass('clean dirty inspected')
+                        .addClass(newStatus.toLowerCase())
+                        .text(newStatus)
+                        .data('current-status', newStatus);
+
+                    // Update room card status badge in main list
+                    updateRoomStatusBadge(roomId, newStatus);
+
+                    showToast('Room marked as ' + newStatus, 'success');
+                } else {
+                    const errorMsg = response.data && response.data.message ? response.data.message : 'Failed to update status';
+                    showToast('NewBook Error: ' + errorMsg, 'error');
+                }
+            },
+            error: function() {
+                showToast('Network error. Please try again.', 'error');
+            },
+            complete: function() {
+                // Re-enable badge
+                badge.css('opacity', '').css('pointer-events', '');
+            }
+        });
     }
 
     // Initialize when document is ready OR when module content is dynamically loaded
