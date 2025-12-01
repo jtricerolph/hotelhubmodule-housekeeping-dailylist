@@ -318,8 +318,10 @@
             'unoccupied': counts.unoccupied || 0
         };
 
-        // Calculate total room count from DOM
-        totalRoomCount = $('.hhdl-room-card').length;
+        // Calculate total room count from DOM (excluding filter-excluded rooms)
+        totalRoomCount = $('.hhdl-room-card').filter(function() {
+            return $(this).data('filter-excluded') !== true;
+        }).length;
 
         // Update button labels with counts
         $('.hhdl-filter-btn[data-filter="arrivals"]').html('Arrivals <span class="hhdl-count-badge">' + counts.arrivals + '</span>');
