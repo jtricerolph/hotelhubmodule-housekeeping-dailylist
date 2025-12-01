@@ -142,7 +142,7 @@ class HHDL_Reports {
         $offset = ($page - 1) * $per_page;
         $total_pages = ceil($total_records / $per_page);
 
-        // Get records
+        // Get records (explicitly include task_type_id and task_description)
         $query = "SELECT tc.*, u.display_name as staff_name
                   FROM {$table_name} tc
                   LEFT JOIN {$wpdb->users} u ON tc.completed_by = u.ID
@@ -152,6 +152,9 @@ class HHDL_Reports {
 
         $final_params = array_merge($query_params, array($per_page, $offset));
         $records = $wpdb->get_results($wpdb->prepare($query, $final_params));
+
+        // Enhance records with room names and task type names
+        $records = $this->enhance_records_with_names($records);
 
         // Get staff list for filter
         $staff_query = "SELECT DISTINCT u.ID, u.display_name
@@ -207,7 +210,7 @@ class HHDL_Reports {
 
         $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-        $query = "SELECT tc.service_date, tc.room_id, tc.task_type, tc.completed_at, u.display_name as staff_name
+        $query = "SELECT tc.*, u.display_name as staff_name
                   FROM {$table_name} tc
                   LEFT JOIN {$wpdb->users} u ON tc.completed_by = u.ID
                   {$where_sql}
@@ -219,6 +222,9 @@ class HHDL_Reports {
 
         $records = $wpdb->get_results($query);
 
+        // Enhance records with room names and task type names
+        $records = $this->enhance_records_with_names($records);
+
         // Set headers for CSV download
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="housekeeping-task-completions-' . date('Y-m-d') . '.csv"');
@@ -226,20 +232,120 @@ class HHDL_Reports {
         // Open output stream
         $output = fopen('php://output', 'w');
 
-        // Write CSV headers
-        fputcsv($output, array('Task Date', 'Room', 'Task Type', 'Completed Date/Time', 'Completed By'));
+        // Write CSV headers (updated to include Task Description)
+        fputcsv($output, array('Task Date', 'Room', 'Task Type', 'Task Description', 'Completed Date/Time', 'Completed By'));
 
         // Write data rows
         foreach ($records as $record) {
             fputcsv($output, array(
                 $record->service_date,
-                $record->room_id,
-                $record->task_type,
+                $record->room_name,
+                $record->task_type_name,
+                isset($record->task_description) ? $record->task_description : '',
                 $record->completed_at,
                 $record->staff_name
             ));
         }
 
         fclose($output);
+    }
+
+    /**
+     * Enhance records with room names and task type names
+     *
+     * @param array $records Task completion records from database
+     * @return array Enhanced records with room_name and task_type_name properties
+     */
+    private function enhance_records_with_names($records) {
+        if (empty($records)) {
+            return $records;
+        }
+
+        // Extract unique locations and room IDs
+        $locations_rooms = array();
+        foreach ($records as $record) {
+            if (!isset($locations_rooms[$record->location_id])) {
+                $locations_rooms[$record->location_id] = array();
+            }
+            if (!in_array($record->room_id, $locations_rooms[$record->location_id])) {
+                $locations_rooms[$record->location_id][] = $record->room_id;
+            }
+        }
+
+        // Build lookup arrays for room names and task types per location
+        $room_name_lookup = array();
+        $task_type_lookup = array();
+
+        foreach ($locations_rooms as $location_id => $room_ids) {
+            // Get hotel from location
+            $hotel = null;
+            if (function_exists('hha')) {
+                $hotel = hha()->hotels->get($location_id);
+            }
+
+            if (!$hotel) {
+                continue;
+            }
+
+            // Get NewBook API instance
+            $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+            if (empty($integration) || empty($integration['api_key'])) {
+                continue;
+            }
+
+            $api = new HHA_NewBook_API($integration['api_key'], $integration['property_id']);
+
+            // Fetch sites for room name lookup (with caching)
+            $cache_key = 'hhdl_sites_' . $location_id;
+            $sites = get_transient($cache_key);
+
+            if (false === $sites) {
+                $sites_response = $api->get_sites(true);
+                $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+                set_transient($cache_key, $sites, 5 * MINUTE_IN_SECONDS);
+            }
+
+            // Build room ID to name mapping
+            foreach ($sites as $site) {
+                if (isset($site['site_id']) && isset($site['site_name'])) {
+                    $room_name_lookup[$location_id][$site['site_id']] = $site['site_name'];
+                }
+            }
+
+            // Fetch task types from integration settings (with caching)
+            $cache_key = 'hhdl_task_types_' . $location_id;
+            $task_types = get_transient($cache_key);
+
+            if (false === $task_types) {
+                $task_types = HHDL_Settings::get_task_types($location_id);
+                set_transient($cache_key, $task_types, 5 * MINUTE_IN_SECONDS);
+            }
+
+            // Build task type ID to name mapping
+            foreach ($task_types as $task_type) {
+                if (isset($task_type['id']) && isset($task_type['name'])) {
+                    $task_type_lookup[$location_id][$task_type['id']] = $task_type['name'];
+                }
+            }
+        }
+
+        // Enhance each record with room name and task type name
+        foreach ($records as $record) {
+            // Add room name
+            if (isset($room_name_lookup[$record->location_id][$record->room_id])) {
+                $record->room_name = $room_name_lookup[$record->location_id][$record->room_id];
+            } else {
+                $record->room_name = $record->room_id; // Fallback to ID if name not found
+            }
+
+            // Add task type name
+            if (isset($record->task_type_id) && isset($task_type_lookup[$record->location_id][$record->task_type_id])) {
+                $record->task_type_name = $task_type_lookup[$record->location_id][$record->task_type_id];
+            } else {
+                $record->task_type_name = ''; // Empty if not found
+            }
+        }
+
+        return $records;
     }
 }

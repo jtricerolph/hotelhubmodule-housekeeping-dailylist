@@ -139,8 +139,9 @@ if (!defined('ABSPATH')) {
             <thead>
                 <tr>
                     <th style="width: 100px;"><?php _e('Task Date', 'hhdl'); ?></th>
-                    <th style="width: 80px;"><?php _e('Room', 'hhdl'); ?></th>
-                    <th><?php _e('Task Type', 'hhdl'); ?></th>
+                    <th style="width: 100px;"><?php _e('Room', 'hhdl'); ?></th>
+                    <th style="width: 120px;"><?php _e('Task Type', 'hhdl'); ?></th>
+                    <th><?php _e('Task Description', 'hhdl'); ?></th>
                     <th style="width: 160px;"><?php _e('Completed Date/Time', 'hhdl'); ?></th>
                     <th style="width: 150px;"><?php _e('Completed By', 'hhdl'); ?></th>
                 </tr>
@@ -149,8 +150,9 @@ if (!defined('ABSPATH')) {
                 <?php foreach ($records as $record): ?>
                     <tr>
                         <td><?php echo esc_html($record->service_date); ?></td>
-                        <td><strong><?php echo esc_html($record->room_id); ?></strong></td>
-                        <td><?php echo esc_html($record->task_type); ?></td>
+                        <td><strong><?php echo esc_html($record->room_name); ?></strong></td>
+                        <td><?php echo esc_html($record->task_type_name); ?></td>
+                        <td><?php echo esc_html(isset($record->task_description) ? $record->task_description : ''); ?></td>
                         <td><?php echo esc_html(date('Y-m-d H:i:s', strtotime($record->completed_at))); ?></td>
                         <td><?php echo esc_html($record->staff_name); ?></td>
                     </tr>
