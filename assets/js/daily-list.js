@@ -141,6 +141,33 @@
                     // Show only blocked rooms
                     matchesFilter = isBlocked;
                     break;
+                case 'no-booking':
+                    // Rooms without a booking (vacant or blocked)
+                    matchesFilter = card.data('booking-type') === 'vacant' || isBlocked;
+                    break;
+                case 'unoccupied':
+                    // Rooms without guests currently in them
+                    const isStopover = card.data('is-stopover') === true;
+                    const isArrived = card.data('booking-status') === 'arrived';
+                    const isDeparting = card.data('is-departing') === true;
+                    const previousStatus = card.data('previous-status');
+                    const bookingType = card.data('booking-type');
+
+                    let isOccupied = false;
+
+                    // Check various occupation states
+                    if (isStopover) {
+                        isOccupied = true;
+                    } else if (isArrived) {
+                        isOccupied = true;
+                    } else if (isDeparting && previousStatus === 'arrived') {
+                        isOccupied = true;
+                    } else if (bookingType === 'back-to-back' && (isArrived || previousStatus === 'arrived')) {
+                        isOccupied = true;
+                    }
+
+                    matchesFilter = !isOccupied;
+                    break;
                 case 'all':
                 default:
                     matchesFilter = true;
@@ -170,6 +197,8 @@
         $('.hhdl-filter-btn[data-filter="back-to-back"]').html('Back to Back <span class="hhdl-count-badge">' + counts.back_to_back + '</span>');
         $('.hhdl-filter-btn[data-filter="twins"]').html('Twins <span class="hhdl-count-badge">' + counts.twins + '</span>');
         $('.hhdl-filter-btn[data-filter="blocked"]').html('Blocked <span class="hhdl-count-badge">' + counts.blocked + '</span>');
+        $('.hhdl-filter-btn[data-filter="no-booking"]').html('No Booking <span class="hhdl-count-badge">' + counts.no_booking + '</span>');
+        $('.hhdl-filter-btn[data-filter="unoccupied"]').html('Unoccupied <span class="hhdl-count-badge">' + counts.unoccupied + '</span>');
     }
 
     /**

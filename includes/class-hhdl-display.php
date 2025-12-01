@@ -122,6 +122,12 @@ class HHDL_Display {
             <button class="hhdl-filter-btn" data-filter="blocked">
                 <?php _e('Blocked', 'hhdl'); ?>
             </button>
+            <button class="hhdl-filter-btn" data-filter="no-booking">
+                <?php _e('No Booking', 'hhdl'); ?>
+            </button>
+            <button class="hhdl-filter-btn" data-filter="unoccupied">
+                <?php _e('Unoccupied', 'hhdl'); ?>
+            </button>
         </div>
         <?php
     }
@@ -167,7 +173,9 @@ class HHDL_Display {
             'stopovers' => 0,
             'back_to_back' => 0,
             'twins' => 0,
-            'blocked' => 0
+            'blocked' => 0,
+            'no_booking' => 0,
+            'unoccupied' => 0
         );
 
         foreach ($rooms_data as $room) {
@@ -177,6 +185,39 @@ class HHDL_Display {
             if (isset($room['booking_type']) && $room['booking_type'] === 'back-to-back') $counts['back_to_back']++;
             if ($room['has_twin']) $counts['twins']++;
             if ($room['booking_status'] === 'blocked') $counts['blocked']++;
+
+            // No booking: vacant or blocked (no guest booking)
+            if ($room['booking_type'] === 'vacant' || $room['booking_status'] === 'blocked') {
+                $counts['no_booking']++;
+            }
+
+            // Unoccupied: rooms without guests currently in them
+            // Occupied if: stopover, arrived booking, departure not checked out, or back-to-back with present guest
+            $is_occupied = false;
+
+            // Stopovers are always occupied (guest staying through)
+            if ($room['is_stopover']) {
+                $is_occupied = true;
+            }
+            // Current booking has arrived = occupied
+            elseif ($room['booking_status'] === 'arrived') {
+                $is_occupied = true;
+            }
+            // Departure where previous guest hasn't left yet = occupied
+            elseif ($room['is_departing'] && isset($room['prev_booking_status']) && $room['prev_booking_status'] === 'arrived') {
+                $is_occupied = true;
+            }
+            // Back-to-back: occupied if either guest is present
+            elseif ($room['booking_type'] === 'back-to-back') {
+                if ($room['booking_status'] === 'arrived' ||
+                    (isset($room['prev_booking_status']) && $room['prev_booking_status'] === 'arrived')) {
+                    $is_occupied = true;
+                }
+            }
+
+            if (!$is_occupied) {
+                $counts['unoccupied']++;
+            }
         }
 
         // Check if viewing today's date
