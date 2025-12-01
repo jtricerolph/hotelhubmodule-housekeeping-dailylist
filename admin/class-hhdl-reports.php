@@ -284,65 +284,81 @@ class HHDL_Reports {
             }
 
             if (!$hotel) {
+                error_log('HHDL Reports: Hotel not found for location_id: ' . $location_id);
                 continue;
             }
 
             // Get NewBook API instance
             $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
             if (empty($integration) || empty($integration['api_key'])) {
+                error_log('HHDL Reports: NewBook integration not configured for hotel: ' . $hotel->id);
                 continue;
             }
 
+            require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
             $api = new HHA_NewBook_API($integration['api_key'], $integration['property_id']);
 
-            // Fetch sites for room name lookup (with caching)
-            $cache_key = 'hhdl_sites_' . $location_id;
-            $sites = get_transient($cache_key);
+            // Fetch sites for room name lookup (NO caching for report accuracy)
+            $sites_response = $api->get_sites(true);
+            $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
 
-            if (false === $sites) {
-                $sites_response = $api->get_sites(true);
-                $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
-                set_transient($cache_key, $sites, 5 * MINUTE_IN_SECONDS);
-            }
+            error_log('HHDL Reports: Fetched ' . count($sites) . ' sites for location_id: ' . $location_id);
 
-            // Build room ID to name mapping
+            // Build room ID to name mapping (handle both string and int comparisons)
             foreach ($sites as $site) {
                 if (isset($site['site_id']) && isset($site['site_name'])) {
-                    $room_name_lookup[$location_id][$site['site_id']] = $site['site_name'];
+                    // Store with both string and int keys for flexibility
+                    $room_name_lookup[$location_id][(string)$site['site_id']] = $site['site_name'];
+                    $room_name_lookup[$location_id][(int)$site['site_id']] = $site['site_name'];
                 }
             }
 
-            // Fetch task types from integration settings (with caching)
-            $cache_key = 'hhdl_task_types_' . $location_id;
-            $task_types = get_transient($cache_key);
-
-            if (false === $task_types) {
-                $task_types = HHDL_Settings::get_task_types($location_id);
-                set_transient($cache_key, $task_types, 5 * MINUTE_IN_SECONDS);
+            // Fetch task types from integration settings (NO caching for report accuracy)
+            if (!class_exists('HHDL_Settings')) {
+                require_once HHDL_PLUGIN_DIR . 'includes/class-hhdl-settings.php';
             }
+            $task_types = HHDL_Settings::get_task_types($location_id);
 
-            // Build task type ID to name mapping
+            error_log('HHDL Reports: Fetched ' . count($task_types) . ' task types for location_id: ' . $location_id);
+
+            // Build task type ID to name mapping (handle both string and int comparisons)
             foreach ($task_types as $task_type) {
                 if (isset($task_type['id']) && isset($task_type['name'])) {
-                    $task_type_lookup[$location_id][$task_type['id']] = $task_type['name'];
+                    // Store with both string and int keys for flexibility
+                    $task_type_lookup[$location_id][(string)$task_type['id']] = $task_type['name'];
+                    $task_type_lookup[$location_id][(int)$task_type['id']] = $task_type['name'];
                 }
             }
         }
 
         // Enhance each record with room name and task type name
         foreach ($records as $record) {
-            // Add room name
+            // Add room name (try both string and int lookups)
             if (isset($room_name_lookup[$record->location_id][$record->room_id])) {
                 $record->room_name = $room_name_lookup[$record->location_id][$record->room_id];
+            } elseif (isset($room_name_lookup[$record->location_id][(string)$record->room_id])) {
+                $record->room_name = $room_name_lookup[$record->location_id][(string)$record->room_id];
+            } elseif (isset($room_name_lookup[$record->location_id][(int)$record->room_id])) {
+                $record->room_name = $room_name_lookup[$record->location_id][(int)$record->room_id];
             } else {
+                error_log('HHDL Reports: Room name not found for room_id: ' . $record->room_id . ' at location_id: ' . $record->location_id);
                 $record->room_name = $record->room_id; // Fallback to ID if name not found
             }
 
-            // Add task type name
-            if (isset($record->task_type_id) && isset($task_type_lookup[$record->location_id][$record->task_type_id])) {
-                $record->task_type_name = $task_type_lookup[$record->location_id][$record->task_type_id];
+            // Add task type name (try both string and int lookups)
+            if (isset($record->task_type_id) && $record->task_type_id) {
+                if (isset($task_type_lookup[$record->location_id][$record->task_type_id])) {
+                    $record->task_type_name = $task_type_lookup[$record->location_id][$record->task_type_id];
+                } elseif (isset($task_type_lookup[$record->location_id][(string)$record->task_type_id])) {
+                    $record->task_type_name = $task_type_lookup[$record->location_id][(string)$record->task_type_id];
+                } elseif (isset($task_type_lookup[$record->location_id][(int)$record->task_type_id])) {
+                    $record->task_type_name = $task_type_lookup[$record->location_id][(int)$record->task_type_id];
+                } else {
+                    error_log('HHDL Reports: Task type name not found for task_type_id: ' . $record->task_type_id . ' at location_id: ' . $record->location_id);
+                    $record->task_type_name = ''; // Empty if not found
+                }
             } else {
-                $record->task_type_name = ''; // Empty if not found
+                $record->task_type_name = ''; // Empty if task_type_id is null
             }
         }
 
