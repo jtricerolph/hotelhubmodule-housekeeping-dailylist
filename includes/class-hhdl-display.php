@@ -309,6 +309,33 @@ class HHDL_Display {
              <?php foreach ($data_attrs as $key => $value) { echo $key . '="' . esc_attr($value) . '" '; } ?>
              style="<?php echo esc_attr($inline_style); ?>">
 
+            <?php
+            // Render departure time for previous booking if still arrived and departing today
+            if (!$room['spans_previous'] &&
+                !empty($room['prev_booking_status']) &&
+                $room['prev_booking_status'] === 'arrived' &&
+                $room['is_departing'] &&
+                !empty($room['prev_booking_departure'])) {
+
+                // Extract time from booking_departure (format: "2025-11-30 11:00:00")
+                $departure_time = date('H:i', strtotime($room['prev_booking_departure']));
+
+                // Get default checkout time from hotel settings
+                $hotel = hha()->hotels->get(hha_get_current_location());
+                $default_checkout_time = isset($hotel->default_departure_time) ? $hotel->default_departure_time : '10:00';
+
+                // Check if departure is late (after default checkout time)
+                $is_late = (strtotime($room['prev_booking_departure']) > strtotime(date('Y-m-d') . ' ' . $default_checkout_time));
+                $late_class = $is_late ? 'hhdl-late-checkout' : '';
+                ?>
+                <div class="hhdl-prev-departure-time <?php echo esc_attr($late_class); ?>">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span class="hhdl-time-text"><?php echo esc_html($departure_time); ?></span>
+                </div>
+                <?php
+            }
+            ?>
+
             <?php if ($is_blocked): ?>
                 <?php $this->render_blocked_room($room, $is_viewing_today); ?>
             <?php elseif ($is_vacant): ?>
@@ -1312,6 +1339,7 @@ class HHDL_Display {
 
             // Get adjacent booking statuses and vacancy info
             $prev_booking_status = '';
+            $prev_booking_departure = '';
             $prev_is_vacant = false;
             if ($yesterday_booking && is_array($yesterday_booking)) {
                 if (isset($yesterday_booking['description'])) {
@@ -1319,6 +1347,10 @@ class HHDL_Display {
                     $prev_booking_status = 'blocked';
                 } else {
                     $prev_booking_status = $this->get_booking_status($yesterday_booking);
+                    // Extract departure time from yesterday's booking
+                    if (isset($yesterday_booking['booking_departure'])) {
+                        $prev_booking_departure = $yesterday_booking['booking_departure'];
+                    }
                 }
             } else {
                 $prev_is_vacant = true;
@@ -1348,29 +1380,30 @@ class HHDL_Display {
             );
 
             $room_cards[] = array(
-                'room_id'              => $room['room_id'],
-                'room_number'          => $room['room_number'],
-                'site_status'          => $room['site_status'],
-                'booking_status'       => $booking_status,
-                'is_arriving'          => $is_arriving,
-                'is_departing'         => $is_departing,
-                'is_stopover'          => $is_stopover,
-                'booking_type'         => $booking_type,
-                'has_twin'             => $room['has_twin'],
-                'twin_info'            => $room['twin_info'],
-                'filter_excluded'      => in_array($room['room_id'], $filter_excluded_sites),
-                'extra_bed_info'       => $room['extra_bed_info'],
-                'spans_previous'       => $spans_previous,
-                'spans_next'           => $spans_next,
-                'prev_booking_status'  => $prev_booking_status,
-                'next_booking_status'  => $next_booking_status,
-                'prev_is_vacant'       => $prev_is_vacant,
-                'next_is_vacant'       => $next_is_vacant,
-                'booking'              => $booking_data,
-                'blocking_task'        => $blocking_task,
-                'newbook_tasks'        => isset($room['newbook_tasks']) ? $room['newbook_tasks'] : array(),
-                'date'                 => $date,  // Add viewing date for task rollover detection
-                'order'                => $room['order']
+                'room_id'                 => $room['room_id'],
+                'room_number'             => $room['room_number'],
+                'site_status'             => $room['site_status'],
+                'booking_status'          => $booking_status,
+                'is_arriving'             => $is_arriving,
+                'is_departing'            => $is_departing,
+                'is_stopover'             => $is_stopover,
+                'booking_type'            => $booking_type,
+                'has_twin'                => $room['has_twin'],
+                'twin_info'               => $room['twin_info'],
+                'filter_excluded'         => in_array($room['room_id'], $filter_excluded_sites),
+                'extra_bed_info'          => $room['extra_bed_info'],
+                'spans_previous'          => $spans_previous,
+                'spans_next'              => $spans_next,
+                'prev_booking_status'     => $prev_booking_status,
+                'prev_booking_departure'  => $prev_booking_departure,
+                'next_booking_status'     => $next_booking_status,
+                'prev_is_vacant'          => $prev_is_vacant,
+                'next_is_vacant'          => $next_is_vacant,
+                'booking'                 => $booking_data,
+                'blocking_task'           => $blocking_task,
+                'newbook_tasks'           => isset($room['newbook_tasks']) ? $room['newbook_tasks'] : array(),
+                'date'                    => $date,  // Add viewing date for task rollover detection
+                'order'                   => $room['order']
             );
         }
 

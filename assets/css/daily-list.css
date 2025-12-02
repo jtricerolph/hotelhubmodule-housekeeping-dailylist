@@ -215,6 +215,47 @@
     left: -53px !important; /* Compensate for card moving right */
 }
 
+/* Previous booking departure time display - positioned in wider border */
+.hhdl-prev-departure-time {
+    position: absolute;
+    left: -47px; /* Position 6px from left edge of 45px border */
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #3b82f6; /* Blue to match arrived status */
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.hhdl-prev-departure-time .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.hhdl-prev-departure-time .hhdl-time-text {
+    font-size: 13px;
+}
+
+/* Glow effect for late checkout */
+.hhdl-prev-departure-time.hhdl-late-checkout {
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.8));
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.8));
+    }
+    50% {
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 1));
+    }
+}
+
 /* Previous night - vacant */
 .hhdl-room-card[data-previous-vacant="true"]:not([data-spans-previous="true"]):not(.hhdl-vacant)::before {
     content: '';
