@@ -383,14 +383,15 @@
             const $arrow = $header.find('.hhdl-category-arrow');
 
             // Toggle collapsed state
+            // IMPORTANT: Save preference BEFORE updating DOM, so getCollapsedCategories() reads correct state
             if ($categoryRooms.hasClass('hhdl-collapsed')) {
+                removeFromCollapsedCategories(categoryId);
                 $categoryRooms.removeClass('hhdl-collapsed');
                 $arrow.text('expand_more');
-                removeFromCollapsedCategories(categoryId);
             } else {
+                addToCollapsedCategories(categoryId);
                 $categoryRooms.addClass('hhdl-collapsed');
                 $arrow.text('chevron_right');
-                addToCollapsedCategories(categoryId);
             }
         });
     }
