@@ -1163,8 +1163,10 @@
 
             console.log('[HHDL] Room ' + booking.site_name + ': ' + oldStatus + ' → ' + newStatus);
 
-            // Detect checkout (arrived → departed)
-            if (oldStatus === 'arrived' && newStatus === 'departed') {
+            // Detect checkout (any status → departed/Departed)
+            // NewBook may return "Departed" with capital D
+            if (newStatus && newStatus.toLowerCase() === 'departed' &&
+                oldStatus && oldStatus.toLowerCase() !== 'departed') {
                 handleCheckout(roomCard, booking);
             }
 
@@ -1196,7 +1198,15 @@
         }
 
         // Show dismissable notification
-        showCheckoutNotification(booking.site_name, booking.guest_name || 'Guest');
+        // Try to get guest name from booking data
+        let guestName = 'Guest';
+        if (booking.guests && booking.guests.length > 0 && booking.guests[0].firstname) {
+            guestName = booking.guests[0].firstname;
+            if (booking.guests[0].lastname) {
+                guestName += ' ' + booking.guests[0].lastname;
+            }
+        }
+        showCheckoutNotification(booking.site_name, guestName);
     }
 
     /**
