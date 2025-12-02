@@ -342,7 +342,7 @@ class HHDL_Display {
                 $late_class = $is_late_checkout ? 'hhdl-late-checkout' : '';
                 ?>
                 <div class="hhdl-prev-departure-time <?php echo esc_attr($late_class); ?>">
-                    <span class="material-symbols-outlined">schedule</span>
+                    <span class="material-symbols-outlined">snooze</span>
                     <span class="hhdl-time-text"><?php echo esc_html($departure_time); ?></span>
                 </div>
                 <?php
