@@ -87,14 +87,17 @@ class HHDL_Display {
 
         $meta_key = 'hhdl_display_prefs_' . $location_id;
 
-        // Sanitize preferences
+        // Get existing preferences to merge with new ones
+        $existing_prefs = self::get_user_preferences($user_id, $location_id);
+
+        // Merge and sanitize preferences (preserve existing values not being updated)
         $clean_preferences = array(
             'view_mode' => isset($preferences['view_mode']) && in_array($preferences['view_mode'], array('grouped', 'flat'))
-                ? $preferences['view_mode'] : 'grouped',
+                ? $preferences['view_mode'] : $existing_prefs['view_mode'],
             'collapsed_categories' => isset($preferences['collapsed_categories']) && is_array($preferences['collapsed_categories'])
-                ? array_map('sanitize_text_field', $preferences['collapsed_categories']) : array(),
+                ? array_map('sanitize_text_field', $preferences['collapsed_categories']) : $existing_prefs['collapsed_categories'],
             'default_filter' => isset($preferences['default_filter'])
-                ? sanitize_text_field($preferences['default_filter']) : 'all',
+                ? sanitize_text_field($preferences['default_filter']) : $existing_prefs['default_filter'],
         );
 
         return update_user_meta($user_id, $meta_key, $clean_preferences);
@@ -285,10 +288,16 @@ class HHDL_Display {
             }
         }
 
+        // Check if this category is in the user's collapsed list
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $collapsed_categories = isset($user_prefs['collapsed_categories']) ? $user_prefs['collapsed_categories'] : array();
+        $is_collapsed = in_array($category['id'], $collapsed_categories);
+        $arrow_icon = $is_collapsed ? 'chevron_right' : 'expand_more';
+
         ?>
         <div class="hhdl-category-header" data-category-id="<?php echo esc_attr($category['id']); ?>">
             <div class="hhdl-category-toggle">
-                <span class="material-symbols-outlined hhdl-category-arrow">expand_more</span>
+                <span class="material-symbols-outlined hhdl-category-arrow"><?php echo esc_html($arrow_icon); ?></span>
             </div>
             <div class="hhdl-category-name">
                 <?php echo esc_html($category['name']); ?>
