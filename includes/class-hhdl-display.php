@@ -207,13 +207,13 @@ class HHDL_Display {
                     <span class="material-symbols-outlined">format_list_bulleted</span>
                     <?php _e('Flat', 'hhdl'); ?>
                 </button>
+                <button class="hhdl-view-mode-btn"
+                        id="hhdl-reset-preferences"
+                        title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    <?php _e('Reset View', 'hhdl'); ?>
+                </button>
             </div>
-            <button class="hhdl-reset-view-btn"
-                    id="hhdl-reset-preferences"
-                    title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
-                <span class="material-symbols-outlined">restart_alt</span>
-                <?php _e('Reset View', 'hhdl'); ?>
-            </button>
         </div>
         <?php
     }

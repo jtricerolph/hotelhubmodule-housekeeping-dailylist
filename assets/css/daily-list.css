@@ -1909,29 +1909,6 @@
     font-size: 18px;
 }
 
-.hhdl-reset-view-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    background: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.hhdl-reset-view-btn:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-.hhdl-reset-view-btn .material-symbols-outlined {
-    font-size: 18px;
-}
-
 /* ============================================
    Category Headers
    ============================================ */
@@ -2063,18 +2040,7 @@
 
 /* Responsive adjustments for small screens */
 @media (max-width: 768px) {
-    .hhdl-view-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-
     .hhdl-view-mode-toggle {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .hhdl-reset-view-btn {
         width: 100%;
         justify-content: center;
     }
