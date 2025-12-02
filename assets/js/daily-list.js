@@ -1180,20 +1180,30 @@
 
             console.log('[HHDL] Date relevance check - Departure relevant:', isDepartureRelevant, 'Arrival relevant:', isArrivalRelevant);
 
-            // Detect checkout - only if we're viewing the departure date
+            // Detect checkout - only if we're viewing the departure date AND this card represents a departure
             if (newStatus && newStatus.toLowerCase() === 'departed' && isDepartureRelevant) {
-                // This is a departure on the date we're viewing
-                const oldStatus = roomCard.attr('data-booking-status');
-                console.log('[HHDL] Checking checkout: Old status:', oldStatus, 'New status:', newStatus);
+                // Check if this room card is actually showing a departure (not a new arrival)
+                const isDeparting = roomCard.attr('data-is-departing') === 'true';
+                const cardBookingType = roomCard.attr('data-booking-type');
 
-                if (oldStatus && oldStatus.toLowerCase() !== 'departed') {
-                    console.log('[HHDL] Checkout detected for current viewing date: Room ' + booking.site_name);
-                    handleCheckout(roomCard, booking);
+                console.log('[HHDL] Card type check - Is departing:', isDeparting, 'Booking type:', cardBookingType);
 
-                    // Update room card booking status for this specific date
-                    roomCard.attr('data-booking-status', newStatus);
+                // Only update if this card represents a departure or depart type booking
+                if (isDeparting || cardBookingType === 'depart') {
+                    const oldStatus = roomCard.attr('data-booking-status');
+                    console.log('[HHDL] Checking checkout: Old status:', oldStatus, 'New status:', newStatus);
+
+                    if (oldStatus && oldStatus.toLowerCase() !== 'departed') {
+                        console.log('[HHDL] Checkout detected for departure card: Room ' + booking.site_name);
+                        handleCheckout(roomCard, booking);
+
+                        // Update room card booking status for this departure
+                        roomCard.attr('data-booking-status', newStatus);
+                    } else {
+                        console.log('[HHDL] Room already marked as departed, skipping');
+                    }
                 } else {
-                    console.log('[HHDL] Room already marked as departed, skipping');
+                    console.warn('[HHDL] Room card is not a departure (might be new arrival), skipping status update');
                 }
             } else if (newStatus && newStatus.toLowerCase() === 'departed' && !isDepartureRelevant) {
                 // This is a checkout but NOT for the date we're viewing - log it but don't update
