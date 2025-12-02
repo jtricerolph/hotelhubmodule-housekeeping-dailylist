@@ -1941,9 +1941,9 @@
 .hhdl-category-header::before {
     content: '';
     position: absolute;
-    left: -23px;
+    left: -15px;
     top: -2px;
-    height: 46px;
+    bottom: -2px;
     width: 15px;
     border-top: 2px solid #d1d5db;
     border-bottom: 2px solid #d1d5db;
@@ -1958,9 +1958,9 @@
 .hhdl-category-header::after {
     content: '';
     position: absolute;
-    right: -23px;
+    right: -15px;
     top: -2px;
-    height: 46px;
+    bottom: -2px;
     width: 15px;
     border-top: 2px solid #d1d5db;
     border-bottom: 2px solid #d1d5db;
@@ -2086,14 +2086,10 @@
     }
 
     .hhdl-category-header::before {
-        left: -12px;
-        width: 15px;
-        height: 42px;
+        left: -15px;
     }
 
     .hhdl-category-header::after {
-        right: -12px;
-        width: 15px;
-        height: 42px;
+        right: -15px;
     }
 }
