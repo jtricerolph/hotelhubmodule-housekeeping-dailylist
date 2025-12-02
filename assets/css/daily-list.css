@@ -19,14 +19,14 @@
     z-index: 100;
     background: #fff;
     border-bottom: 2px solid #e5e7eb;
-    padding: 12px 16px;
+    padding: 8px 16px;
     margin: 0;
 }
 
 .hhdl-header-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .hhdl-viewing-date {
@@ -39,10 +39,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
     background: #fff;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -53,7 +55,7 @@
 }
 
 .hhdl-date-picker-btn .material-symbols-outlined {
-    font-size: 24px;
+    font-size: 18px;
     color: #6b7280;
 }
 
@@ -2140,7 +2142,7 @@
     cursor: pointer;
     transition: all 0.2s;
     position: sticky;
-    top: 95px;
+    top: 40px;
     z-index: 50;
 }
 
