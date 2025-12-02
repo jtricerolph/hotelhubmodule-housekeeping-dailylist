@@ -222,6 +222,27 @@ if (!defined('ABSPATH')) {
                             </div>
                         </div>
 
+                        <!-- Notification Settings -->
+                        <div class="hhdl-settings-section">
+                            <h3><?php _e('Notification Settings', 'hhdl'); ?></h3>
+                            <div class="hhdl-settings-grid">
+                                <fieldset class="hhdl-fieldset">
+                                    <legend><?php _e('Checkout Notification', 'hhdl'); ?></legend>
+                                    <div class="hhdl-field">
+                                        <label><?php _e('Notification Display Time (seconds)', 'hhdl'); ?></label>
+                                        <input type="number"
+                                               name="locations[<?php echo $location_id; ?>][checkout_notification_timeout]"
+                                               value="<?php echo esc_attr(isset($location_settings['checkout_notification_timeout']) ? $location_settings['checkout_notification_timeout'] : 10); ?>"
+                                               min="1"
+                                               max="60"
+                                               step="1"
+                                               style="width: 80px;">
+                                        <p class="description"><?php _e('How long checkout notifications remain visible (1-60 seconds)', 'hhdl'); ?></p>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
                         <!-- Note Types & Categories Grid -->
                         <div class="hhdl-settings-section">
                             <div class="hhdl-settings-grid-2col">

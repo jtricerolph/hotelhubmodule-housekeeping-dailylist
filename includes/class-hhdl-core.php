@@ -202,11 +202,22 @@ class HHDL_Core {
             true
         );
 
+        // Get all location settings for the JavaScript
+        $all_settings = get_option(HHDL_Settings::OPTION_NAME, array());
+        $location_settings = array();
+
+        foreach ($all_settings as $location_id => $settings) {
+            $location_settings[$location_id] = array(
+                'checkout_notification_timeout' => isset($settings['checkout_notification_timeout']) ? $settings['checkout_notification_timeout'] : 10
+            );
+        }
+
         // Localize script
         wp_localize_script('hhdl-daily-list', 'hhdlAjax', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('hhdl_ajax_nonce'),
             'userId'  => get_current_user_id(),
+            'locationSettings' => $location_settings,
             'strings' => array(
                 'error'           => __('An error occurred', 'hhdl'),
                 'taskCompleted'   => __('Task completed successfully', 'hhdl'),

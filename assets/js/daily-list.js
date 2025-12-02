@@ -1244,9 +1244,15 @@
         }
 
         // Show dismissable notification
-        // Try to get guest name from booking data
+        // Check if user has permission to view guest names (based on room card)
+        const hasGuestNamePermission = roomCard.find('.hhdl-guest-name').length > 0 &&
+                                      !roomCard.find('.hhdl-guest-name').hasClass('hhdl-guest-blurred');
+
+        // Get guest name with permission check
         let guestName = 'Guest';
-        if (booking.guests && booking.guests.length > 0 && booking.guests[0].firstname) {
+        let shouldBlurName = !hasGuestNamePermission;
+
+        if (hasGuestNamePermission && booking.guests && booking.guests.length > 0 && booking.guests[0].firstname) {
             guestName = booking.guests[0].firstname;
             if (booking.guests[0].lastname) {
                 guestName += ' ' + booking.guests[0].lastname;
@@ -1254,11 +1260,11 @@
         }
 
         // Log for debugging
-        console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName);
+        console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName, 'blurred:', shouldBlurName);
 
         // Ensure notification shows with a slight delay to avoid race conditions
         setTimeout(function() {
-            showCheckoutNotification(booking.site_name, guestName);
+            showCheckoutNotification(booking.site_name, guestName, shouldBlurName);
         }, 100);
     }
 
@@ -1294,8 +1300,8 @@
     /**
      * Show dismissable checkout notification
      */
-    function showCheckoutNotification(roomNumber, guestName) {
-        console.log('[HHDL] showCheckoutNotification called - Room:', roomNumber, 'Guest:', guestName);
+    function showCheckoutNotification(roomNumber, guestName, shouldBlurName) {
+        console.log('[HHDL] showCheckoutNotification called - Room:', roomNumber, 'Guest:', guestName, 'Blurred:', shouldBlurName);
 
         // Prevent duplicate notifications
         if (checkoutNotifications[roomNumber]) {
@@ -1304,17 +1310,33 @@
         }
         checkoutNotifications[roomNumber] = true;
 
+        // Get notification timeout from location settings (default to 10 seconds)
+        let timeoutSeconds = 10;
+        if (hhdlAjax.locationSettings && hhdlAjax.locationSettings[currentLocationId]) {
+            const locationSetting = hhdlAjax.locationSettings[currentLocationId];
+            if (locationSetting.checkout_notification_timeout) {
+                timeoutSeconds = parseInt(locationSetting.checkout_notification_timeout);
+            }
+        }
+        const timeoutMs = timeoutSeconds * 1000;
+        console.log('[HHDL] Using notification timeout:', timeoutSeconds, 'seconds');
+
         const notificationId = 'checkout-notif-' + Date.now();
 
+        // Build guest name HTML with blur if needed
+        const guestNameHtml = shouldBlurName ?
+            '<span style="filter: blur(4px); user-select: none;">' + guestName + '</span>' :
+            guestName;
+
         const notification = $('<div class="hhdl-checkout-notification" id="' + notificationId + '">' +
-            '<div class="hhdl-notification-header">' +
-                '<span class="material-symbols-outlined">logout</span>' +
-                '<h3>Guest Checked Out</h3>' +
-                '<button class="hhdl-notification-close" data-id="' + notificationId + '">&times;</button>' +
+            '<div class="hhdl-notification-header" style="padding: 8px 12px !important;">' +
+                '<span class="material-symbols-outlined" style="font-size: 18px;">logout</span>' +
+                '<h3 style="margin: 0; font-size: 14px;">Guest Checked Out</h3>' +
+                '<button class="hhdl-notification-close" data-id="' + notificationId + '" style="padding: 2px 6px; font-size: 18px;">&times;</button>' +
             '</div>' +
-            '<div class="hhdl-notification-body">' +
-                '<p><strong>Room ' + roomNumber + '</strong></p>' +
-                '<p>' + guestName + ' has checked out.</p>' +
+            '<div class="hhdl-notification-body" style="padding: 10px 12px !important;">' +
+                '<p style="margin: 0 0 4px 0;"><strong>Room ' + roomNumber + '</strong></p>' +
+                '<p style="margin: 0;">' + guestNameHtml + ' has checked out.</p>' +
             '</div>' +
         '</div>');
 
@@ -1348,19 +1370,20 @@
         container.append(notification);
         console.log('[HHDL] Notification appended to container');
 
-        // Force the notification to be visible with very aggressive inline styles
+        // Force the notification to be visible with very aggressive inline styles (reduced padding)
         notification.attr('style',
             'display: block !important; ' +
             'opacity: 0 !important; ' +
             'transform: translateX(100px) !important; ' +
             'position: relative !important; ' +
-            'margin-bottom: 15px !important; ' +
+            'margin-bottom: 12px !important; ' +
             'background: white !important; ' +
             'border-left: 4px solid #8b5cf6 !important; ' +
             'box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; ' +
-            'padding: 15px !important; ' +
+            'padding: 0 !important; ' +  // No padding on container, it's on inner elements
             'border-radius: 4px !important; ' +
-            'min-width: 300px !important; ' +
+            'min-width: 280px !important; ' +
+            'max-width: 350px !important; ' +
             'pointer-events: auto !important; ' +
             'z-index: 2147483647 !important;'
         );
@@ -1373,13 +1396,14 @@
                 'opacity: 1 !important; ' +
                 'transform: translateX(0) !important; ' +
                 'position: relative !important; ' +
-                'margin-bottom: 15px !important; ' +
+                'margin-bottom: 12px !important; ' +
                 'background: white !important; ' +
                 'border-left: 4px solid #8b5cf6 !important; ' +
                 'box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; ' +
-                'padding: 15px !important; ' +
+                'padding: 0 !important; ' +  // No padding on container
                 'border-radius: 4px !important; ' +
-                'min-width: 300px !important; ' +
+                'min-width: 280px !important; ' +
+                'max-width: 350px !important; ' +
                 'pointer-events: auto !important; ' +
                 'z-index: 2147483647 !important; ' +
                 'transition: all 0.3s ease !important;'
@@ -1410,7 +1434,7 @@
             }, 300);
         });
 
-        // Auto-dismiss after 10 seconds
+        // Auto-dismiss after configured timeout
         setTimeout(function() {
             if ($('#' + notificationId).length) {
                 $('#' + notificationId).removeClass('show').css({
@@ -1422,7 +1446,7 @@
                     delete checkoutNotifications[roomNumber];
                 }, 300);
             }
-        }, 10000);
+        }, timeoutMs);
     }
 
     /**

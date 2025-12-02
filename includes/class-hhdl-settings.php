@@ -130,7 +130,9 @@ class HHDL_Settings {
                     'visible_note_types' => isset($location_data['visible_note_types']) && is_array($location_data['visible_note_types']) ? array_map('intval', $location_data['visible_note_types']) : array(),
                     // Room Category Exclusions
                     'excluded_categories' => isset($location_data['excluded_categories']) && is_array($location_data['excluded_categories']) ? array_map('sanitize_text_field', $location_data['excluded_categories']) : array(),
-                    'hide_excluded_categories' => isset($location_data['hide_excluded_categories']) ? true : false
+                    'hide_excluded_categories' => isset($location_data['hide_excluded_categories']) ? true : false,
+                    // Notification Settings
+                    'checkout_notification_timeout' => isset($location_data['checkout_notification_timeout']) ? intval($location_data['checkout_notification_timeout']) : 10
                 );
 
                 // Process tasks if provided
@@ -252,7 +254,9 @@ class HHDL_Settings {
             'visible_note_types' => array(),
             // Room Category Exclusions
             'excluded_categories' => array(),
-            'hide_excluded_categories' => false
+            'hide_excluded_categories' => false,
+            // Notification Settings
+            'checkout_notification_timeout' => 10
         );
     }
 
