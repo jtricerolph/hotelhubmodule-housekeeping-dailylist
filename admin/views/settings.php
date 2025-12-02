@@ -233,11 +233,11 @@ if (!defined('ABSPATH')) {
                                         <input type="number"
                                                name="locations[<?php echo $location_id; ?>][checkout_notification_timeout]"
                                                value="<?php echo esc_attr(isset($location_settings['checkout_notification_timeout']) ? $location_settings['checkout_notification_timeout'] : 10); ?>"
-                                               min="1"
+                                               min="0"
                                                max="60"
                                                step="1"
                                                style="width: 80px;">
-                                        <p class="description"><?php _e('How long checkout notifications remain visible (1-60 seconds)', 'hhdl'); ?></p>
+                                        <p class="description"><?php _e('How long checkout notifications remain visible (1-60 seconds, 0 = indefinite)', 'hhdl'); ?></p>
                                     </div>
                                 </fieldset>
                             </div>

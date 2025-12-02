@@ -1314,12 +1314,13 @@
         let timeoutSeconds = 10;
         if (hhdlAjax.locationSettings && hhdlAjax.locationSettings[currentLocationId]) {
             const locationSetting = hhdlAjax.locationSettings[currentLocationId];
-            if (locationSetting.checkout_notification_timeout) {
+            if (locationSetting.checkout_notification_timeout !== undefined) {
                 timeoutSeconds = parseInt(locationSetting.checkout_notification_timeout);
             }
         }
         const timeoutMs = timeoutSeconds * 1000;
-        console.log('[HHDL] Using notification timeout:', timeoutSeconds, 'seconds');
+        const isIndefinite = timeoutSeconds === 0;
+        console.log('[HHDL] Using notification timeout:', isIndefinite ? 'indefinite' : timeoutSeconds + ' seconds');
 
         const notificationId = 'checkout-notif-' + Date.now();
 
@@ -1434,19 +1435,21 @@
             }, 300);
         });
 
-        // Auto-dismiss after configured timeout
-        setTimeout(function() {
-            if ($('#' + notificationId).length) {
-                $('#' + notificationId).removeClass('show').css({
-                    'opacity': '0',
-                    'transform': 'translateX(100px)'
-                });
-                setTimeout(function() {
-                    $('#' + notificationId).remove();
-                    delete checkoutNotifications[roomNumber];
-                }, 300);
-            }
-        }, timeoutMs);
+        // Auto-dismiss after configured timeout (only if not indefinite)
+        if (!isIndefinite) {
+            setTimeout(function() {
+                if ($('#' + notificationId).length) {
+                    $('#' + notificationId).removeClass('show').css({
+                        'opacity': '0',
+                        'transform': 'translateX(100px)'
+                    });
+                    setTimeout(function() {
+                        $('#' + notificationId).remove();
+                        delete checkoutNotifications[roomNumber];
+                    }, 300);
+                }
+            }, timeoutMs);
+        }
     }
 
     /**
