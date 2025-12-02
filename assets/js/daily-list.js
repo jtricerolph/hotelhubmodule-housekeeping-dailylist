@@ -39,14 +39,19 @@
     /**
      * Initialize date picker handler and modal
      */
+    let calendarDate = new Date(); // Track current month being viewed
+    let selectedDate = null; // Track selected date
+
     function initDatePicker() {
+        // Initialize selected date from current date
+        const initialDate = $('#hhdl-date-picker').val();
+        selectedDate = initialDate ? new Date(initialDate + 'T00:00:00') : new Date();
+        calendarDate = new Date(selectedDate);
+
         // Open date picker modal
         $('#hhdl-open-date-picker').on('click', function() {
+            renderCalendar();
             $('#hhdl-date-modal').addClass('hhdl-modal-open');
-            // Focus the date input
-            setTimeout(() => {
-                $('#hhdl-date-picker').focus();
-            }, 100);
         });
 
         // Close date picker modal
@@ -68,10 +73,30 @@
             }
         });
 
-        // Handle date change
-        $('#hhdl-date-picker').on('change', function() {
-            currentDate = $(this).val();
-            updateDateDisplay(currentDate);
+        // Previous month navigation
+        $('#hhdl-prev-month').on('click', function() {
+            calendarDate.setMonth(calendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        // Next month navigation
+        $('#hhdl-next-month').on('click', function() {
+            calendarDate.setMonth(calendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Handle date selection from calendar
+        $(document).on('click', '.hhdl-calendar-day:not(.hhdl-calendar-day-other)', function() {
+            const day = parseInt($(this).data('day'));
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+
+            selectedDate = new Date(year, month, day);
+            const dateString = formatDateForInput(selectedDate);
+
+            $('#hhdl-date-picker').val(dateString);
+            currentDate = dateString;
+            updateDateDisplay(dateString);
 
             // Reset filter to 'all' when date changes
             $('.hhdl-filter-btn').removeClass('active');
@@ -82,6 +107,73 @@
             // Close modal after selection
             $('#hhdl-date-modal').removeClass('hhdl-modal-open');
         });
+    }
+
+    /**
+     * Render calendar for current month
+     */
+    function renderCalendar() {
+        const year = calendarDate.getFullYear();
+        const month = calendarDate.getMonth();
+
+        // Update title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        $('#hhdl-calendar-title').text(`${monthNames[month]} ${year}`);
+
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        // Get today's date for highlighting
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+        const todayDate = today.getDate();
+
+        // Get selected date for highlighting
+        const isSelectedMonth = selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month;
+        const selectedDay = selectedDate ? selectedDate.getDate() : null;
+
+        // Build calendar grid
+        let html = '';
+
+        // Previous month days (greyed out)
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            html += `<div class="hhdl-calendar-day hhdl-calendar-day-other">${day}</div>`;
+        }
+
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            let classes = 'hhdl-calendar-day';
+            if (isCurrentMonth && day === todayDate) {
+                classes += ' hhdl-calendar-day-today';
+            }
+            if (isSelectedMonth && day === selectedDay) {
+                classes += ' hhdl-calendar-day-selected';
+            }
+            html += `<div class="${classes}" data-day="${day}">${day}</div>`;
+        }
+
+        // Next month days (greyed out)
+        const totalCells = firstDay + daysInMonth;
+        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let day = 1; day <= remainingCells; day++) {
+            html += `<div class="hhdl-calendar-day hhdl-calendar-day-other">${day}</div>`;
+        }
+
+        $('#hhdl-calendar-days').html(html);
+    }
+
+    /**
+     * Format date for input (YYYY-MM-DD)
+     */
+    function formatDateForInput(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     /**

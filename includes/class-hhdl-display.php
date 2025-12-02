@@ -193,17 +193,33 @@ class HHDL_Display {
         <div class="hhdl-date-modal" id="hhdl-date-modal">
             <div class="hhdl-date-modal-content">
                 <div class="hhdl-date-modal-header">
-                    <h3><?php _e('Select Date', 'hhdl'); ?></h3>
+                    <button class="hhdl-calendar-nav" id="hhdl-prev-month">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <h3 id="hhdl-calendar-title"><?php echo date('F Y', strtotime($selected_date)); ?></h3>
+                    <button class="hhdl-calendar-nav" id="hhdl-next-month">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
                     <button class="hhdl-date-modal-close" id="hhdl-close-date-modal">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
                 <div class="hhdl-date-modal-body">
-                    <input type="date"
-                           id="hhdl-date-picker"
-                           class="hhdl-date-input"
-                           value="<?php echo esc_attr($selected_date); ?>">
+                    <div class="hhdl-calendar-weekdays">
+                        <div class="hhdl-calendar-weekday">Sun</div>
+                        <div class="hhdl-calendar-weekday">Mon</div>
+                        <div class="hhdl-calendar-weekday">Tue</div>
+                        <div class="hhdl-calendar-weekday">Wed</div>
+                        <div class="hhdl-calendar-weekday">Thu</div>
+                        <div class="hhdl-calendar-weekday">Fri</div>
+                        <div class="hhdl-calendar-weekday">Sat</div>
+                    </div>
+                    <div class="hhdl-calendar-days" id="hhdl-calendar-days">
+                        <!-- Days will be populated by JavaScript -->
+                    </div>
                 </div>
+                <!-- Hidden input to store selected date -->
+                <input type="hidden" id="hhdl-date-picker" value="<?php echo esc_attr($selected_date); ?>">
             </div>
         </div>
         <?php

@@ -101,13 +101,37 @@
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid #e5e7eb;
+    gap: 12px;
 }
 
 .hhdl-date-modal-header h3 {
+    flex: 1;
+    text-align: center;
     margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: #1f2937;
+}
+
+.hhdl-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-calendar-nav:hover {
+    background: #f3f4f6;
+}
+
+.hhdl-calendar-nav .material-symbols-outlined {
+    font-size: 24px;
+    color: #6b7280;
 }
 
 .hhdl-date-modal-close {
@@ -132,21 +156,77 @@
 }
 
 .hhdl-date-modal-body {
-    padding: 24px 20px;
+    padding: 20px;
 }
 
-.hhdl-date-modal-body .hhdl-date-input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #d1d5db;
+/* Calendar Grid */
+.hhdl-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.hhdl-calendar-weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    padding: 8px 4px;
+}
+
+.hhdl-calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.hhdl-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
     border-radius: 6px;
-    font-size: 16px;
     cursor: pointer;
+    transition: all 0.2s;
+    color: #1f2937;
+    background: #fff;
 }
 
-.hhdl-date-modal-body .hhdl-date-input:focus {
-    outline: none;
-    border-color: #10b981;
+.hhdl-calendar-day:hover {
+    background: #f3f4f6;
+}
+
+.hhdl-calendar-day-other {
+    color: #d1d5db;
+    cursor: default;
+}
+
+.hhdl-calendar-day-other:hover {
+    background: #fff;
+}
+
+.hhdl-calendar-day-today {
+    background: #dbeafe;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+.hhdl-calendar-day-today:hover {
+    background: #bfdbfe;
+}
+
+.hhdl-calendar-day-selected {
+    background: #10b981;
+    color: #fff;
+    font-weight: 600;
+}
+
+.hhdl-calendar-day-selected:hover {
+    background: #059669;
 }
 
 /* Filters */
