@@ -1250,20 +1250,21 @@ class HHDL_Ajax {
             <?php endif; ?>
         </section>
 
-        <!-- Placeholder Sections -->
-        <section class="hhdl-placeholder">
-            <div class="hhdl-section-header">
-                <h3><?php _e('Recurring Tasks', 'hhdl'); ?></h3>
-            </div>
-            <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
-        </section>
-
-        <section class="hhdl-placeholder">
-            <div class="hhdl-section-header">
-                <h3><?php _e('Spoilt Linen Tracking', 'hhdl'); ?></h3>
-            </div>
-            <p class="hhdl-placeholder-text"><?php _e('Future module integration', 'hhdl'); ?></p>
-        </section>
+        <!-- Module Integration Hooks -->
+        <?php
+        /**
+         * Action hook for modules to add sections to the room modal
+         *
+         * @param int    $location_id Hotel Hub location ID
+         * @param string $room_id     Room/site identifier
+         * @param string $date        Date in Y-m-d format
+         * @param array  $room_details Full room details array
+         * @param array  $booking_data Booking data from NewBook API
+         *
+         * @since 1.0.0
+         */
+        do_action('hhdl_modal_sections', $location_id, $room_details['room_id'], $date, $room_details, $booking_data);
+        ?>
         <?php
     }
 
