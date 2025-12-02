@@ -1940,6 +1940,11 @@
     border-color: #9ca3af;
 }
 
+/* First category header has reduced top margin */
+.hhdl-category-header:first-of-type {
+    margin-top: 4px;
+}
+
 /* Edge blocks for category headers - extend borders to page edges */
 .hhdl-category-header::before {
     content: '';
