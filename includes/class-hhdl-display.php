@@ -646,12 +646,15 @@ class HHDL_Display {
              style="<?php echo esc_attr($inline_style); ?>">
 
             <?php
-            // Render departure time for previous booking if still arrived and departing today
+            // Render departure time for previous booking
+            // - For today: show for all departing rooms still arrived
+            // - For future dates: only show for late checkouts
             if (!$room['spans_previous'] &&
                 !empty($room['prev_booking_status']) &&
                 $room['prev_booking_status'] === 'arrived' &&
                 $room['is_departing'] &&
-                !empty($room['prev_booking_departure'])) {
+                !empty($room['prev_booking_departure']) &&
+                $show_wider_border) {
 
                 // Extract time from booking_departure (format: "2025-11-30 11:00:00")
                 $departure_time = date('H:i', strtotime($room['prev_booking_departure']));
