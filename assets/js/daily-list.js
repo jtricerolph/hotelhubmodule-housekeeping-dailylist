@@ -1186,8 +1186,9 @@
     function handleCheckout(roomCard, booking) {
         console.log('[HHDL] Checkout detected: Room ' + booking.site_name);
 
-        // Remove wider border
+        // Update CSS data attributes for styling
         roomCard.attr('data-show-wider-border', 'false');
+        roomCard.attr('data-previous-status', 'departed');
 
         // Update booking status badge
         const statusBadge = roomCard.find('.hhdl-booking-status-badge');
@@ -1206,6 +1207,9 @@
                 guestName += ' ' + booking.guests[0].lastname;
             }
         }
+
+        // Log for debugging
+        console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName);
         showCheckoutNotification(booking.site_name, guestName);
     }
 
@@ -1242,6 +1246,8 @@
      * Show dismissable checkout notification
      */
     function showCheckoutNotification(roomNumber, guestName) {
+        console.log('[HHDL] showCheckoutNotification called - Room:', roomNumber, 'Guest:', guestName);
+
         // Prevent duplicate notifications
         if (checkoutNotifications[roomNumber]) {
             console.log('[HHDL] Notification already shown for ' + roomNumber);
@@ -1265,14 +1271,17 @@
 
         // Create container if needed
         if (!$('.hhdl-notification-container').length) {
+            console.log('[HHDL] Creating notification container');
             $('body').append('<div class="hhdl-notification-container"></div>');
         }
 
         $('.hhdl-notification-container').append(notification);
+        console.log('[HHDL] Notification appended to container');
 
         // Animate in
         setTimeout(function() {
             notification.addClass('show');
+            console.log('[HHDL] Notification show class added');
         }, 10);
 
         // Close button handler
