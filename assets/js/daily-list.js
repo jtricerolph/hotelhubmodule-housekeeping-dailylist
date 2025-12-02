@@ -1308,63 +1308,87 @@
             '</div>' +
         '</div>');
 
-        // Create container if needed - append to Hotel Hub app container for proper z-index
+        // Create container if needed - use more aggressive styling to ensure visibility
         let container = $('.hhdl-notification-container');
         if (!container.length) {
             console.log('[HHDL] Creating notification container');
-            // Try to append to HHA main container first, fallback to body
-            const hhaContainer = $('#hha-main-content, .hha-app-container, .hha-content').first();
-            if (hhaContainer.length) {
-                console.log('[HHDL] Appending to HHA container');
-                hhaContainer.append('<div class="hhdl-notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 99999; max-width: 380px;"></div>');
-            } else {
-                console.log('[HHDL] Appending to body');
-                $('body').append('<div class="hhdl-notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 99999; max-width: 380px;"></div>');
-            }
+            // Create container with inline styles that force visibility
+            const containerHtml = '<div class="hhdl-notification-container" style="' +
+                'position: fixed !important; ' +
+                'top: 80px !important; ' +
+                'right: 20px !important; ' +
+                'z-index: 2147483647 !important; ' + // Maximum z-index value
+                'max-width: 380px !important; ' +
+                'display: block !important; ' +
+                'visibility: visible !important; ' +
+                'pointer-events: none !important;' +
+                '"></div>';
+
+            // Always append to body for maximum visibility
+            $('body').append(containerHtml);
             container = $('.hhdl-notification-container');
+
+            // Double-check it was created
+            if (!container.length) {
+                console.error('[HHDL] Failed to create notification container!');
+                return;
+            }
         }
 
         container.append(notification);
         console.log('[HHDL] Notification appended to container');
 
-        // Force the notification to be visible with inline styles
-        notification.css({
-            'display': 'block',
-            'opacity': '0',
-            'transform': 'translateX(100px)',
-            'position': 'relative',
-            'margin-bottom': '15px'
-        });
+        // Force the notification to be visible with very aggressive inline styles
+        notification.attr('style',
+            'display: block !important; ' +
+            'opacity: 0 !important; ' +
+            'transform: translateX(100px) !important; ' +
+            'position: relative !important; ' +
+            'margin-bottom: 15px !important; ' +
+            'background: white !important; ' +
+            'border-left: 4px solid #8b5cf6 !important; ' +
+            'box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; ' +
+            'padding: 15px !important; ' +
+            'border-radius: 4px !important; ' +
+            'min-width: 300px !important; ' +
+            'pointer-events: auto !important; ' +
+            'z-index: 2147483647 !important;'
+        );
 
         // Animate in with a slightly longer delay to ensure DOM is ready
         setTimeout(function() {
-            notification.addClass('show').css({
-                'opacity': '1',
-                'transform': 'translateX(0)',
-                'transition': 'all 0.3s ease'
-            });
-            console.log('[HHDL] Notification show class added and styles applied');
-            console.log('[HHDL] Container visible:', container.is(':visible'), 'Position:', container.css('position'), 'Z-index:', container.css('z-index'));
+            // Use setAttribute to override all styles including !important
+            notification.attr('style',
+                'display: block !important; ' +
+                'opacity: 1 !important; ' +
+                'transform: translateX(0) !important; ' +
+                'position: relative !important; ' +
+                'margin-bottom: 15px !important; ' +
+                'background: white !important; ' +
+                'border-left: 4px solid #8b5cf6 !important; ' +
+                'box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; ' +
+                'padding: 15px !important; ' +
+                'border-radius: 4px !important; ' +
+                'min-width: 300px !important; ' +
+                'pointer-events: auto !important; ' +
+                'z-index: 2147483647 !important; ' +
+                'transition: all 0.3s ease !important;'
+            );
 
-            // Double-check visibility and force display if needed
-            if (!notification.is(':visible')) {
-                console.warn('[HHDL] Notification not visible! Forcing display...');
-                notification.show();
-                container.show();
-                // Force notification to be on top
-                notification.css({
-                    'position': 'relative',
-                    'z-index': '99999',
-                    'display': 'block !important',
-                    'visibility': 'visible !important',
-                    'opacity': '1 !important'
-                });
-            }
+            console.log('[HHDL] Notification show styles applied');
+            console.log('[HHDL] Container visible:', container.is(':visible'), 'Position:', container.css('position'), 'Z-index:', container.css('z-index'));
+            console.log('[HHDL] Notification visible:', notification.is(':visible'), 'Display:', notification.css('display'));
 
             // Log element positions for debugging
             const offset = notification.offset();
+            const containerOffset = container.offset();
             console.log('[HHDL] Notification position - Top:', offset ? offset.top : 'N/A', 'Left:', offset ? offset.left : 'N/A');
-        }, 100);
+            console.log('[HHDL] Container position - Top:', containerOffset ? containerOffset.top : 'N/A', 'Left:', containerOffset ? containerOffset.left : 'N/A');
+
+            // Check parent visibility
+            const parent = notification.parent();
+            console.log('[HHDL] Parent element:', parent[0], 'Parent visible:', parent.is(':visible'));
+        }, 150);
 
         // Close button handler
         notification.find('.hhdl-notification-close').on('click', function() {
