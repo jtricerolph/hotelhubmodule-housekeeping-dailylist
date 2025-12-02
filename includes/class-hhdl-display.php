@@ -217,6 +217,11 @@ class HHDL_Display {
                     <div class="hhdl-calendar-days" id="hhdl-calendar-days">
                         <!-- Days will be populated by JavaScript -->
                     </div>
+                    <div class="hhdl-calendar-footer">
+                        <button class="hhdl-calendar-today-btn" id="hhdl-calendar-today">
+                            <?php _e('Today', 'hhdl'); ?>
+                        </button>
+                    </div>
                 </div>
                 <!-- Hidden input to store selected date -->
                 <input type="hidden" id="hhdl-date-picker" value="<?php echo esc_attr($selected_date); ?>">
@@ -325,7 +330,7 @@ class HHDL_Display {
     /**
      * Render category header with task counts
      */
-    private function render_category_header($category, $room_cards, $location_id) {
+    private function render_category_header($category, $room_cards, $location_id, $is_viewing_today = true) {
         // Calculate task counts for this category
         $newbook_tasks = 0;
         $recurring_tasks_incomplete = 0;
@@ -373,14 +378,17 @@ class HHDL_Display {
                     rooms
                 </span>
 
-                <!-- NewBook Tasks Badge -->
+                <!-- NewBook Tasks Badge (greyed out for future dates) -->
+                <?php
+                $newbook_badge_class = $is_viewing_today ? '' : ' hhdl-task-future';
+                ?>
                 <?php if ($newbook_tasks > 0): ?>
-                    <span class="hhdl-task-badge hhdl-task-outstanding" title="<?php echo esc_attr($newbook_tasks . ' NewBook tasks outstanding'); ?>">
+                    <span class="hhdl-task-badge hhdl-task-outstanding<?php echo $newbook_badge_class; ?>" title="<?php echo esc_attr($newbook_tasks . ' NewBook tasks outstanding'); ?>">
                         <span class="material-symbols-outlined">assignment_late</span>
                         <span class="hhdl-task-count"><?php echo $newbook_tasks; ?></span>
                     </span>
                 <?php else: ?>
-                    <span class="hhdl-task-badge hhdl-task-complete" title="<?php esc_attr_e('No NewBook tasks outstanding', 'hhdl'); ?>">
+                    <span class="hhdl-task-badge hhdl-task-complete<?php echo $newbook_badge_class; ?>" title="<?php esc_attr_e('No NewBook tasks outstanding', 'hhdl'); ?>">
                         <span class="material-symbols-outlined">assignment_turned_in</span>
                     </span>
                 <?php endif; ?>
@@ -548,7 +556,7 @@ class HHDL_Display {
                 error_log('[HHDL DEBUG] Rendering category ID: ' . $category_id . ' (type: ' . gettype($category_id) . '), strval: ' . strval($category_id) . ', is_collapsed: ' . ($is_collapsed ? 'YES' : 'NO'));
 
                 // Render category header
-                $this->render_category_header($category_info, $rooms_by_category[$category_id], $location_id);
+                $this->render_category_header($category_info, $rooms_by_category[$category_id], $location_id, $is_viewing_today);
 
                 // Render category container
                 echo '<div class="hhdl-category-rooms' . ($is_collapsed ? ' hhdl-collapsed' : '') . '" data-category-id="' . esc_attr($category_id) . '">';

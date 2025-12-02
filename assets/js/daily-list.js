@@ -107,6 +107,27 @@
             // Close modal after selection
             $('#hhdl-date-modal').removeClass('hhdl-modal-open');
         });
+
+        // Handle "Today" button
+        $('#hhdl-calendar-today').on('click', function() {
+            const today = new Date();
+            selectedDate = today;
+            calendarDate = new Date(today);
+
+            const dateString = formatDateForInput(today);
+            $('#hhdl-date-picker').val(dateString);
+            currentDate = dateString;
+            updateDateDisplay(dateString);
+
+            // Reset filter to 'all' when date changes
+            $('.hhdl-filter-btn').removeClass('active');
+            $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
+
+            loadRoomList(currentDate);
+
+            // Close modal after selection
+            $('#hhdl-date-modal').removeClass('hhdl-modal-open');
+        });
     }
 
     /**

@@ -229,6 +229,31 @@
     background: #059669;
 }
 
+.hhdl-calendar-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+}
+
+.hhdl-calendar-today-btn {
+    padding: 8px 24px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-calendar-today-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
 /* Filters */
 .hhdl-filters {
     display: flex;
@@ -2248,6 +2273,17 @@
     font-weight: 700;
     min-width: 18px;
     text-align: center;
+}
+
+/* Future tasks (greyed out) */
+.hhdl-task-badge.hhdl-task-future {
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-color: #d1d5db;
+}
+
+.hhdl-task-badge.hhdl-task-future .material-symbols-outlined {
+    color: #9ca3af;
 }
 
 /* ============================================
