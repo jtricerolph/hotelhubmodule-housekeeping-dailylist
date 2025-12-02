@@ -1190,17 +1190,17 @@
 
                 // Only update if this card represents a departure or depart type booking
                 if (isDeparting || cardBookingType === 'depart') {
-                    const oldStatus = roomCard.attr('data-booking-status');
-                    console.log('[HHDL] Checking checkout: Old status:', oldStatus, 'New status:', newStatus);
+                    const previousStatus = roomCard.attr('data-previous-status');
+                    console.log('[HHDL] Checking checkout: Previous status:', previousStatus, 'New status:', newStatus);
 
-                    if (oldStatus && oldStatus.toLowerCase() !== 'departed') {
+                    if (previousStatus && previousStatus.toLowerCase() !== 'departed') {
                         console.log('[HHDL] Checkout detected for departure card: Room ' + booking.site_name);
                         handleCheckout(roomCard, booking);
 
-                        // Update room card booking status for this departure
-                        roomCard.attr('data-booking-status', newStatus);
+                        // DO NOT update data-booking-status - that's for today's booking
+                        // Only data-previous-status was updated in handleCheckout
                     } else {
-                        console.log('[HHDL] Room already marked as departed, skipping');
+                        console.log('[HHDL] Previous guest already marked as departed, skipping');
                     }
                 } else {
                     console.warn('[HHDL] Room card is not a departure (might be new arrival), skipping status update');
