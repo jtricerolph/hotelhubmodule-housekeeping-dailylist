@@ -1647,17 +1647,4 @@ class HHDL_Ajax {
             wp_send_json_error(array('message' => __('Failed to reset preferences', 'hhdl')));
         }
     }
-
-    /**
-     * Check if user can access module
-     */
-    private function user_can_access() {
-        // Check using WFA permissions if available
-        if (function_exists('wfa_current_user_can')) {
-            return wfa_current_user_can('hhdl_access_module');
-        }
-
-        // Fall back to checking if user is logged in
-        return is_user_logged_in();
-    }
 }
