@@ -205,12 +205,12 @@
     border-color: #3b82f6;
 }
 
-/* Wider left border ONLY for late checkouts (after default departure time) */
-.hhdl-room-card[data-late-checkout="true"]:not([data-spans-previous="true"]) {
+/* Wider left border - for today: all departing rooms still arrived, for future: only late checkouts */
+.hhdl-room-card[data-show-wider-border="true"]:not([data-spans-previous="true"]) {
     margin-left: 53px !important; /* 23px base + 30px extra for wider border */
 }
 
-.hhdl-room-card[data-late-checkout="true"]:not([data-spans-previous="true"])::before {
+.hhdl-room-card[data-show-wider-border="true"]:not([data-spans-previous="true"])::before {
     width: 45px !important;
     left: -53px !important; /* Compensate for card moving right */
 }
@@ -237,12 +237,12 @@
     transition: all 0.2s;
 }
 
-/* Position in wider border for late checkouts, normal position for on-time */
-.hhdl-room-card[data-late-checkout="true"] .hhdl-prev-departure-time {
+/* Position departure time based on whether wider border is showing */
+.hhdl-room-card[data-show-wider-border="true"] .hhdl-prev-departure-time {
     left: -53px; /* Further out in the wider border area */
 }
 
-.hhdl-room-card[data-late-checkout="false"] .hhdl-prev-departure-time {
+.hhdl-room-card[data-show-wider-border="false"] .hhdl-prev-departure-time {
     left: -17px; /* 6px inside 15px normal border */
 }
 

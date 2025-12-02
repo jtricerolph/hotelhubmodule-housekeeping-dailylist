@@ -247,8 +247,10 @@ class HHDL_Display {
         // Check if early arrival
         $is_early_arrival = !empty($room['booking']) && isset($room['booking']['is_early_arrival']) && $room['booking']['is_early_arrival'];
 
-        // Check if previous booking has late checkout
+        // Check if previous booking has late checkout (for glow effect)
         $is_late_checkout = false;
+        $show_wider_border = false;
+
         if (!$room['spans_previous'] &&
             !empty($room['prev_booking_status']) &&
             $room['prev_booking_status'] === 'arrived' &&
@@ -259,11 +261,20 @@ class HHDL_Display {
             $hotel = hha()->hotels->get(hha_get_current_location());
             $default_checkout_time = isset($hotel->default_departure_time) ? $hotel->default_departure_time : '10:00';
 
-            // Compare against departure date
+            // Compare against departure date to determine late checkout
             $departure_date = date('Y-m-d', strtotime($room['prev_booking_departure']));
             $default_checkout_timestamp = strtotime($departure_date . ' ' . $default_checkout_time);
             $actual_departure_timestamp = strtotime($room['prev_booking_departure']);
             $is_late_checkout = ($actual_departure_timestamp > $default_checkout_timestamp);
+
+            // Determine if wider border should be shown
+            if ($is_viewing_today) {
+                // For today: show wider border for all rooms still arrived and departing
+                $show_wider_border = true;
+            } else {
+                // For future dates: only show wider border for late checkouts
+                $show_wider_border = $is_late_checkout;
+            }
         }
 
         // Data attributes for filtering
@@ -280,6 +291,7 @@ class HHDL_Display {
             'data-spans-next'      => $room['spans_next'] ? 'true' : 'false',
             'data-early-arrival'   => $is_early_arrival ? 'true' : 'false',
             'data-late-checkout'   => $is_late_checkout ? 'true' : 'false',
+            'data-show-wider-border' => $show_wider_border ? 'true' : 'false',
             'data-filter-excluded' => (isset($room['filter_excluded']) && $room['filter_excluded']) ? 'true' : 'false'
         );
 
