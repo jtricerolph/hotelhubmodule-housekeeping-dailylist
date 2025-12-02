@@ -1161,7 +1161,7 @@
 
             console.log('[HHDL] Booking dates - Arrival:', bookingArrival, 'Departure:', bookingDeparture, 'Viewing:', currentDate);
 
-            // Find the room card
+            // Find the room card - also check if it's the right booking for this date
             const roomCard = $('.hhdl-room-card[data-room-id="' + booking.site_id + '"]');
 
             if (!roomCard.length) {
@@ -1169,22 +1169,36 @@
                 return;
             }
 
+            // Only update if this is a departure on the date we're viewing OR
+            // if it's a room status update (Clean/Dirty) which is always relevant
+            // This prevents updating yesterday's cards with today's booking changes
+
             // For departure updates, check if we're viewing the departure date
             const newStatus = booking.booking_status;
             const isDepartureRelevant = bookingDeparture === currentDate;
+            const isArrivalRelevant = bookingArrival === currentDate;
+
+            console.log('[HHDL] Date relevance check - Departure relevant:', isDepartureRelevant, 'Arrival relevant:', isArrivalRelevant);
 
             // Detect checkout - only if we're viewing the departure date
             if (newStatus && newStatus.toLowerCase() === 'departed' && isDepartureRelevant) {
                 // This is a departure on the date we're viewing
                 const oldStatus = roomCard.attr('data-booking-status');
+                console.log('[HHDL] Checking checkout: Old status:', oldStatus, 'New status:', newStatus);
 
                 if (oldStatus && oldStatus.toLowerCase() !== 'departed') {
                     console.log('[HHDL] Checkout detected for current viewing date: Room ' + booking.site_name);
                     handleCheckout(roomCard, booking);
 
-                    // Update room card booking status for this date
+                    // Update room card booking status for this specific date
                     roomCard.attr('data-booking-status', newStatus);
+                } else {
+                    console.log('[HHDL] Room already marked as departed, skipping');
                 }
+            } else if (newStatus && newStatus.toLowerCase() === 'departed' && !isDepartureRelevant) {
+                // This is a checkout but NOT for the date we're viewing - log it but don't update
+                console.warn('[HHDL] Checkout detected but NOT for current viewing date - Room:', booking.site_name,
+                           'Departure date:', bookingDeparture, 'Viewing date:', currentDate, '- SKIPPING UPDATE');
             }
 
             // Update room status (Clean/Dirty/Inspected) if provided - always relevant
@@ -1294,35 +1308,68 @@
             '</div>' +
         '</div>');
 
-        // Create container if needed
-        if (!$('.hhdl-notification-container').length) {
+        // Create container if needed - append to Hotel Hub app container for proper z-index
+        let container = $('.hhdl-notification-container');
+        if (!container.length) {
             console.log('[HHDL] Creating notification container');
-            $('body').append('<div class="hhdl-notification-container"></div>');
+            // Try to append to HHA main container first, fallback to body
+            const hhaContainer = $('#hha-main-content, .hha-app-container, .hha-content').first();
+            if (hhaContainer.length) {
+                console.log('[HHDL] Appending to HHA container');
+                hhaContainer.append('<div class="hhdl-notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 99999; max-width: 380px;"></div>');
+            } else {
+                console.log('[HHDL] Appending to body');
+                $('body').append('<div class="hhdl-notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 99999; max-width: 380px;"></div>');
+            }
+            container = $('.hhdl-notification-container');
         }
 
-        $('.hhdl-notification-container').append(notification);
+        container.append(notification);
         console.log('[HHDL] Notification appended to container');
 
-        // Force the notification to be visible with inline styles as backup
+        // Force the notification to be visible with inline styles
         notification.css({
             'display': 'block',
             'opacity': '0',
-            'transform': 'translateX(100px)'
+            'transform': 'translateX(100px)',
+            'position': 'relative',
+            'margin-bottom': '15px'
         });
 
         // Animate in with a slightly longer delay to ensure DOM is ready
         setTimeout(function() {
             notification.addClass('show').css({
                 'opacity': '1',
-                'transform': 'translateX(0)'
+                'transform': 'translateX(0)',
+                'transition': 'all 0.3s ease'
             });
             console.log('[HHDL] Notification show class added and styles applied');
-        }, 50);
+            console.log('[HHDL] Container visible:', container.is(':visible'), 'Position:', container.css('position'), 'Z-index:', container.css('z-index'));
+
+            // Double-check visibility and force display if needed
+            if (!notification.is(':visible')) {
+                console.warn('[HHDL] Notification not visible! Forcing display...');
+                notification.show();
+                container.show();
+                // Force notification to be on top
+                notification.css({
+                    'position': 'relative',
+                    'z-index': '99999',
+                    'display': 'block !important',
+                    'visibility': 'visible !important',
+                    'opacity': '1 !important'
+                });
+            }
+
+            // Log element positions for debugging
+            const offset = notification.offset();
+            console.log('[HHDL] Notification position - Top:', offset ? offset.top : 'N/A', 'Left:', offset ? offset.left : 'N/A');
+        }, 100);
 
         // Close button handler
         notification.find('.hhdl-notification-close').on('click', function() {
             const id = $(this).data('id');
-            $('#' + id).removeClass('show');
+            $('#' + id).removeClass('show').css('opacity', '0');
             setTimeout(function() {
                 $('#' + id).remove();
                 delete checkoutNotifications[roomNumber];
