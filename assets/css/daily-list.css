@@ -2270,9 +2270,11 @@
 }
 
 .hhdl-task-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 700;
     min-width: 18px;
-    text-align: center;
 }
 
 /* Future tasks (greyed out) */
