@@ -32,6 +32,7 @@
 .hhdl-header-info {
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 .hhdl-viewing-date {
