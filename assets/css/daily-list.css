@@ -2008,29 +2008,33 @@
 }
 
 .hhdl-task-badge .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 18px;
 }
 
-.hhdl-newbook-tasks {
-    background: #dbeafe;
-    color: #1e40af;
+/* Outstanding tasks - Red */
+.hhdl-task-badge.hhdl-task-outstanding {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
-.hhdl-newbook-tasks .material-symbols-outlined {
-    color: #2563eb;
+.hhdl-task-badge.hhdl-task-outstanding .material-symbols-outlined {
+    color: #dc2626;
 }
 
-.hhdl-recurring-tasks {
-    background: #fce7f3;
-    color: #a21caf;
+/* Complete tasks - Green */
+.hhdl-task-badge.hhdl-task-complete {
+    background: #d1fae5;
+    color: #065f46;
 }
 
-.hhdl-recurring-tasks .material-symbols-outlined {
-    color: #c026d3;
+.hhdl-task-badge.hhdl-task-complete .material-symbols-outlined {
+    color: #10b981;
 }
 
 .hhdl-task-count {
     font-weight: 700;
+    min-width: 18px;
+    text-align: center;
 }
 
 /* ============================================

@@ -301,18 +301,23 @@ class HHDL_Display {
                     <?php endif; ?>
                     rooms
                 </span>
+
+                <!-- NewBook Tasks Badge -->
                 <?php if ($newbook_tasks > 0): ?>
-                    <span class="hhdl-task-badge hhdl-newbook-tasks" title="NewBook Tasks">
-                        <span class="material-symbols-outlined">task_alt</span>
+                    <span class="hhdl-task-badge hhdl-task-outstanding" title="<?php echo esc_attr($newbook_tasks . ' NewBook tasks outstanding'); ?>">
+                        <span class="material-symbols-outlined">assignment_late</span>
                         <span class="hhdl-task-count"><?php echo $newbook_tasks; ?></span>
                     </span>
-                <?php endif; ?>
-                <?php if ($recurring_tasks_incomplete > 0): ?>
-                    <span class="hhdl-task-badge hhdl-recurring-tasks" title="Recurring Tasks">
-                        <span class="material-symbols-outlined">repeat</span>
-                        <span class="hhdl-task-count"><?php echo $recurring_tasks_incomplete; ?></span>
+                <?php else: ?>
+                    <span class="hhdl-task-badge hhdl-task-complete" title="<?php esc_attr_e('No NewBook tasks outstanding', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">assignment_turned_in</span>
                     </span>
                 <?php endif; ?>
+
+                <!-- Recurring Tasks Badge - Always show as complete for now -->
+                <span class="hhdl-task-badge hhdl-task-complete" title="<?php esc_attr_e('Recurring tasks complete', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">checklist_rtl</span>
+                </span>
             </div>
         </div>
         <?php
