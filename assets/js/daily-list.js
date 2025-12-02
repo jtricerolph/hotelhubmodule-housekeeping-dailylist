@@ -430,12 +430,18 @@
     function addToCollapsedCategories(categoryId) {
         // Ensure category ID is a string
         categoryId = String(categoryId);
+        console.log('[HHDL DEBUG] addToCollapsedCategories called with:', categoryId, typeof categoryId);
 
         // Get current collapsed categories
         let collapsed = getCollapsedCategories();
+        console.log('[HHDL DEBUG] Current collapsed categories from DOM:', collapsed);
+
         if (!collapsed.includes(categoryId)) {
             collapsed.push(categoryId);
+            console.log('[HHDL DEBUG] Saving collapsed categories:', collapsed);
             saveUserPreference('collapsed_categories', collapsed);
+        } else {
+            console.log('[HHDL DEBUG] Category already in collapsed list, not saving');
         }
     }
 
@@ -445,12 +451,18 @@
     function removeFromCollapsedCategories(categoryId) {
         // Ensure category ID is a string
         categoryId = String(categoryId);
+        console.log('[HHDL DEBUG] removeFromCollapsedCategories called with:', categoryId);
 
         let collapsed = getCollapsedCategories();
+        console.log('[HHDL DEBUG] Current collapsed categories from DOM:', collapsed);
+
         const index = collapsed.indexOf(categoryId);
         if (index > -1) {
             collapsed.splice(index, 1);
+            console.log('[HHDL DEBUG] Saving collapsed categories after removal:', collapsed);
             saveUserPreference('collapsed_categories', collapsed);
+        } else {
+            console.log('[HHDL DEBUG] Category not in collapsed list, not saving');
         }
     }
 
@@ -462,8 +474,10 @@
         const collapsed = [];
         $('.hhdl-category-rooms.hhdl-collapsed').each(function() {
             // Ensure category ID is stored as string
-            collapsed.push(String($(this).data('category-id')));
+            const catId = String($(this).data('category-id'));
+            collapsed.push(catId);
         });
+        console.log('[HHDL DEBUG] getCollapsedCategories from DOM:', collapsed);
         return collapsed;
     }
 

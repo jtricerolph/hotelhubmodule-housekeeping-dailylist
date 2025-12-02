@@ -90,6 +90,11 @@ class HHDL_Display {
         // Get existing preferences to merge with new ones
         $existing_prefs = self::get_user_preferences($user_id, $location_id);
 
+        // DEBUG: Log what we're saving
+        error_log('[HHDL DEBUG] save_user_preferences - User ID: ' . $user_id . ', Location ID: ' . $location_id);
+        error_log('[HHDL DEBUG] save_user_preferences - Incoming preferences: ' . print_r($preferences, true));
+        error_log('[HHDL DEBUG] save_user_preferences - Existing preferences: ' . print_r($existing_prefs, true));
+
         // Merge and sanitize preferences (preserve existing values not being updated)
         $clean_preferences = array(
             'view_mode' => isset($preferences['view_mode']) && in_array($preferences['view_mode'], array('grouped', 'flat'))
@@ -99,6 +104,9 @@ class HHDL_Display {
             'default_filter' => isset($preferences['default_filter'])
                 ? sanitize_text_field($preferences['default_filter']) : $existing_prefs['default_filter'],
         );
+
+        // DEBUG: Log final preferences being saved
+        error_log('[HHDL DEBUG] save_user_preferences - Clean preferences to save: ' . print_r($clean_preferences, true));
 
         return update_user_meta($user_id, $meta_key, $clean_preferences);
     }
@@ -456,6 +464,10 @@ class HHDL_Display {
         $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
         $collapsed_categories = isset($user_prefs['collapsed_categories']) ? $user_prefs['collapsed_categories'] : array();
 
+        // DEBUG: Log what we're loading
+        error_log('[HHDL DEBUG] render_room_cards - User preferences loaded: ' . print_r($user_prefs, true));
+        error_log('[HHDL DEBUG] render_room_cards - Collapsed categories: ' . print_r($collapsed_categories, true));
+
         // Render based on view mode
         if ($view_mode === 'grouped') {
             // Group rooms by category
@@ -486,6 +498,9 @@ class HHDL_Display {
             // Render each category with its rooms
             foreach ($categories_order as $category_id => $category_info) {
                 $is_collapsed = in_array(strval($category_id), $collapsed_categories, true);
+
+                // DEBUG: Log category rendering
+                error_log('[HHDL DEBUG] Rendering category ID: ' . $category_id . ' (type: ' . gettype($category_id) . '), strval: ' . strval($category_id) . ', is_collapsed: ' . ($is_collapsed ? 'YES' : 'NO'));
 
                 // Render category header
                 $this->render_category_header($category_info, $rooms_by_category[$category_id], $location_id);
