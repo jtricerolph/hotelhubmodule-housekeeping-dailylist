@@ -1041,8 +1041,23 @@
      * Handle task completions from other users
      */
     function handleRemoteUpdates(completions) {
+        if (!completions || completions.length === 0) return;
+
+        console.log('[HHDL] Processing ' + completions.length + ' task completions');
+
+        // Group completions by room for efficient updates
+        const roomUpdates = {};
+
         completions.forEach(function(completion) {
-            // Find and update the task checkbox
+            console.log('[HHDL] Task completed:', completion);
+
+            // Track completions per room
+            if (!roomUpdates[completion.room_id]) {
+                roomUpdates[completion.room_id] = 0;
+            }
+            roomUpdates[completion.room_id]++;
+
+            // Find and update the task checkbox if modal is open
             const taskCheckbox = $('.hhdl-task-checkbox[data-task-id="' + completion.task_id + '"]');
             if (taskCheckbox.length) {
                 taskCheckbox.prop('checked', true);
@@ -1054,6 +1069,54 @@
                 showToast('Task completed by ' + completion.completed_by_name, 'info');
             }
         });
+
+        // Update room card badges
+        Object.keys(roomUpdates).forEach(function(roomId) {
+            const completedCount = roomUpdates[roomId];
+            updateRoomTaskBadge(roomId, -completedCount); // Decrement by number of completions
+        });
+    }
+
+    /**
+     * Update room card task badge count
+     */
+    function updateRoomTaskBadge(roomId, delta) {
+        const roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+        if (!roomCard.length) {
+            console.log('[HHDL] Room card not found for:', roomId);
+            return;
+        }
+
+        const badge = roomCard.find('.hhdl-task-count-badge');
+        if (!badge.length) {
+            console.log('[HHDL] Task badge not found for room:', roomId);
+            return;
+        }
+
+        // Get current count
+        let currentCount = parseInt(badge.text()) || 0;
+        let newCount = Math.max(0, currentCount + delta); // Don't go below 0
+
+        console.log('[HHDL] Room ' + roomId + ' task count: ' + currentCount + ' → ' + newCount);
+
+        if (newCount > 0) {
+            badge.text(newCount).show();
+        } else {
+            // All tasks complete - hide badge and update icon
+            badge.hide();
+
+            const taskStatusContainer = roomCard.find('.hhdl-task-status');
+            if (taskStatusContainer.length) {
+                taskStatusContainer.removeClass('hhdl-task-late hhdl-task-return hhdl-task-future hhdl-task-none');
+                taskStatusContainer.addClass('hhdl-task-complete');
+            }
+
+            const taskIcon = roomCard.find('.hhdl-stat-content .material-symbols-outlined').first();
+            if (taskIcon.length) {
+                taskIcon.text('assignment_turned_in');
+                taskIcon.css('color', '#10b981'); // Green
+            }
+        }
     }
 
     /**
