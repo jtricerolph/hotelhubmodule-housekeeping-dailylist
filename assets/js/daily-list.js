@@ -400,11 +400,11 @@
      */
     function saveUserPreference(key, value) {
         $.ajax({
-            url: hhdl_ajax.ajax_url,
+            url: hhdlAjax.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'hhdl_save_user_preferences',
-                nonce: hhdl_ajax.nonce,
+                nonce: hhdlAjax.nonce,
                 location_id: currentLocationId,
                 preferences: JSON.stringify({
                     [key]: value
@@ -465,11 +465,11 @@
      */
     function resetUserPreferences() {
         $.ajax({
-            url: hhdl_ajax.ajax_url,
+            url: hhdlAjax.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'hhdl_reset_user_preferences',
-                nonce: hhdl_ajax.nonce,
+                nonce: hhdlAjax.nonce,
                 location_id: currentLocationId
             },
             success: function(response) {
