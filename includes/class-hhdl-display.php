@@ -158,19 +158,16 @@ class HHDL_Display {
 
         // Render the view
         $this->render_header($selected_date);
+        $this->render_view_controls();
         $this->render_filters();
         $this->render_room_list($location_id, $selected_date);
         $this->render_modal();
     }
 
     /**
-     * Render header with date picker and view controls
+     * Render header with date picker
      */
     private function render_header($selected_date) {
-        // Get user preferences
-        $location_id = $this->get_current_location();
-        $user_prefs = self::get_user_preferences(null, $location_id);
-        $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
         ?>
         <div class="hhdl-header">
             <div class="hhdl-date-selector">
@@ -183,28 +180,40 @@ class HHDL_Display {
             <div class="hhdl-header-info">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
             </div>
-            <div class="hhdl-view-controls">
-                <div class="hhdl-view-mode-toggle">
-                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
-                            data-view-mode="grouped"
-                            title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
-                        <span class="material-symbols-outlined">view_list</span>
-                        <?php _e('Grouped', 'hhdl'); ?>
-                    </button>
-                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
-                            data-view-mode="flat"
-                            title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
-                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                        <?php _e('Flat', 'hhdl'); ?>
-                    </button>
-                </div>
-                <button class="hhdl-reset-view-btn"
-                        id="hhdl-reset-preferences"
-                        title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">restart_alt</span>
-                    <?php _e('Reset View', 'hhdl'); ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render view controls (grouped/flat toggle and reset button)
+     */
+    private function render_view_controls() {
+        // Get user preferences for current view mode
+        $location_id = $this->get_current_location();
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
+        ?>
+        <div class="hhdl-view-controls">
+            <div class="hhdl-view-mode-toggle">
+                <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
+                        data-view-mode="grouped"
+                        title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">view_list</span>
+                    <?php _e('Grouped', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
+                        data-view-mode="flat"
+                        title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                    <?php _e('Flat', 'hhdl'); ?>
                 </button>
             </div>
+            <button class="hhdl-reset-view-btn"
+                    id="hhdl-reset-preferences"
+                    title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
+                <span class="material-symbols-outlined">restart_alt</span>
+                <?php _e('Reset View', 'hhdl'); ?>
+            </button>
         </div>
         <?php
     }
