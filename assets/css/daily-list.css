@@ -1856,3 +1856,229 @@
     color: #1f2937;
     font-weight: 600;
 }
+
+/* ============================================
+   View Controls
+   ============================================ */
+
+.hhdl-view-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.hhdl-view-mode-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.hhdl-view-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #fff;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-view-mode-btn:not(:last-child) {
+    border-right: 1px solid #d1d5db;
+}
+
+.hhdl-view-mode-btn:hover {
+    background: #f3f4f6;
+}
+
+.hhdl-view-mode-btn.active {
+    background: #10b981;
+    color: #fff;
+}
+
+.hhdl-view-mode-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.hhdl-reset-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-reset-view-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.hhdl-reset-view-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* ============================================
+   Category Headers
+   ============================================ */
+
+.hhdl-category-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 16px 16px 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: sticky;
+    top: 140px; /* Below the main header and filters */
+    z-index: 50;
+}
+
+.hhdl-category-header:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.hhdl-category-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.hhdl-category-arrow {
+    font-size: 24px;
+    color: #6b7280;
+    transition: transform 0.2s;
+}
+
+.hhdl-category-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.hhdl-category-counts {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hhdl-room-count {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.hhdl-visible-count {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.hhdl-of-total {
+    color: #9ca3af;
+}
+
+/* Task Badges in Category Headers */
+.hhdl-task-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hhdl-task-badge .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.hhdl-newbook-tasks {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.hhdl-newbook-tasks .material-symbols-outlined {
+    color: #2563eb;
+}
+
+.hhdl-recurring-tasks {
+    background: #fce7f3;
+    color: #a21caf;
+}
+
+.hhdl-recurring-tasks .material-symbols-outlined {
+    color: #c026d3;
+}
+
+.hhdl-task-count {
+    font-weight: 700;
+}
+
+/* ============================================
+   Category Room Containers
+   ============================================ */
+
+.hhdl-category-rooms {
+    margin: 0 16px 8px 16px;
+    padding-left: 36px; /* Indent rooms under category */
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.hhdl-category-rooms.hhdl-collapsed {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+/* Adjust room cards when in grouped view */
+.hhdl-category-rooms .hhdl-room-card {
+    margin: 8px 0;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 768px) {
+    .hhdl-view-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .hhdl-view-mode-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hhdl-reset-view-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hhdl-category-header {
+        padding: 10px 12px;
+        margin: 12px 12px 6px 12px;
+    }
+
+    .hhdl-category-rooms {
+        padding-left: 20px;
+    }
+}

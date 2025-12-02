@@ -29,6 +29,8 @@
         initFilters();
         initModal();
         initHeartbeat();
+        initViewControls();  // Initialize view mode and reset controls
+        initCategoryHeaders();  // Initialize category header interactions
 
         // Load initial room list
         loadRoomList(currentDate);
@@ -302,6 +304,9 @@
 
             card.toggle(shouldShow);
         });
+
+        // Update category header counts after filtering
+        updateCategoryFilterCounts();
     }
 
     /**
@@ -334,6 +339,180 @@
         $('.hhdl-filter-btn[data-filter="blocked"]').html('Blocked <span class="hhdl-count-badge">' + counts.blocked + '</span>');
         $('.hhdl-filter-btn[data-filter="no-booking"]').html('No Booking <span class="hhdl-count-badge">' + counts.no_booking + '</span>');
         $('.hhdl-filter-btn[data-filter="unoccupied"]').html('Unoccupied <span class="hhdl-count-badge">' + counts.unoccupied + '</span>');
+    }
+
+    /**
+     * Initialize view controls (view mode toggle and reset button)
+     */
+    function initViewControls() {
+        // Handle view mode toggle
+        $(document).on('click', '.hhdl-view-mode-btn', function() {
+            const $btn = $(this);
+            const viewMode = $btn.data('view-mode');
+
+            // Update active state
+            $('.hhdl-view-mode-btn').removeClass('active');
+            $btn.addClass('active');
+
+            // Save preference and reload
+            saveUserPreference('view_mode', viewMode);
+        });
+
+        // Handle reset preferences button
+        $(document).on('click', '#hhdl-reset-preferences', function() {
+            if (confirm('Reset all view preferences to defaults?')) {
+                resetUserPreferences();
+            }
+        });
+    }
+
+    /**
+     * Initialize category header interactions
+     */
+    function initCategoryHeaders() {
+        // Handle category header clicks for collapse/expand
+        $(document).on('click', '.hhdl-category-header', function(e) {
+            // Don't toggle if clicking on a link or button within the header
+            if ($(e.target).is('a, button') || $(e.target).closest('a, button').length) {
+                return;
+            }
+
+            const $header = $(this);
+            const categoryId = $header.data('category-id');
+            const $categoryRooms = $(`.hhdl-category-rooms[data-category-id="${categoryId}"]`);
+            const $arrow = $header.find('.hhdl-category-arrow');
+
+            // Toggle collapsed state
+            if ($categoryRooms.hasClass('hhdl-collapsed')) {
+                $categoryRooms.removeClass('hhdl-collapsed');
+                $arrow.text('expand_more');
+                removeFromCollapsedCategories(categoryId);
+            } else {
+                $categoryRooms.addClass('hhdl-collapsed');
+                $arrow.text('chevron_right');
+                addToCollapsedCategories(categoryId);
+            }
+        });
+    }
+
+    /**
+     * Save user preference
+     */
+    function saveUserPreference(key, value) {
+        $.ajax({
+            url: hhdl_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'hhdl_save_user_preferences',
+                nonce: hhdl_ajax.nonce,
+                location_id: currentLocationId,
+                preferences: JSON.stringify({
+                    [key]: value
+                })
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Reload room list if view mode changed
+                    if (key === 'view_mode') {
+                        loadRoomList(currentDate);
+                    }
+                }
+            },
+            error: function() {
+                console.error('[HHDL] Failed to save user preference');
+            }
+        });
+    }
+
+    /**
+     * Add category to collapsed list
+     */
+    function addToCollapsedCategories(categoryId) {
+        // Get current collapsed categories
+        let collapsed = getCollapsedCategories();
+        if (!collapsed.includes(categoryId)) {
+            collapsed.push(categoryId);
+            saveUserPreference('collapsed_categories', collapsed);
+        }
+    }
+
+    /**
+     * Remove category from collapsed list
+     */
+    function removeFromCollapsedCategories(categoryId) {
+        let collapsed = getCollapsedCategories();
+        const index = collapsed.indexOf(categoryId);
+        if (index > -1) {
+            collapsed.splice(index, 1);
+            saveUserPreference('collapsed_categories', collapsed);
+        }
+    }
+
+    /**
+     * Get collapsed categories from local state
+     */
+    function getCollapsedCategories() {
+        // Extract from DOM (already rendered with user preferences)
+        const collapsed = [];
+        $('.hhdl-category-rooms.hhdl-collapsed').each(function() {
+            collapsed.push($(this).data('category-id'));
+        });
+        return collapsed;
+    }
+
+    /**
+     * Reset user preferences
+     */
+    function resetUserPreferences() {
+        $.ajax({
+            url: hhdl_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'hhdl_reset_user_preferences',
+                nonce: hhdl_ajax.nonce,
+                location_id: currentLocationId
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Reload the page to apply default preferences
+                    location.reload();
+                }
+            },
+            error: function() {
+                console.error('[HHDL] Failed to reset user preferences');
+            }
+        });
+    }
+
+    /**
+     * Update filter counts in category headers
+     */
+    function updateCategoryFilterCounts() {
+        $('.hhdl-category-rooms').each(function() {
+            const $category = $(this);
+            const categoryId = $category.data('category-id');
+            const $header = $(`.hhdl-category-header[data-category-id="${categoryId}"]`);
+
+            // Count visible rooms in this category
+            const totalRooms = $category.find('.hhdl-room-card').length;
+            const visibleRooms = $category.find('.hhdl-room-card:visible').length;
+
+            // Update the room count in header
+            const $visibleCount = $header.find('.hhdl-visible-count');
+            const $ofTotal = $header.find('.hhdl-of-total');
+
+            $visibleCount.text(visibleRooms);
+
+            if (visibleRooms < totalRooms) {
+                if ($ofTotal.length === 0) {
+                    $visibleCount.after(' <span class="hhdl-of-total">of ' + totalRooms + '</span>');
+                } else {
+                    $ofTotal.text('of ' + totalRooms);
+                }
+            } else {
+                $ofTotal.remove();
+            }
+        });
     }
 
     /**

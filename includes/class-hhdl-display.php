@@ -38,6 +38,91 @@ class HHDL_Display {
     }
 
     /**
+     * Get user display preferences
+     *
+     * @param int $user_id
+     * @param int $location_id
+     * @return array
+     */
+    public static function get_user_preferences($user_id = null, $location_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        if (!$location_id && function_exists('hha_get_current_location')) {
+            $location_id = hha_get_current_location();
+        }
+
+        $meta_key = 'hhdl_display_prefs_' . $location_id;
+        $preferences = get_user_meta($user_id, $meta_key, true);
+
+        // Default preferences if none exist
+        if (empty($preferences)) {
+            $preferences = array(
+                'view_mode' => 'grouped',  // 'grouped' or 'flat'
+                'collapsed_categories' => array(),  // Array of collapsed category IDs
+                'default_filter' => 'all',  // Default filter to apply
+            );
+        }
+
+        return $preferences;
+    }
+
+    /**
+     * Save user display preferences
+     *
+     * @param int $user_id
+     * @param int $location_id
+     * @param array $preferences
+     * @return bool
+     */
+    public static function save_user_preferences($user_id = null, $location_id = null, $preferences = array()) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        if (!$location_id && function_exists('hha_get_current_location')) {
+            $location_id = hha_get_current_location();
+        }
+
+        $meta_key = 'hhdl_display_prefs_' . $location_id;
+
+        // Sanitize preferences
+        $clean_preferences = array(
+            'view_mode' => isset($preferences['view_mode']) && in_array($preferences['view_mode'], array('grouped', 'flat'))
+                ? $preferences['view_mode'] : 'grouped',
+            'collapsed_categories' => isset($preferences['collapsed_categories']) && is_array($preferences['collapsed_categories'])
+                ? array_map('sanitize_text_field', $preferences['collapsed_categories']) : array(),
+            'default_filter' => isset($preferences['default_filter'])
+                ? sanitize_text_field($preferences['default_filter']) : 'all',
+        );
+
+        return update_user_meta($user_id, $meta_key, $clean_preferences);
+    }
+
+    /**
+     * Reset user display preferences to defaults
+     *
+     * @param int $user_id
+     * @param int $location_id
+     * @return bool
+     */
+    public static function reset_user_preferences($user_id = null, $location_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        if (!$location_id && function_exists('hha_get_current_location')) {
+            $location_id = hha_get_current_location();
+        }
+
+        $meta_key = 'hhdl_display_prefs_' . $location_id;
+
+        // Delete the meta to reset to defaults
+        return delete_user_meta($user_id, $meta_key);
+    }
+
+    /**
      * Render module (entry point from HHA_Modules)
      *
      * @param array $params Optional parameters
@@ -76,9 +161,13 @@ class HHDL_Display {
     }
 
     /**
-     * Render header with date picker
+     * Render header with date picker and view controls
      */
     private function render_header($selected_date) {
+        // Get user preferences
+        $location_id = $this->get_current_location();
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
         ?>
         <div class="hhdl-header">
             <div class="hhdl-date-selector">
@@ -90,6 +179,28 @@ class HHDL_Display {
             </div>
             <div class="hhdl-header-info">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
+            </div>
+            <div class="hhdl-view-controls">
+                <div class="hhdl-view-mode-toggle">
+                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
+                            data-view-mode="grouped"
+                            title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">view_list</span>
+                        <?php _e('Grouped', 'hhdl'); ?>
+                    </button>
+                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
+                            data-view-mode="flat"
+                            title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                        <?php _e('Flat', 'hhdl'); ?>
+                    </button>
+                </div>
+                <button class="hhdl-reset-view-btn"
+                        id="hhdl-reset-preferences"
+                        title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    <?php _e('Reset View', 'hhdl'); ?>
+                </button>
             </div>
         </div>
         <?php
@@ -144,6 +255,95 @@ class HHDL_Display {
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * Render category header with task counts
+     */
+    private function render_category_header($category, $room_cards, $location_id) {
+        // Calculate task counts for this category
+        $newbook_tasks = 0;
+        $recurring_tasks_incomplete = 0;
+        $room_count = count($room_cards);
+        $visible_room_count = $room_count;  // Will be updated based on filters
+
+        // Get default tasks for comparison
+        $default_tasks = HHDL_Settings::get_default_tasks($location_id);
+
+        foreach ($room_cards as $room) {
+            // Count NewBook tasks
+            if (!empty($room['newbook_tasks'])) {
+                $newbook_tasks += count($room['newbook_tasks']);
+            }
+
+            // Count incomplete recurring tasks (comparing against defaults)
+            // This is a simplified check - expand based on your actual task tracking
+            if (!empty($default_tasks)) {
+                // Check if room has completed today's default tasks
+                // This would need to check against your completion tracking
+                $recurring_tasks_incomplete += count($default_tasks);
+            }
+        }
+
+        ?>
+        <div class="hhdl-category-header" data-category-id="<?php echo esc_attr($category['id']); ?>">
+            <div class="hhdl-category-toggle">
+                <span class="material-symbols-outlined hhdl-category-arrow">expand_more</span>
+            </div>
+            <div class="hhdl-category-name">
+                <?php echo esc_html($category['name']); ?>
+            </div>
+            <div class="hhdl-category-counts">
+                <span class="hhdl-room-count">
+                    <span class="hhdl-visible-count"><?php echo $visible_room_count; ?></span>
+                    <?php if ($visible_room_count !== $room_count): ?>
+                        <span class="hhdl-of-total">of <?php echo $room_count; ?></span>
+                    <?php endif; ?>
+                    rooms
+                </span>
+                <?php if ($newbook_tasks > 0): ?>
+                    <span class="hhdl-task-badge hhdl-newbook-tasks" title="NewBook Tasks">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        <span class="hhdl-task-count"><?php echo $newbook_tasks; ?></span>
+                    </span>
+                <?php endif; ?>
+                <?php if ($recurring_tasks_incomplete > 0): ?>
+                    <span class="hhdl-task-badge hhdl-recurring-tasks" title="Recurring Tasks">
+                        <span class="material-symbols-outlined">repeat</span>
+                        <span class="hhdl-task-count"><?php echo $recurring_tasks_incomplete; ?></span>
+                    </span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Calculate category task counts
+     */
+    private function calculate_category_task_counts($room_cards, $location_id) {
+        $counts = array(
+            'newbook_tasks' => 0,
+            'recurring_tasks' => 0,
+            'room_count' => count($room_cards)
+        );
+
+        $default_tasks = HHDL_Settings::get_default_tasks($location_id);
+
+        foreach ($room_cards as $room) {
+            // Count NewBook tasks
+            if (!empty($room['newbook_tasks'])) {
+                $counts['newbook_tasks'] += count($room['newbook_tasks']);
+            }
+
+            // Count incomplete recurring tasks
+            if (!empty($default_tasks)) {
+                // Simplified - would need actual completion checking
+                $counts['recurring_tasks'] += count($default_tasks);
+            }
+        }
+
+        return $counts;
     }
 
     /**
@@ -228,9 +428,60 @@ class HHDL_Display {
         // Check if viewing today's date
         $is_viewing_today = ($date === date('Y-m-d'));
 
-        // Render each room card
-        foreach ($rooms_data as $room) {
-            $this->render_room_card($room, $is_viewing_today);
+        // Get user preferences
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
+        $collapsed_categories = isset($user_prefs['collapsed_categories']) ? $user_prefs['collapsed_categories'] : array();
+
+        // Render based on view mode
+        if ($view_mode === 'grouped') {
+            // Group rooms by category
+            $rooms_by_category = array();
+            $categories_order = array();
+
+            foreach ($rooms_data as $room) {
+                $category_id = isset($room['category_id']) ? $room['category_id'] : 'uncategorized';
+
+                if (!isset($rooms_by_category[$category_id])) {
+                    $rooms_by_category[$category_id] = array();
+                    // Store category info for header rendering
+                    $categories_order[$category_id] = array(
+                        'id' => $category_id,
+                        'name' => isset($room['category_name']) ? $room['category_name'] : 'Uncategorized',
+                        'order' => isset($room['order']['category_order']) ? $room['order']['category_order'] : 999
+                    );
+                }
+
+                $rooms_by_category[$category_id][] = $room;
+            }
+
+            // Sort categories by their order
+            uasort($categories_order, function($a, $b) {
+                return $a['order'] - $b['order'];
+            });
+
+            // Render each category with its rooms
+            foreach ($categories_order as $category_id => $category_info) {
+                $is_collapsed = in_array($category_id, $collapsed_categories);
+
+                // Render category header
+                $this->render_category_header($category_info, $rooms_by_category[$category_id], $location_id);
+
+                // Render category container
+                echo '<div class="hhdl-category-rooms' . ($is_collapsed ? ' hhdl-collapsed' : '') . '" data-category-id="' . esc_attr($category_id) . '">';
+
+                // Render room cards in this category
+                foreach ($rooms_by_category[$category_id] as $room) {
+                    $this->render_room_card($room, $is_viewing_today);
+                }
+
+                echo '</div>';
+            }
+        } else {
+            // Flat view - render all rooms without grouping
+            foreach ($rooms_data as $room) {
+                $this->render_room_card($room, $is_viewing_today);
+            }
         }
 
         return $counts;
@@ -1404,6 +1655,12 @@ class HHDL_Display {
                 $booking_status
             );
 
+            // Get category information for this room
+            $category_info = isset($site_to_category[$room['room_id']]) ? $site_to_category[$room['room_id']] : array(
+                'category_id' => 'uncategorized',
+                'category_name' => 'Uncategorized'
+            );
+
             $room_cards[] = array(
                 'room_id'                 => $room['room_id'],
                 'room_number'             => $room['room_number'],
@@ -1428,7 +1685,9 @@ class HHDL_Display {
                 'blocking_task'           => $blocking_task,
                 'newbook_tasks'           => isset($room['newbook_tasks']) ? $room['newbook_tasks'] : array(),
                 'date'                    => $date,  // Add viewing date for task rollover detection
-                'order'                   => $room['order']
+                'order'                   => $room['order'],
+                'category_id'             => $category_info['category_id'],
+                'category_name'           => $category_info['category_name']
             );
         }
 

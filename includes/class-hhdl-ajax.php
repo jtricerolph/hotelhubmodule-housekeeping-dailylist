@@ -39,6 +39,8 @@ class HHDL_Ajax {
         add_action('wp_ajax_hhdl_get_room_details', array($this, 'get_room_details'));
         add_action('wp_ajax_hhdl_complete_task', array($this, 'complete_task'));
         add_action('wp_ajax_hhdl_update_room_status', array($this, 'update_room_status'));
+        add_action('wp_ajax_hhdl_save_user_preferences', array($this, 'save_user_preferences'));
+        add_action('wp_ajax_hhdl_reset_user_preferences', array($this, 'reset_user_preferences'));
     }
 
     /**
@@ -1580,5 +1582,82 @@ class HHDL_Ajax {
             <?php endforeach; ?>
         </section>
         <?php
+    }
+
+    /**
+     * Save user preferences (AJAX handler)
+     */
+    public function save_user_preferences() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        $preferences = isset($_POST['preferences']) ? $_POST['preferences'] : array();
+
+        if (!$location_id) {
+            wp_send_json_error(array('message' => __('Invalid location', 'hhdl')));
+        }
+
+        // Parse preferences if they came as JSON string
+        if (is_string($preferences)) {
+            $preferences = json_decode(stripslashes($preferences), true);
+        }
+
+        // Save preferences
+        $result = HHDL_Display::save_user_preferences(null, $location_id, $preferences);
+
+        if ($result) {
+            wp_send_json_success(array('message' => __('Preferences saved', 'hhdl')));
+        } else {
+            wp_send_json_error(array('message' => __('Failed to save preferences', 'hhdl')));
+        }
+    }
+
+    /**
+     * Reset user preferences (AJAX handler)
+     */
+    public function reset_user_preferences() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+
+        if (!$location_id) {
+            wp_send_json_error(array('message' => __('Invalid location', 'hhdl')));
+        }
+
+        // Reset preferences
+        $result = HHDL_Display::reset_user_preferences(null, $location_id);
+
+        if ($result) {
+            wp_send_json_success(array('message' => __('Preferences reset to defaults', 'hhdl')));
+        } else {
+            wp_send_json_error(array('message' => __('Failed to reset preferences', 'hhdl')));
+        }
+    }
+
+    /**
+     * Check if user can access module
+     */
+    private function user_can_access() {
+        // Check using WFA permissions if available
+        if (function_exists('wfa_current_user_can')) {
+            return wfa_current_user_can('hhdl_access_module');
+        }
+
+        // Fall back to checking if user is logged in
+        return is_user_logged_in();
     }
 }
