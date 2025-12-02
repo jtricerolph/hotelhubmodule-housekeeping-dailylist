@@ -1752,3 +1752,107 @@
 .hhdl-confirm-btn-confirm.danger:hover {
     background: #dc2626;
 }
+
+/* ========================================
+   Checkout Notifications
+   ======================================== */
+
+/* Notification Container */
+.hhdl-notification-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 380px;
+    pointer-events: none;
+}
+
+.hhdl-notification-container > * {
+    pointer-events: auto;
+}
+
+/* Checkout Notification Card */
+.hhdl-checkout-notification {
+    background: white;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateX(420px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hhdl-checkout-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Notification Header */
+.hhdl-notification-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 8px;
+    background: linear-gradient(to bottom, #fafafa, #ffffff);
+}
+
+.hhdl-notification-header .material-symbols-outlined {
+    color: #8b5cf6;
+    font-size: 22px;
+}
+
+.hhdl-notification-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Close Button */
+.hhdl-notification-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.hhdl-notification-close:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Notification Body */
+.hhdl-notification-body {
+    padding: 14px 16px;
+}
+
+.hhdl-notification-body p {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.hhdl-notification-body p:last-child {
+    margin-bottom: 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.hhdl-notification-body strong {
+    color: #1f2937;
+    font-weight: 600;
+}

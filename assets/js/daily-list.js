@@ -10,6 +10,8 @@
     let currentLocationId = 0;
     let currentDate = '';
     let lastCheckTimestamp = new Date().toISOString();
+    let lastPollingCheck = new Date().toISOString();
+    let checkoutNotifications = {}; // Track shown notifications to prevent duplicates
     let originalFilterCounts = {}; // Store original filter counts
     let totalRoomCount = 0; // Total number of rooms
 
@@ -994,20 +996,45 @@
     function initHeartbeat() {
         // Send monitoring data with each heartbeat
         $(document).on('heartbeat-send', function(e, data) {
+            // Task completion monitoring
             data.hhdl_monitor = {
                 location_id: currentLocationId,
                 viewing_date: currentDate,
                 last_check: lastCheckTimestamp
             };
+
+            // NewBook polling monitoring (date range: yesterday to tomorrow)
+            data.nbp_monitor = {
+                location_id: currentLocationId,
+                date_from: getDateOffset(currentDate, -1),
+                date_to: getDateOffset(currentDate, +1),
+                last_check: lastPollingCheck
+            };
         });
 
         // Receive updates from server
         $(document).on('heartbeat-tick', function(e, data) {
+            // Handle task completion updates
             if (data.hhdl_updates && data.hhdl_updates.completions) {
                 handleRemoteUpdates(data.hhdl_updates.completions);
                 lastCheckTimestamp = data.hhdl_updates.timestamp;
             }
+
+            // Handle NewBook booking updates
+            if (data.nbp_updates && data.nbp_updates.bookings) {
+                handleBookingUpdates(data.nbp_updates.bookings);
+                lastPollingCheck = data.nbp_updates.timestamp;
+            }
         });
+    }
+
+    /**
+     * Get date with offset (for date range calculations)
+     */
+    function getDateOffset(dateStr, days) {
+        const d = new Date(dateStr + 'T00:00:00');
+        d.setDate(d.getDate() + days);
+        return d.toISOString().split('T')[0];
     }
 
     /**
@@ -1050,6 +1077,151 @@
                 toast.remove();
             }, 300);
         }, 3000);
+    }
+
+    /**
+     * Handle booking updates from NewBook polling
+     */
+    function handleBookingUpdates(bookings) {
+        if (!bookings || bookings.length === 0) return;
+
+        console.log('[HHDL] Processing ' + bookings.length + ' booking updates');
+
+        bookings.forEach(function(booking) {
+            const roomCard = $('.hhdl-room-card[data-room-id="' + booking.site_id + '"]');
+
+            if (!roomCard.length) {
+                console.log('[HHDL] Room card not found for site_id: ' + booking.site_id);
+                return;
+            }
+
+            const oldStatus = roomCard.attr('data-booking-status');
+            const newStatus = booking.booking_status;
+
+            console.log('[HHDL] Room ' + booking.site_name + ': ' + oldStatus + ' → ' + newStatus);
+
+            // Detect checkout (arrived → departed)
+            if (oldStatus === 'arrived' && newStatus === 'departed') {
+                handleCheckout(roomCard, booking);
+            }
+
+            // Update room card booking status
+            roomCard.attr('data-booking-status', newStatus);
+
+            // Update room status (Clean/Dirty/Inspected) if provided
+            if (booking.site_status) {
+                updateRoomStatus(roomCard, booking.site_status);
+            }
+        });
+    }
+
+    /**
+     * Handle checkout detection
+     */
+    function handleCheckout(roomCard, booking) {
+        console.log('[HHDL] Checkout detected: Room ' + booking.site_name);
+
+        // Remove wider border
+        roomCard.attr('data-show-wider-border', 'false');
+
+        // Update booking status badge
+        const statusBadge = roomCard.find('.hhdl-booking-status-badge');
+        if (statusBadge.length) {
+            statusBadge.removeClass('hhdl-status-arrived')
+                       .addClass('hhdl-status-departed')
+                       .text('Departed');
+        }
+
+        // Show dismissable notification
+        showCheckoutNotification(booking.site_name, booking.guest_name || 'Guest');
+    }
+
+    /**
+     * Update room status (Clean/Dirty/Inspected)
+     */
+    function updateRoomStatus(roomCard, newStatus) {
+        const statusBadge = roomCard.find('.hhdl-status-badge');
+
+        if (!statusBadge.length) return;
+
+        // Remove old status classes
+        statusBadge.removeClass('hhdl-status-clean hhdl-status-dirty hhdl-status-inspected');
+
+        // Add new status
+        const statusClass = 'hhdl-status-' + newStatus.toLowerCase();
+        statusBadge.addClass(statusClass).text(newStatus);
+
+        // Update modal if open for this room
+        const roomId = roomCard.data('room-id');
+        const openModal = $('.hhdl-modal[data-room-id="' + roomId + '"]');
+
+        if (openModal.is(':visible')) {
+            openModal.find('.hhdl-modal-status-badge')
+                     .removeClass('hhdl-status-clean hhdl-status-dirty hhdl-status-inspected')
+                     .addClass(statusClass)
+                     .text(newStatus);
+        }
+
+        console.log('[HHDL] Updated room status: ' + newStatus);
+    }
+
+    /**
+     * Show dismissable checkout notification
+     */
+    function showCheckoutNotification(roomNumber, guestName) {
+        // Prevent duplicate notifications
+        if (checkoutNotifications[roomNumber]) {
+            console.log('[HHDL] Notification already shown for ' + roomNumber);
+            return;
+        }
+        checkoutNotifications[roomNumber] = true;
+
+        const notificationId = 'checkout-notif-' + Date.now();
+
+        const notification = $('<div class="hhdl-checkout-notification" id="' + notificationId + '">' +
+            '<div class="hhdl-notification-header">' +
+                '<span class="material-symbols-outlined">logout</span>' +
+                '<h3>Guest Checked Out</h3>' +
+                '<button class="hhdl-notification-close" data-id="' + notificationId + '">&times;</button>' +
+            '</div>' +
+            '<div class="hhdl-notification-body">' +
+                '<p><strong>Room ' + roomNumber + '</strong></p>' +
+                '<p>' + guestName + ' has checked out.</p>' +
+            '</div>' +
+        '</div>');
+
+        // Create container if needed
+        if (!$('.hhdl-notification-container').length) {
+            $('body').append('<div class="hhdl-notification-container"></div>');
+        }
+
+        $('.hhdl-notification-container').append(notification);
+
+        // Animate in
+        setTimeout(function() {
+            notification.addClass('show');
+        }, 10);
+
+        // Close button handler
+        notification.find('.hhdl-notification-close').on('click', function() {
+            const id = $(this).data('id');
+            $('#' + id).removeClass('show');
+            setTimeout(function() {
+                $('#' + id).remove();
+                delete checkoutNotifications[roomNumber];
+            }, 300);
+        });
+
+        // Auto-dismiss after 30 seconds
+        setTimeout(function() {
+            if ($('#' + notificationId).length) {
+                $('#' + notificationId).removeClass('show');
+                setTimeout(function() {
+                    $('#' + notificationId).remove();
+                    delete checkoutNotifications[roomNumber];
+                }, 300);
+            }
+        }, 30000);
     }
 
     /**
