@@ -1173,7 +1173,7 @@
 
             // Update room status (Clean/Dirty/Inspected) if provided
             if (booking.site_status) {
-                updateRoomStatus(roomCard, booking.site_status);
+                updateRoomStatusDisplay(roomCard, booking.site_status);
             }
         });
     }
@@ -1200,9 +1200,9 @@
     }
 
     /**
-     * Update room status (Clean/Dirty/Inspected)
+     * Update room status display (Clean/Dirty/Inspected)
      */
-    function updateRoomStatus(roomCard, newStatus) {
+    function updateRoomStatusDisplay(roomCard, newStatus) {
         const statusBadge = roomCard.find('.hhdl-status-badge');
 
         if (!statusBadge.length) return;
