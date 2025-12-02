@@ -638,11 +638,7 @@
                 date: date
             },
             success: function(response) {
-                console.log('HHDL: Modal AJAX response received', response);
-
                 if (response.success) {
-                    console.log('HHDL: Modal loaded successfully, updating content');
-
                     // Update modal header
                     if (response.data.header) {
                         modalHeader.html(response.data.header);
@@ -652,11 +648,10 @@
                         modalBody.html(response.data.body);
                     }
 
-                    console.log('HHDL: About to call initTaskCheckboxes');
                     initTaskCheckboxes();
                     initNotesTabs();
                 } else {
-                    console.error('HHDL: Modal load failed', response);
+                    console.error('[HHDL] Modal load failed', response);
                     modalBody.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');
                 }
             },
@@ -715,30 +710,21 @@
      * Initialize task checkbox handlers
      */
     function initTaskCheckboxes() {
-        console.log('HHDL: initTaskCheckboxes called');
-
         const checkboxes = $('.hhdl-task-checkbox');
-        console.log('HHDL: Found', checkboxes.length, 'task checkboxes');
 
         if (checkboxes.length === 0) {
-            console.warn('HHDL: No task checkboxes found in DOM!');
             return;
         }
 
-        // COMPLETELY remove all event handlers first
-        console.log('HHDL: Removing all existing change handlers');
+        // Remove all event handlers first
         checkboxes.off('change');
 
         // Attach new handler (using .on() not .one() so it persists after cancel)
-        console.log('HHDL: Attaching new change handler');
         checkboxes.on('change', async function(e) {
-            console.log('HHDL: Task checkbox changed');
-
             const checkbox = $(this);
 
             // Prevent duplicate events - check processing flag first
             if (checkbox.data('processing') === true) {
-                console.log('HHDL: Task already processing, ignoring duplicate event');
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 checkbox.prop('checked', false); // Force uncheck
@@ -747,7 +733,6 @@
 
             // Also check if disabled (belt and suspenders)
             if (checkbox.prop('disabled')) {
-                console.log('HHDL: Checkbox already disabled, ignoring event');
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 return false;
@@ -765,32 +750,23 @@
             };
 
             if (checkbox.prop('checked')) {
-                console.log('HHDL: Checkbox is checked, checking for confirmations needed');
-
                 // Set processing flag IMMEDIATELY to prevent duplicate events
-                console.log('HHDL: Setting processing flag and disabling checkbox');
                 checkbox.data('processing', true);
                 checkbox.prop('disabled', true);
 
                 // Show confirmation dialogs if needed
                 if (!taskData.isDefault || taskData.isOccupy) {
-                    console.log('HHDL: Confirmation needed - isDefault:', taskData.isDefault, 'isOccupy:', taskData.isOccupy);
-
                     try {
                         const confirmed = await confirmTaskCompletion(taskData);
-                        console.log('HHDL: confirmTaskCompletion returned:', confirmed);
                         if (!confirmed) {
                             // User cancelled, clear processing flag and re-enable
-                            console.log('HHDL: User cancelled confirmation, clearing flag and re-enabling');
                             checkbox.data('processing', false);
                             checkbox.prop('checked', false);
                             checkbox.prop('disabled', false);
                             return;
                         }
-
-                        console.log('HHDL: Confirmations passed');
                     } catch (error) {
-                        console.error('HHDL: Error in confirmation process:', error);
+                        console.error('[HHDL] Error in confirmation:', error);
                         checkbox.data('processing', false);
                         checkbox.prop('checked', false);
                         checkbox.prop('disabled', false);
@@ -799,7 +775,6 @@
                     }
                 }
 
-                console.log('HHDL: Calling completeTask');
                 completeTask(taskData, checkbox, taskItem);
             }
         });
@@ -809,8 +784,6 @@
      * Show custom confirmation modal
      */
     function showConfirmModal(title, message, iconType, confirmText, confirmClass) {
-        console.log('HHDL: showConfirmModal called with:', {title: title, iconType: iconType, confirmText: confirmText});
-
         return new Promise(function(resolve) {
             try {
                 // Create modal HTML
@@ -830,23 +803,13 @@
                     '</div>' +
                 '</div>');
 
-                console.log('HHDL: Modal HTML created, appending to body');
-
                 // Add to page
                 $('body').append(modal);
-
-                console.log('HHDL: Modal appended, immediately adding active class for debugging');
-                console.log('HHDL: Modal element:', modal[0]);
 
                 // Force active class immediately and force display to flex (workaround for cache issue)
                 modal.addClass('active');
                 // Force display property inline with !important to override any CSS
                 modal[0].style.setProperty('display', 'flex', 'important');
-                console.log('HHDL: Modal active class added and display forced to flex');
-                console.log('HHDL: Modal has active class:', modal.hasClass('active'));
-                console.log('HHDL: Modal opacity:', modal.css('opacity'));
-                console.log('HHDL: Modal z-index:', modal.css('z-index'));
-                console.log('HHDL: Modal display:', modal.css('display'));
                 console.log('HHDL: Modal visibility:', modal.css('visibility'));
 
                 // Handle cancel
@@ -940,11 +903,7 @@
      * Complete a task
      */
     function completeTask(taskData, checkbox, taskItem) {
-        console.log('HHDL: completeTask called with data:', taskData);
-        console.log('HHDL: taskItem element:', taskItem);
-
         // Checkbox should already be disabled from change handler, but ensure it
-        // This is a safety measure in case completeTask is called from elsewhere
         checkbox.prop('disabled', true);
 
         // Add processing overlay
@@ -953,8 +912,6 @@
             '<div class="hhdl-processing-text">Completing task on NewBook</div>' +
             '</div>');
         taskItem.append(overlay);
-
-        console.log('HHDL: Sending AJAX request to complete task');
 
         $.ajax({
             url: hhdlAjax.ajaxUrl,
@@ -971,16 +928,7 @@
                 service_date: currentDate
             },
             success: function(response) {
-                console.log('HHDL: AJAX response received');
-                console.log('HHDL: Response type:', typeof response);
-                console.log('HHDL: Response object:', response);
-                console.log('HHDL: response.success value:', response.success);
-                console.log('HHDL: response.data:', response.data);
-
                 if (response.success) {
-                    console.log('HHDL: Task completed successfully, starting fade out');
-                    console.log('HHDL: taskItem before fadeOut:', taskItem, 'is visible:', taskItem.is(':visible'));
-
                     // Remove overlay immediately
                     overlay.remove();
 
@@ -990,22 +938,16 @@
                     }
 
                     // Fade out and remove task
-                    console.log('HHDL: Calling fadeOut on taskItem');
                     taskItem.fadeOut(400, function() {
-                        console.log('HHDL: Fade complete, removing task from DOM');
                         $(this).remove();
-
                         // Update task count after removal
-                        console.log('HHDL: Calling updateTaskCount with roomId:', taskData.roomId);
                         updateTaskCount(taskData.roomId);
                     });
 
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
                 } else {
-                    // Rollback on error with detailed message
-                    console.error('HHDL: Task completion failed!');
-                    console.error('HHDL: Full response:', response);
-                    console.error('HHDL: Error message:', response.data && response.data.message ? response.data.message : 'No error message provided');
+                    // Rollback on error
+                    console.error('[HHDL] Task completion failed:', response.data && response.data.message ? response.data.message : 'Unknown error');
 
                     checkbox.prop('checked', false);
                     checkbox.prop('disabled', false);
@@ -1057,28 +999,18 @@
      * Update task count badge in modal header, section header, and room card
      */
     function updateTaskCount(roomId) {
-        console.log('HHDL: updateTaskCount called with roomId:', roomId);
-
         var taskList = $('.hhdl-task-list');
-        console.log('HHDL: Found taskList:', taskList.length);
 
         if (!taskList.length) {
-            console.warn('HHDL: No task list found!');
             return;
         }
 
         // Count remaining incomplete tasks (visible items only, not fading out)
-        var allTaskItems = taskList.find('.hhdl-task-item');
         var visibleTaskItems = taskList.find('.hhdl-task-item:visible');
         var incompleteTasks = visibleTaskItems.length;
 
-        console.log('HHDL: Total task items:', allTaskItems.length);
-        console.log('HHDL: Visible task items:', visibleTaskItems.length);
-        console.log('HHDL: Updating task count - ' + incompleteTasks + ' tasks remaining');
-
         // Update the task count badge in modal header
         var modalBadge = $('.hhdl-modal-header .hhdl-task-count-badge');
-        console.log('HHDL: Found modal badge:', modalBadge.length);
         if (modalBadge.length) {
             if (incompleteTasks > 0) {
                 modalBadge.text(incompleteTasks);
@@ -1130,20 +1062,15 @@
 
         // Update the task count badge on the room card in main list
         if (roomId) {
-            console.log('HHDL: Looking for room card with id:', roomId);
             var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
-            console.log('HHDL: Found room card:', roomCard.length);
 
             if (roomCard.length) {
                 var roomBadge = roomCard.find('.hhdl-task-count-badge');
-                console.log('HHDL: Found room badge:', roomBadge.length);
 
                 if (roomBadge.length) {
                     if (incompleteTasks > 0) {
-                        console.log('HHDL: Setting room badge to', incompleteTasks);
                         roomBadge.text(incompleteTasks).show();
                     } else {
-                        console.log('HHDL: Hiding room badge and updating icon to completed');
                         roomBadge.hide();
 
                         // Find the task status container and update its class
