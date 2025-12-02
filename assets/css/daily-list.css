@@ -1942,9 +1942,9 @@
     content: '';
     position: absolute;
     left: -23px;
-    top: 0;
-    bottom: 0;
-    width: 23px;
+    top: -2px;
+    height: 46px;
+    width: 15px;
     border-top: 2px solid #d1d5db;
     border-bottom: 2px solid #d1d5db;
     background: #e5e7eb;
@@ -1959,9 +1959,9 @@
     content: '';
     position: absolute;
     right: -23px;
-    top: 0;
-    bottom: 0;
-    width: 23px;
+    top: -2px;
+    height: 46px;
+    width: 15px;
     border-top: 2px solid #d1d5db;
     border-bottom: 2px solid #d1d5db;
     background: #e5e7eb;
@@ -2087,11 +2087,13 @@
 
     .hhdl-category-header::before {
         left: -12px;
-        width: 12px;
+        width: 15px;
+        height: 42px;
     }
 
     .hhdl-category-header::after {
         right: -12px;
-        width: 12px;
+        width: 15px;
+        height: 42px;
     }
 }
