@@ -247,6 +247,25 @@ class HHDL_Display {
         // Check if early arrival
         $is_early_arrival = !empty($room['booking']) && isset($room['booking']['is_early_arrival']) && $room['booking']['is_early_arrival'];
 
+        // Check if previous booking has late checkout
+        $is_late_checkout = false;
+        if (!$room['spans_previous'] &&
+            !empty($room['prev_booking_status']) &&
+            $room['prev_booking_status'] === 'arrived' &&
+            $room['is_departing'] &&
+            !empty($room['prev_booking_departure'])) {
+
+            // Get default checkout time from hotel settings
+            $hotel = hha()->hotels->get(hha_get_current_location());
+            $default_checkout_time = isset($hotel->default_departure_time) ? $hotel->default_departure_time : '10:00';
+
+            // Compare against departure date
+            $departure_date = date('Y-m-d', strtotime($room['prev_booking_departure']));
+            $default_checkout_timestamp = strtotime($departure_date . ' ' . $default_checkout_time);
+            $actual_departure_timestamp = strtotime($room['prev_booking_departure']);
+            $is_late_checkout = ($actual_departure_timestamp > $default_checkout_timestamp);
+        }
+
         // Data attributes for filtering
         $data_attrs = array(
             'data-room-id'         => $room['room_id'],
@@ -260,6 +279,7 @@ class HHDL_Display {
             'data-spans-previous'  => $room['spans_previous'] ? 'true' : 'false',
             'data-spans-next'      => $room['spans_next'] ? 'true' : 'false',
             'data-early-arrival'   => $is_early_arrival ? 'true' : 'false',
+            'data-late-checkout'   => $is_late_checkout ? 'true' : 'false',
             'data-filter-excluded' => (isset($room['filter_excluded']) && $room['filter_excluded']) ? 'true' : 'false'
         );
 
@@ -319,14 +339,7 @@ class HHDL_Display {
 
                 // Extract time from booking_departure (format: "2025-11-30 11:00:00")
                 $departure_time = date('H:i', strtotime($room['prev_booking_departure']));
-
-                // Get default checkout time from hotel settings
-                $hotel = hha()->hotels->get(hha_get_current_location());
-                $default_checkout_time = isset($hotel->default_departure_time) ? $hotel->default_departure_time : '10:00';
-
-                // Check if departure is late (after default checkout time)
-                $is_late = (strtotime($room['prev_booking_departure']) > strtotime(date('Y-m-d') . ' ' . $default_checkout_time));
-                $late_class = $is_late ? 'hhdl-late-checkout' : '';
+                $late_class = $is_late_checkout ? 'hhdl-late-checkout' : '';
                 ?>
                 <div class="hhdl-prev-departure-time <?php echo esc_attr($late_class); ?>">
                     <span class="material-symbols-outlined">schedule</span>
