@@ -95,7 +95,7 @@ class HHDL_Display {
             'view_mode' => isset($preferences['view_mode']) && in_array($preferences['view_mode'], array('grouped', 'flat'))
                 ? $preferences['view_mode'] : $existing_prefs['view_mode'],
             'collapsed_categories' => isset($preferences['collapsed_categories']) && is_array($preferences['collapsed_categories'])
-                ? array_map('sanitize_text_field', $preferences['collapsed_categories']) : $existing_prefs['collapsed_categories'],
+                ? array_values(array_unique(array_map('strval', $preferences['collapsed_categories']))) : $existing_prefs['collapsed_categories'],
             'default_filter' => isset($preferences['default_filter'])
                 ? sanitize_text_field($preferences['default_filter']) : $existing_prefs['default_filter'],
         );
@@ -300,7 +300,7 @@ class HHDL_Display {
         // Check if this category is in the user's collapsed list
         $user_prefs = self::get_user_preferences(null, $location_id);
         $collapsed_categories = isset($user_prefs['collapsed_categories']) ? $user_prefs['collapsed_categories'] : array();
-        $is_collapsed = in_array($category['id'], $collapsed_categories);
+        $is_collapsed = in_array(strval($category['id']), $collapsed_categories, true);
         $arrow_icon = $is_collapsed ? 'chevron_right' : 'expand_more';
 
         ?>
@@ -485,7 +485,7 @@ class HHDL_Display {
 
             // Render each category with its rooms
             foreach ($categories_order as $category_id => $category_info) {
-                $is_collapsed = in_array($category_id, $collapsed_categories);
+                $is_collapsed = in_array(strval($category_id), $collapsed_categories, true);
 
                 // Render category header
                 $this->render_category_header($category_info, $rooms_by_category[$category_id], $location_id);

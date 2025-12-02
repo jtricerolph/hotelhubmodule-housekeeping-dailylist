@@ -428,6 +428,9 @@
      * Add category to collapsed list
      */
     function addToCollapsedCategories(categoryId) {
+        // Ensure category ID is a string
+        categoryId = String(categoryId);
+
         // Get current collapsed categories
         let collapsed = getCollapsedCategories();
         if (!collapsed.includes(categoryId)) {
@@ -440,6 +443,9 @@
      * Remove category from collapsed list
      */
     function removeFromCollapsedCategories(categoryId) {
+        // Ensure category ID is a string
+        categoryId = String(categoryId);
+
         let collapsed = getCollapsedCategories();
         const index = collapsed.indexOf(categoryId);
         if (index > -1) {
@@ -455,7 +461,8 @@
         // Extract from DOM (already rendered with user preferences)
         const collapsed = [];
         $('.hhdl-category-rooms.hhdl-collapsed').each(function() {
-            collapsed.push($(this).data('category-id'));
+            // Ensure category ID is stored as string
+            collapsed.push(String($(this).data('category-id')));
         });
         return collapsed;
     }
