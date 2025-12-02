@@ -176,20 +176,34 @@ class HHDL_Display {
     }
 
     /**
-     * Render header with date picker
+     * Render header with date display and modal picker button
      */
     private function render_header($selected_date) {
         ?>
         <div class="hhdl-header">
-            <div class="hhdl-date-selector">
-                <label for="hhdl-date-picker"><?php _e('Select Date:', 'hhdl'); ?></label>
-                <input type="date"
-                       id="hhdl-date-picker"
-                       class="hhdl-date-input"
-                       value="<?php echo esc_attr($selected_date); ?>">
-            </div>
             <div class="hhdl-header-info">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
+                <button class="hhdl-date-picker-btn" id="hhdl-open-date-picker" title="<?php esc_attr_e('Change date', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">calendar_month</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Date Picker Modal -->
+        <div class="hhdl-date-modal" id="hhdl-date-modal">
+            <div class="hhdl-date-modal-content">
+                <div class="hhdl-date-modal-header">
+                    <h3><?php _e('Select Date', 'hhdl'); ?></h3>
+                    <button class="hhdl-date-modal-close" id="hhdl-close-date-modal">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="hhdl-date-modal-body">
+                    <input type="date"
+                           id="hhdl-date-picker"
+                           class="hhdl-date-input"
+                           value="<?php echo esc_attr($selected_date); ?>">
+                </div>
             </div>
         </div>
         <?php

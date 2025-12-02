@@ -37,9 +37,38 @@
     }
 
     /**
-     * Initialize date picker handler
+     * Initialize date picker handler and modal
      */
     function initDatePicker() {
+        // Open date picker modal
+        $('#hhdl-open-date-picker').on('click', function() {
+            $('#hhdl-date-modal').addClass('hhdl-modal-open');
+            // Focus the date input
+            setTimeout(() => {
+                $('#hhdl-date-picker').focus();
+            }, 100);
+        });
+
+        // Close date picker modal
+        $('#hhdl-close-date-modal').on('click', function() {
+            $('#hhdl-date-modal').removeClass('hhdl-modal-open');
+        });
+
+        // Close modal when clicking outside content
+        $('#hhdl-date-modal').on('click', function(e) {
+            if ($(e.target).is('#hhdl-date-modal')) {
+                $(this).removeClass('hhdl-modal-open');
+            }
+        });
+
+        // Close modal on Escape key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#hhdl-date-modal').hasClass('hhdl-modal-open')) {
+                $('#hhdl-date-modal').removeClass('hhdl-modal-open');
+            }
+        });
+
+        // Handle date change
         $('#hhdl-date-picker').on('change', function() {
             currentDate = $(this).val();
             updateDateDisplay(currentDate);
@@ -49,6 +78,9 @@
             $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
 
             loadRoomList(currentDate);
+
+            // Close modal after selection
+            $('#hhdl-date-modal').removeClass('hhdl-modal-open');
         });
     }
 
