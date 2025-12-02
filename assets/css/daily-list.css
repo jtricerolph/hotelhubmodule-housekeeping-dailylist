@@ -239,7 +239,7 @@
 
 /* Position in wider border for late checkouts, normal position for on-time */
 .hhdl-room-card[data-late-checkout="true"] .hhdl-prev-departure-time {
-    left: -47px; /* 6px inside 45px wider border */
+    left: -53px; /* Further out in the wider border area */
 }
 
 .hhdl-room-card[data-late-checkout="false"] .hhdl-prev-departure-time {
