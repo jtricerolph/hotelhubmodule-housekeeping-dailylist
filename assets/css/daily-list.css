@@ -19,44 +19,25 @@
     z-index: 100;
     background: #fff;
     border-bottom: 2px solid #e5e7eb;
-    padding: 8px 16px;
+    padding: 10px 16px;
     margin: 0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.hhdl-header:hover {
+    background: #f9fafb;
 }
 
 .hhdl-header-info {
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
 .hhdl-viewing-date {
     font-size: 16px;
     font-weight: 600;
     color: #1f2937;
-}
-
-.hhdl-date-picker-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    background: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.hhdl-date-picker-btn:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-.hhdl-date-picker-btn .material-symbols-outlined {
-    font-size: 18px;
-    color: #6b7280;
 }
 
 /* Date Picker Modal */
@@ -2142,7 +2123,7 @@
     cursor: pointer;
     transition: all 0.2s;
     position: sticky;
-    top: 40px;
+    top: 46px;
     z-index: 50;
 }
 

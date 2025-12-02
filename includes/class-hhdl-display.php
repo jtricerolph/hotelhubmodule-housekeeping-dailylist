@@ -180,12 +180,9 @@ class HHDL_Display {
      */
     private function render_header($selected_date) {
         ?>
-        <div class="hhdl-header">
+        <div class="hhdl-header" id="hhdl-open-date-picker" title="<?php esc_attr_e('Click to change date', 'hhdl'); ?>">
             <div class="hhdl-header-info">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
-                <button class="hhdl-date-picker-btn" id="hhdl-open-date-picker" title="<?php esc_attr_e('Change date', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">calendar_month</span>
-                </button>
             </div>
         </div>
 
