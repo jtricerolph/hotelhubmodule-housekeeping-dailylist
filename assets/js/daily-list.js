@@ -1149,8 +1149,19 @@
         if (!bookings || bookings.length === 0) return;
 
         console.log('[HHDL] Processing ' + bookings.length + ' booking updates');
+        console.log('[HHDL] Currently viewing date: ' + currentDate);
 
         bookings.forEach(function(booking) {
+            // Check if this booking update is relevant to the date we're viewing
+            // For checkout detection, we need to check if the departure date matches
+            const bookingDeparture = booking.booking_departure ?
+                booking.booking_departure.split(' ')[0] : null;
+            const bookingArrival = booking.booking_arrival ?
+                booking.booking_arrival.split(' ')[0] : null;
+
+            console.log('[HHDL] Booking dates - Arrival:', bookingArrival, 'Departure:', bookingDeparture, 'Viewing:', currentDate);
+
+            // Find the room card
             const roomCard = $('.hhdl-room-card[data-room-id="' + booking.site_id + '"]');
 
             if (!roomCard.length) {
@@ -1158,22 +1169,25 @@
                 return;
             }
 
-            const oldStatus = roomCard.attr('data-booking-status');
+            // For departure updates, check if we're viewing the departure date
             const newStatus = booking.booking_status;
+            const isDepartureRelevant = bookingDeparture === currentDate;
 
-            console.log('[HHDL] Room ' + booking.site_name + ': ' + oldStatus + ' → ' + newStatus);
+            // Detect checkout - only if we're viewing the departure date
+            if (newStatus && newStatus.toLowerCase() === 'departed' && isDepartureRelevant) {
+                // This is a departure on the date we're viewing
+                const oldStatus = roomCard.attr('data-booking-status');
 
-            // Detect checkout (any status → departed/Departed)
-            // NewBook may return "Departed" with capital D
-            if (newStatus && newStatus.toLowerCase() === 'departed' &&
-                oldStatus && oldStatus.toLowerCase() !== 'departed') {
-                handleCheckout(roomCard, booking);
+                if (oldStatus && oldStatus.toLowerCase() !== 'departed') {
+                    console.log('[HHDL] Checkout detected for current viewing date: Room ' + booking.site_name);
+                    handleCheckout(roomCard, booking);
+
+                    // Update room card booking status for this date
+                    roomCard.attr('data-booking-status', newStatus);
+                }
             }
 
-            // Update room card booking status
-            roomCard.attr('data-booking-status', newStatus);
-
-            // Update room status (Clean/Dirty/Inspected) if provided
+            // Update room status (Clean/Dirty/Inspected) if provided - always relevant
             if (booking.site_status) {
                 updateRoomStatusDisplay(roomCard, booking.site_status);
             }
@@ -1189,6 +1203,13 @@
         // Update CSS data attributes for styling
         roomCard.attr('data-show-wider-border', 'false');
         roomCard.attr('data-previous-status', 'departed');
+
+        // Hide the departure time element (they've already departed)
+        const departureTimeElement = roomCard.find('.hhdl-prev-departure-time');
+        if (departureTimeElement.length) {
+            console.log('[HHDL] Hiding departure time element');
+            departureTimeElement.hide();
+        }
 
         // Update booking status badge
         const statusBadge = roomCard.find('.hhdl-booking-status-badge');
@@ -1210,7 +1231,11 @@
 
         // Log for debugging
         console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName);
-        showCheckoutNotification(booking.site_name, guestName);
+
+        // Ensure notification shows with a slight delay to avoid race conditions
+        setTimeout(function() {
+            showCheckoutNotification(booking.site_name, guestName);
+        }, 100);
     }
 
     /**
@@ -1278,11 +1303,21 @@
         $('.hhdl-notification-container').append(notification);
         console.log('[HHDL] Notification appended to container');
 
-        // Animate in
+        // Force the notification to be visible with inline styles as backup
+        notification.css({
+            'display': 'block',
+            'opacity': '0',
+            'transform': 'translateX(100px)'
+        });
+
+        // Animate in with a slightly longer delay to ensure DOM is ready
         setTimeout(function() {
-            notification.addClass('show');
-            console.log('[HHDL] Notification show class added');
-        }, 10);
+            notification.addClass('show').css({
+                'opacity': '1',
+                'transform': 'translateX(0)'
+            });
+            console.log('[HHDL] Notification show class added and styles applied');
+        }, 50);
 
         // Close button handler
         notification.find('.hhdl-notification-close').on('click', function() {
@@ -1294,16 +1329,19 @@
             }, 300);
         });
 
-        // Auto-dismiss after 30 seconds
+        // Auto-dismiss after 10 seconds
         setTimeout(function() {
             if ($('#' + notificationId).length) {
-                $('#' + notificationId).removeClass('show');
+                $('#' + notificationId).removeClass('show').css({
+                    'opacity': '0',
+                    'transform': 'translateX(100px)'
+                });
                 setTimeout(function() {
                     $('#' + notificationId).remove();
                     delete checkoutNotifications[roomNumber];
                 }, 300);
             }
-        }, 30000);
+        }, 10000);
     }
 
     /**
