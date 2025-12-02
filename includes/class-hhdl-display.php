@@ -62,6 +62,7 @@ class HHDL_Display {
                 'view_mode' => 'grouped',  // 'grouped' or 'flat'
                 'collapsed_categories' => array(),  // Array of collapsed category IDs
                 'default_filter' => 'all',  // Default filter to apply
+                'filters_visible' => true,  // Whether filters section is shown
             );
         }
 
@@ -103,6 +104,8 @@ class HHDL_Display {
                 ? array_values(array_unique(array_map('strval', $preferences['collapsed_categories']))) : $existing_prefs['collapsed_categories'],
             'default_filter' => isset($preferences['default_filter'])
                 ? sanitize_text_field($preferences['default_filter']) : $existing_prefs['default_filter'],
+            'filters_visible' => isset($preferences['filters_visible'])
+                ? (bool)$preferences['filters_visible'] : $existing_prefs['filters_visible'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -193,13 +196,14 @@ class HHDL_Display {
     }
 
     /**
-     * Render view controls (grouped/flat toggle and reset button)
+     * Render view controls (grouped/flat toggle, filters toggle, and reset button)
      */
     private function render_view_controls() {
         // Get user preferences for current view mode
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
+        $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
         ?>
         <div class="hhdl-view-controls">
             <div class="hhdl-view-mode-toggle">
@@ -214,6 +218,12 @@ class HHDL_Display {
                         title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
                     <span class="material-symbols-outlined">format_list_bulleted</span>
                     <?php _e('Flat', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-view-mode-btn <?php echo $filters_visible ? 'active' : ''; ?>"
+                        id="hhdl-toggle-filters"
+                        title="<?php esc_attr_e('Show/Hide Filters', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">filter_list</span>
+                    <?php _e('Filters', 'hhdl'); ?>
                 </button>
                 <button class="hhdl-view-mode-btn"
                         id="hhdl-reset-preferences"
@@ -230,8 +240,13 @@ class HHDL_Display {
      * Render filter buttons
      */
     private function render_filters() {
+        // Get user preferences to check if filters should be visible
+        $location_id = $this->get_current_location();
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
+        $hidden_class = $filters_visible ? '' : ' hhdl-filters-hidden';
         ?>
-        <div class="hhdl-filters">
+        <div class="hhdl-filters<?php echo $hidden_class; ?>">
             <button class="hhdl-filter-btn active" data-filter="all">
                 <?php _e('All Rooms', 'hhdl'); ?>
             </button>

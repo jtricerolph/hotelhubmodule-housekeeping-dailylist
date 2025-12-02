@@ -51,6 +51,11 @@
     gap: 8px;
     padding: 0 16px 12px 16px;
     overflow-x: auto;
+    transition: all 0.3s ease;
+}
+
+.hhdl-filters.hhdl-filters-hidden {
+    display: none;
 }
 
 .hhdl-filter-btn {

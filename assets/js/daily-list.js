@@ -342,20 +342,41 @@
     }
 
     /**
-     * Initialize view controls (view mode toggle and reset button)
+     * Initialize view controls (view mode toggle, filters toggle, and reset button)
      */
     function initViewControls() {
-        // Handle view mode toggle
-        $(document).on('click', '.hhdl-view-mode-btn', function() {
+        // Handle view mode toggle (grouped/flat only)
+        $(document).on('click', '.hhdl-view-mode-btn[data-view-mode]', function() {
             const $btn = $(this);
             const viewMode = $btn.data('view-mode');
 
-            // Update active state
-            $('.hhdl-view-mode-btn').removeClass('active');
+            // Update active state only for view mode buttons
+            $('.hhdl-view-mode-btn[data-view-mode]').removeClass('active');
             $btn.addClass('active');
 
             // Save preference and reload
             saveUserPreference('view_mode', viewMode);
+        });
+
+        // Handle filters toggle button
+        $(document).on('click', '#hhdl-toggle-filters', function() {
+            const $btn = $(this);
+            const $filters = $('.hhdl-filters');
+            const isCurrentlyVisible = !$filters.hasClass('hhdl-filters-hidden');
+
+            // Toggle visibility
+            $filters.toggleClass('hhdl-filters-hidden');
+            $btn.toggleClass('active');
+
+            // If hiding filters, reset to "all" filter
+            if (isCurrentlyVisible) {
+                $('.hhdl-filter-btn').removeClass('active filter-exclusive');
+                $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
+                filterRooms('all');
+            }
+
+            // Save preference (new state is opposite of current)
+            saveUserPreference('filters_visible', !isCurrentlyVisible);
         });
 
         // Handle reset preferences button
