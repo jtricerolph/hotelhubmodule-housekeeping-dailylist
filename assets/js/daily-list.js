@@ -226,6 +226,8 @@
             filterRooms(savedFilter, savedMode);
             // Scroll to show the active filter
             scrollToActiveFilter();
+            // Update sticky state
+            setTimeout(updateFiltersStickyState, 50);
         }
 
         $('.hhdl-filter-btn').on('click', function() {
@@ -247,6 +249,8 @@
                 filterRooms('all', 'inclusive');
                 // Save filter preference
                 saveFilterPreference('all', 'inclusive');
+                // Update sticky state
+                updateFiltersStickyState();
                 return;
             }
 
@@ -273,6 +277,7 @@
                 filterRooms(filter, 'inclusive');
                 saveFilterPreference(filter, 'inclusive');
                 scrollToActiveFilter();
+                updateFiltersStickyState();
             } else if (isInclusive) {
                 // State 2: Set to exclusive (red)
                 $btn.addClass('filter-exclusive');
@@ -280,6 +285,7 @@
                 filterRooms(filter, 'exclusive');
                 saveFilterPreference(filter, 'exclusive');
                 scrollToActiveFilter();
+                updateFiltersStickyState();
             } else {
                 // State 3: Clear filter (back to 'all')
                 $btn.removeClass('active filter-exclusive');
@@ -287,6 +293,7 @@
                 $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
                 filterRooms('all', 'inclusive');
                 saveFilterPreference('all', 'inclusive');
+                updateFiltersStickyState();
             }
         });
     }
@@ -538,6 +545,8 @@
                 $('.hhdl-filter-btn').removeClass('active filter-exclusive');
                 $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
                 filterRooms('all');
+                // Remove sticky state when hiding filters
+                $filtersWrapper.removeClass('hhdl-filters-sticky');
             }
 
             // Save preference (new state is opposite of current)
@@ -672,6 +681,22 @@
     }
 
     /**
+     * Update filters sticky state based on active filter
+     */
+    function updateFiltersStickyState() {
+        const $filtersWrapper = $('.hhdl-filters-wrapper');
+        const $activeFilter = $('.hhdl-filter-btn.active');
+        const activeFilterType = $activeFilter.data('filter');
+
+        // Make sticky if any filter other than 'all' is active
+        if (activeFilterType && activeFilterType !== 'all') {
+            $filtersWrapper.addClass('hhdl-filters-sticky');
+        } else {
+            $filtersWrapper.removeClass('hhdl-filters-sticky');
+        }
+    }
+
+    /**
      * Initialize filter scroll arrows
      */
     function initFilterScrollArrows() {
@@ -722,6 +747,9 @@
 
         // Initial arrow visibility check
         setTimeout(updateArrowVisibility, 100);
+
+        // Initial sticky state check
+        updateFiltersStickyState();
     }
 
     /**
@@ -871,6 +899,11 @@
                         filterRooms(activeFilter, activeFilterMode);
                         // Scroll to show the active filter
                         setTimeout(scrollToActiveFilter, 100);
+                        // Update sticky state
+                        setTimeout(updateFiltersStickyState, 100);
+                    } else {
+                        // Ensure sticky state is removed if 'all' filter
+                        setTimeout(updateFiltersStickyState, 100);
                     }
                 } else {
                     roomList.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');

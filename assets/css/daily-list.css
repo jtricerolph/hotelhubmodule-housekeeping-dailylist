@@ -287,6 +287,17 @@
 .hhdl-filters-wrapper {
     position: relative;
     margin-top: 8px;
+    transition: all 0.2s;
+}
+
+.hhdl-filters-wrapper.hhdl-filters-sticky {
+    position: sticky;
+    top: 46px; /* Below header */
+    z-index: 90;
+    background: #fff;
+    margin-top: 0;
+    padding-top: 8px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .hhdl-filters {
