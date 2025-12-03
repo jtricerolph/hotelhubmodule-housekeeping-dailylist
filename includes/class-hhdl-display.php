@@ -302,12 +302,16 @@ class HHDL_Display {
         // Filters maintain independent visibility state
         $hidden_class = $filters_visible ? '' : ' hhdl-filters-hidden';
         ?>
-        <div class="hhdl-filters<?php echo $hidden_class; ?>"
-             data-active-filter="<?php echo esc_attr($active_filter); ?>"
-             data-active-filter-mode="<?php echo esc_attr($active_filter_mode); ?>">
-            <button class="hhdl-filter-btn <?php echo $active_filter === 'all' ? 'active' : ''; ?>" data-filter="all">
-                <?php _e('All Rooms', 'hhdl'); ?>
+        <div class="hhdl-filters-wrapper<?php echo $hidden_class; ?>">
+            <button class="hhdl-filters-scroll-btn left" id="hhdl-scroll-filters-left">
+                <span class="material-symbols-outlined">chevron_left</span>
             </button>
+            <div class="hhdl-filters"
+                 data-active-filter="<?php echo esc_attr($active_filter); ?>"
+                 data-active-filter-mode="<?php echo esc_attr($active_filter_mode); ?>">
+                <button class="hhdl-filter-btn <?php echo $active_filter === 'all' ? 'active' : ''; ?>" data-filter="all">
+                    <?php _e('All Rooms', 'hhdl'); ?>
+                </button>
             <button class="hhdl-filter-btn <?php echo ($active_filter === 'arrivals' ? 'active' : '') . ($active_filter === 'arrivals' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="arrivals">
                 <?php _e('Arrivals', 'hhdl'); ?>
             </button>
@@ -331,6 +335,10 @@ class HHDL_Display {
             </button>
             <button class="hhdl-filter-btn <?php echo ($active_filter === 'unoccupied' ? 'active' : '') . ($active_filter === 'unoccupied' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="unoccupied">
                 <?php _e('Unoccupied', 'hhdl'); ?>
+            </button>
+            </div>
+            <button class="hhdl-filters-scroll-btn right" id="hhdl-scroll-filters-right">
+                <span class="material-symbols-outlined">chevron_right</span>
             </button>
         </div>
         <?php

@@ -27,6 +27,7 @@
         // Initialize components
         initDatePicker();
         initFilters();
+        initFilterScrollArrows();
         initModal();
         initHeartbeat();
         initViewControls();  // Initialize view mode and reset controls
@@ -525,11 +526,11 @@
         // Handle filters toggle button
         $(document).on('click', '#hhdl-toggle-filters', function() {
             const $btn = $(this);
-            const $filters = $('.hhdl-filters');
-            const isCurrentlyVisible = !$filters.hasClass('hhdl-filters-hidden');
+            const $filtersWrapper = $('.hhdl-filters-wrapper');
+            const isCurrentlyVisible = !$filtersWrapper.hasClass('hhdl-filters-hidden');
 
             // Toggle visibility
-            $filters.toggleClass('hhdl-filters-hidden');
+            $filtersWrapper.toggleClass('hhdl-filters-hidden');
             $btn.toggleClass('active');
 
             // If hiding filters, reset to "all" filter
@@ -668,6 +669,59 @@
             // Button is to the right, scroll right
             $filtersContainer.scrollLeft(containerScrollLeft + btnOffsetLeft + btnWidth - containerWidth + 10);
         }
+    }
+
+    /**
+     * Initialize filter scroll arrows
+     */
+    function initFilterScrollArrows() {
+        const $filtersContainer = $('.hhdl-filters');
+        const $leftArrow = $('#hhdl-scroll-filters-left');
+        const $rightArrow = $('#hhdl-scroll-filters-right');
+
+        if (!$filtersContainer.length) return;
+
+        // Update arrow visibility based on scroll position
+        function updateArrowVisibility() {
+            const scrollLeft = $filtersContainer.scrollLeft();
+            const scrollWidth = $filtersContainer[0].scrollWidth;
+            const containerWidth = $filtersContainer.width();
+
+            // Show left arrow if not at the start
+            if (scrollLeft > 5) {
+                $leftArrow.addClass('visible');
+            } else {
+                $leftArrow.removeClass('visible');
+            }
+
+            // Show right arrow if not at the end
+            if (scrollLeft < scrollWidth - containerWidth - 5) {
+                $rightArrow.addClass('visible');
+            } else {
+                $rightArrow.removeClass('visible');
+            }
+        }
+
+        // Handle left arrow click
+        $leftArrow.on('click', function() {
+            const scrollAmount = $filtersContainer.width() * 0.8;
+            $filtersContainer.scrollLeft($filtersContainer.scrollLeft() - scrollAmount);
+        });
+
+        // Handle right arrow click
+        $rightArrow.on('click', function() {
+            const scrollAmount = $filtersContainer.width() * 0.8;
+            $filtersContainer.scrollLeft($filtersContainer.scrollLeft() + scrollAmount);
+        });
+
+        // Update arrows on scroll
+        $filtersContainer.on('scroll', updateArrowVisibility);
+
+        // Update arrows on window resize
+        $(window).on('resize', updateArrowVisibility);
+
+        // Initial arrow visibility check
+        setTimeout(updateArrowVisibility, 100);
     }
 
     /**
