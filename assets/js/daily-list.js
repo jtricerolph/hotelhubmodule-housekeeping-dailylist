@@ -98,10 +98,7 @@
             currentDate = dateString;
             updateDateDisplay(dateString);
 
-            // Reset filter to 'all' when date changes
-            $('.hhdl-filter-btn').removeClass('active');
-            $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
-
+            // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
 
             // Close modal after selection
@@ -119,10 +116,7 @@
             currentDate = dateString;
             updateDateDisplay(dateString);
 
-            // Reset filter to 'all' when date changes
-            $('.hhdl-filter-btn').removeClass('active');
-            $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
-
+            // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
 
             // Close modal after selection
@@ -219,6 +213,20 @@
      * - Click 3: Clear filter - back to 'all'
      */
     function initFilters() {
+        // Apply saved filter on init
+        const $filters = $('.hhdl-filters');
+        const savedFilter = $filters.data('active-filter');
+        const savedMode = $filters.data('active-filter-mode');
+
+        if (savedFilter && savedFilter !== 'all') {
+            // Apply the saved filter
+            const $activeBtn = $(`.hhdl-filter-btn[data-filter="${savedFilter}"]`);
+            updateFilterButtonLabel($activeBtn, savedFilter, savedMode);
+            filterRooms(savedFilter, savedMode);
+            // Scroll to show the active filter
+            scrollToActiveFilter();
+        }
+
         $('.hhdl-filter-btn').on('click', function() {
             const $btn = $(this);
             const filter = $btn.data('filter');
@@ -236,6 +244,8 @@
                 $('.hhdl-filter-btn').removeClass('active filter-exclusive');
                 $btn.addClass('active');
                 filterRooms('all', 'inclusive');
+                // Save filter preference
+                saveFilterPreference('all', 'inclusive');
                 return;
             }
 
@@ -260,17 +270,22 @@
                 $btn.addClass('active').removeClass('filter-exclusive');
                 updateFilterButtonLabel($btn, filter, 'inclusive');
                 filterRooms(filter, 'inclusive');
+                saveFilterPreference(filter, 'inclusive');
+                scrollToActiveFilter();
             } else if (isInclusive) {
                 // State 2: Set to exclusive (red)
                 $btn.addClass('filter-exclusive');
                 updateFilterButtonLabel($btn, filter, 'exclusive');
                 filterRooms(filter, 'exclusive');
+                saveFilterPreference(filter, 'exclusive');
+                scrollToActiveFilter();
             } else {
                 // State 3: Clear filter (back to 'all')
                 $btn.removeClass('active filter-exclusive');
                 updateFilterButtonLabel($btn, filter, 'inclusive');
                 $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
                 filterRooms('all', 'inclusive');
+                saveFilterPreference('all', 'inclusive');
             }
         });
     }
@@ -611,6 +626,51 @@
     }
 
     /**
+     * Save filter preference (filter type and mode)
+     */
+    function saveFilterPreference(filter, mode) {
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'hhdl_save_user_preferences',
+                nonce: hhdlAjax.nonce,
+                location_id: currentLocationId,
+                preferences: JSON.stringify({
+                    active_filter: filter,
+                    active_filter_mode: mode
+                })
+            },
+            error: function() {
+                console.error('[HHDL] Failed to save filter preference');
+            }
+        });
+    }
+
+    /**
+     * Scroll filters container to keep active filter visible
+     */
+    function scrollToActiveFilter() {
+        const $activeBtn = $('.hhdl-filter-btn.active');
+        if (!$activeBtn.length) return;
+
+        const $filtersContainer = $('.hhdl-filters');
+        const containerScrollLeft = $filtersContainer.scrollLeft();
+        const containerWidth = $filtersContainer.width();
+        const btnOffsetLeft = $activeBtn.position().left;
+        const btnWidth = $activeBtn.outerWidth();
+
+        // Check if button is outside visible area
+        if (btnOffsetLeft < 0) {
+            // Button is to the left, scroll left
+            $filtersContainer.scrollLeft(containerScrollLeft + btnOffsetLeft - 10);
+        } else if (btnOffsetLeft + btnWidth > containerWidth) {
+            // Button is to the right, scroll right
+            $filtersContainer.scrollLeft(containerScrollLeft + btnOffsetLeft + btnWidth - containerWidth + 10);
+        }
+    }
+
+    /**
      * Add category to collapsed list
      */
     function addToCollapsedCategories(categoryId) {
@@ -747,6 +807,16 @@
                     // Update filter counts
                     if (response.data.counts) {
                         updateFilterCounts(response.data.counts);
+                    }
+
+                    // Re-apply saved filter to new data
+                    const $filters = $('.hhdl-filters');
+                    const activeFilter = $filters.data('active-filter') || 'all';
+                    const activeFilterMode = $filters.data('active-filter-mode') || 'inclusive';
+                    if (activeFilter && activeFilter !== 'all') {
+                        filterRooms(activeFilter, activeFilterMode);
+                        // Scroll to show the active filter
+                        setTimeout(scrollToActiveFilter, 100);
                     }
                 } else {
                     roomList.html('<div class="hhdl-notice hhdl-notice-error"><p>' + (response.data.message || hhdlAjax.strings.error) + '</p></div>');

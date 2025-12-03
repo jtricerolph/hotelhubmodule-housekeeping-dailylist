@@ -64,6 +64,8 @@ class HHDL_Display {
                 'default_filter' => 'all',  // Default filter to apply
                 'filters_visible' => true,  // Whether filters section is shown
                 'controls_visible' => true,  // Whether view controls and filters are shown
+                'active_filter' => 'all',  // Currently active filter
+                'active_filter_mode' => 'inclusive',  // 'inclusive' or 'exclusive'
             );
         }
 
@@ -109,6 +111,10 @@ class HHDL_Display {
                 ? (bool)$preferences['filters_visible'] : $existing_prefs['filters_visible'],
             'controls_visible' => isset($preferences['controls_visible'])
                 ? (bool)$preferences['controls_visible'] : $existing_prefs['controls_visible'],
+            'active_filter' => isset($preferences['active_filter'])
+                ? sanitize_text_field($preferences['active_filter']) : $existing_prefs['active_filter'],
+            'active_filter_mode' => isset($preferences['active_filter_mode']) && in_array($preferences['active_filter_mode'], array('inclusive', 'exclusive'))
+                ? $preferences['active_filter_mode'] : $existing_prefs['active_filter_mode'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -290,35 +296,40 @@ class HHDL_Display {
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
+        $active_filter = isset($user_prefs['active_filter']) ? $user_prefs['active_filter'] : 'all';
+        $active_filter_mode = isset($user_prefs['active_filter_mode']) ? $user_prefs['active_filter_mode'] : 'inclusive';
+
         // Filters maintain independent visibility state
         $hidden_class = $filters_visible ? '' : ' hhdl-filters-hidden';
         ?>
-        <div class="hhdl-filters<?php echo $hidden_class; ?>">
-            <button class="hhdl-filter-btn active" data-filter="all">
+        <div class="hhdl-filters<?php echo $hidden_class; ?>"
+             data-active-filter="<?php echo esc_attr($active_filter); ?>"
+             data-active-filter-mode="<?php echo esc_attr($active_filter_mode); ?>">
+            <button class="hhdl-filter-btn <?php echo $active_filter === 'all' ? 'active' : ''; ?>" data-filter="all">
                 <?php _e('All Rooms', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="arrivals">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'arrivals' ? 'active' : '') . ($active_filter === 'arrivals' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="arrivals">
                 <?php _e('Arrivals', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="departs">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'departs' ? 'active' : '') . ($active_filter === 'departs' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="departs">
                 <?php _e('Departs', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="stopovers">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'stopovers' ? 'active' : '') . ($active_filter === 'stopovers' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="stopovers">
                 <?php _e('Stopovers', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="back-to-back">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'back-to-back' ? 'active' : '') . ($active_filter === 'back-to-back' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="back-to-back">
                 <?php _e('Back to Back', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="twins">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'twins' ? 'active' : '') . ($active_filter === 'twins' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="twins">
                 <?php _e('Twins', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="blocked">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'blocked' ? 'active' : '') . ($active_filter === 'blocked' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="blocked">
                 <?php _e('Blocked', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="no-booking">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'no-booking' ? 'active' : '') . ($active_filter === 'no-booking' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="no-booking">
                 <?php _e('No Booking', 'hhdl'); ?>
             </button>
-            <button class="hhdl-filter-btn" data-filter="unoccupied">
+            <button class="hhdl-filter-btn <?php echo ($active_filter === 'unoccupied' ? 'active' : '') . ($active_filter === 'unoccupied' && $active_filter_mode === 'exclusive' ? ' filter-exclusive' : ''); ?>" data-filter="unoccupied">
                 <?php _e('Unoccupied', 'hhdl'); ?>
             </button>
         </div>
