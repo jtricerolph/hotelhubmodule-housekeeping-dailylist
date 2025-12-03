@@ -28,6 +28,8 @@
         initDatePicker();
         initFilters();
         initFilterScrollArrows();
+        initStatFilters();
+        initStatFilterScrollArrows();
         initModal();
         initHeartbeat();
         initViewControls();  // Initialize view mode and reset controls
@@ -488,6 +490,64 @@
     }
 
     /**
+     * Filter rooms by stat filters
+     */
+    function filterRoomsByStats(statFilterType) {
+        $('.hhdl-room-card').each(function() {
+            const card = $(this);
+            let matchesFilter = false;
+
+            // Determine if room matches the stat filter criteria
+            switch(statFilterType) {
+                case 'newbook-tasks-outstanding':
+                    // Check if room has outstanding NewBook tasks (red/amber icon)
+                    matchesFilter = card.find('.hhdl-task-late, .hhdl-task-return').length > 0;
+                    break;
+                case 'newbook-tasks-complete':
+                    // Check if room has no outstanding NewBook tasks (green icon or no tasks)
+                    matchesFilter = card.find('.hhdl-task-complete').length > 0 || card.find('.hhdl-task-late, .hhdl-task-return').length === 0;
+                    break;
+                case 'recurring-tasks-outstanding':
+                    // TODO: Implement when recurring task tracking is added
+                    matchesFilter = false;
+                    break;
+                case 'recurring-tasks-complete':
+                    // TODO: Implement when recurring task tracking is added
+                    matchesFilter = true;
+                    break;
+                case 'linen-none':
+                    // Rooms with no linen count data (grey icon)
+                    matchesFilter = card.find('.hhdl-linen-none').length > 0;
+                    break;
+                case 'linen-unsaved':
+                    // Rooms with unsaved linen counts (amber icon)
+                    matchesFilter = card.find('.hhdl-linen-unsaved').length > 0;
+                    break;
+                case 'linen-submitted':
+                    // Rooms with submitted linen counts (green icon)
+                    matchesFilter = card.find('.hhdl-linen-submitted').length > 0;
+                    break;
+                case 'clean':
+                    // TODO: Implement when clean/dirty status is available
+                    matchesFilter = false;
+                    break;
+                case 'dirty':
+                    // TODO: Implement when clean/dirty status is available
+                    matchesFilter = false;
+                    break;
+                case 'all':
+                default:
+                    matchesFilter = true;
+            }
+
+            card.toggle(matchesFilter);
+        });
+
+        // Update category header counts after filtering
+        updateCategoryFilterCounts();
+    }
+
+    /**
      * Update filter button counts
      */
     function updateFilterCounts(counts) {
@@ -557,6 +617,27 @@
 
             // Save preference (new state is opposite of current)
             saveUserPreference('filters_visible', !isCurrentlyVisible);
+        });
+
+        // Handle stat filters toggle button
+        $(document).on('click', '#hhdl-toggle-stat-filters', function() {
+            const $btn = $(this);
+            const $statFiltersWrapper = $('.hhdl-stat-filters-wrapper');
+            const isCurrentlyVisible = !$statFiltersWrapper.hasClass('hhdl-stat-filters-hidden');
+
+            // Toggle visibility
+            $statFiltersWrapper.toggleClass('hhdl-stat-filters-hidden');
+            $btn.toggleClass('active');
+
+            // If hiding stat filters, reset to "all" filter
+            if (isCurrentlyVisible) {
+                $('.hhdl-stat-filter-btn').removeClass('active');
+                $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('active');
+                filterRoomsByStats('all');
+            }
+
+            // Save preference (new state is opposite of current)
+            saveUserPreference('stat_filters_visible', !isCurrentlyVisible);
         });
 
         // Handle controls toggle button (gear icon in header)
@@ -756,6 +837,116 @@
 
         // Initial sticky state check
         updateFiltersStickyState();
+    }
+
+    /**
+     * Initialize stat filter button handlers
+     */
+    function initStatFilters() {
+        // Apply saved stat filter on init
+        const $statFilters = $('.hhdl-stat-filters');
+        const savedStatFilter = $statFilters.data('active-stat-filter');
+
+        if (savedStatFilter && savedStatFilter !== 'all') {
+            // Apply the saved stat filter
+            filterRoomsByStats(savedStatFilter);
+            // Scroll to show the active filter
+            scrollToActiveStatFilter();
+        }
+
+        $('.hhdl-stat-filter-btn').on('click', function() {
+            const $btn = $(this);
+            const statFilter = $btn.data('stat-filter');
+
+            // Clear all other stat filters
+            $('.hhdl-stat-filter-btn').removeClass('active');
+            $btn.addClass('active');
+
+            // Apply the stat filter
+            filterRoomsByStats(statFilter);
+
+            // Save stat filter preference
+            saveUserPreference('active_stat_filter', statFilter);
+
+            // Scroll to show the active filter
+            scrollToActiveStatFilter();
+        });
+    }
+
+    /**
+     * Scroll stat filters container to keep active filter visible
+     */
+    function scrollToActiveStatFilter() {
+        const $activeBtn = $('.hhdl-stat-filter-btn.active');
+        if (!$activeBtn.length) return;
+
+        const $filtersContainer = $('.hhdl-stat-filters');
+        const containerScrollLeft = $filtersContainer.scrollLeft();
+        const containerWidth = $filtersContainer.width();
+        const btnOffsetLeft = $activeBtn.position().left;
+        const btnWidth = $activeBtn.outerWidth();
+
+        // Check if button is outside visible area
+        if (btnOffsetLeft < 0) {
+            // Button is to the left, scroll left
+            $filtersContainer.scrollLeft(containerScrollLeft + btnOffsetLeft - 10);
+        } else if (btnOffsetLeft + btnWidth > containerWidth) {
+            // Button is to the right, scroll right
+            $filtersContainer.scrollLeft(containerScrollLeft + btnOffsetLeft + btnWidth - containerWidth + 10);
+        }
+    }
+
+    /**
+     * Initialize stat filter scroll arrows
+     */
+    function initStatFilterScrollArrows() {
+        const $filtersContainer = $('.hhdl-stat-filters');
+        const $leftArrow = $('#hhdl-scroll-stat-filters-left');
+        const $rightArrow = $('#hhdl-scroll-stat-filters-right');
+
+        if (!$filtersContainer.length) return;
+
+        // Update arrow visibility based on scroll position
+        function updateArrowVisibility() {
+            const scrollLeft = $filtersContainer.scrollLeft();
+            const scrollWidth = $filtersContainer[0].scrollWidth;
+            const containerWidth = $filtersContainer.width();
+
+            // Show left arrow if not at the start
+            if (scrollLeft > 5) {
+                $leftArrow.addClass('visible');
+            } else {
+                $leftArrow.removeClass('visible');
+            }
+
+            // Show right arrow if not at the end
+            if (scrollLeft < scrollWidth - containerWidth - 5) {
+                $rightArrow.addClass('visible');
+            } else {
+                $rightArrow.removeClass('visible');
+            }
+        }
+
+        // Handle left arrow click
+        $leftArrow.on('click', function() {
+            const scrollAmount = $filtersContainer.width() * 0.8;
+            $filtersContainer.scrollLeft($filtersContainer.scrollLeft() - scrollAmount);
+        });
+
+        // Handle right arrow click
+        $rightArrow.on('click', function() {
+            const scrollAmount = $filtersContainer.width() * 0.8;
+            $filtersContainer.scrollLeft($filtersContainer.scrollLeft() + scrollAmount);
+        });
+
+        // Update arrows on scroll
+        $filtersContainer.on('scroll', updateArrowVisibility);
+
+        // Update arrows on window resize
+        $(window).on('resize', updateArrowVisibility);
+
+        // Initial arrow visibility check
+        setTimeout(updateArrowVisibility, 100);
     }
 
     /**

@@ -400,6 +400,115 @@
     color: #fff;
 }
 
+/* Stat Filters */
+.hhdl-stat-filters-wrapper {
+    position: relative;
+    margin-top: 8px;
+    transition: all 0.2s;
+}
+
+.hhdl-stat-filters {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px 16px;
+    overflow-x: auto;
+    transition: all 0.3s ease;
+    scroll-behavior: smooth;
+    /* Hide scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hhdl-stat-filters::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.hhdl-stat-filters-wrapper.hhdl-stat-filters-hidden {
+    display: none;
+}
+
+/* Scroll arrows for stat filters */
+.hhdl-stat-filters-scroll-btn {
+    position: absolute;
+    top: 0;
+    bottom: 12px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.hhdl-stat-filters-scroll-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.hhdl-stat-filters-scroll-btn:hover {
+    background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+}
+
+.hhdl-stat-filters-scroll-btn.left {
+    left: 0;
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+}
+
+.hhdl-stat-filters-scroll-btn.left:hover {
+    background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+}
+
+.hhdl-stat-filters-scroll-btn.right {
+    right: 0;
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+}
+
+.hhdl-stat-filters-scroll-btn.right:hover {
+    background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+}
+
+.hhdl-stat-filters-scroll-btn .material-symbols-outlined {
+    font-size: 20px;
+    color: #6b7280;
+}
+
+.hhdl-stat-filter-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hhdl-stat-filter-btn:hover {
+    background: #e5e7eb;
+}
+
+.hhdl-stat-filter-btn.active {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.hhdl-stat-filter-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
 .hhdl-count-badge {
     display: inline-block;
     min-width: 20px;

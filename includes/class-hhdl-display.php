@@ -68,11 +68,13 @@ class HHDL_Display {
                 'view_mode' => 'grouped',  // 'grouped' or 'flat'
                 'collapsed_categories' => array(),  // Array of collapsed category IDs
                 'default_filter' => 'all',  // Default filter to apply
-                'filters_visible' => true,  // Whether filters section is shown
+                'filters_visible' => true,  // Whether room filters section is shown
                 'controls_visible' => true,  // Whether view controls and filters are shown
-                'active_filter' => 'all',  // Currently active filter
+                'active_filter' => 'all',  // Currently active room filter
                 'active_filter_mode' => 'inclusive',  // 'inclusive' or 'exclusive'
                 'selected_date' => '',  // Last selected date (Y-m-d format)
+                'stat_filters_visible' => true,  // Whether stat filters section is shown
+                'active_stat_filter' => 'all',  // Currently active stat filter
             );
         }
 
@@ -124,6 +126,10 @@ class HHDL_Display {
                 ? $preferences['active_filter_mode'] : $existing_prefs['active_filter_mode'],
             'selected_date' => isset($preferences['selected_date'])
                 ? sanitize_text_field($preferences['selected_date']) : $existing_prefs['selected_date'],
+            'stat_filters_visible' => isset($preferences['stat_filters_visible'])
+                ? (bool)$preferences['stat_filters_visible'] : $existing_prefs['stat_filters_visible'],
+            'active_stat_filter' => isset($preferences['active_stat_filter'])
+                ? sanitize_text_field($preferences['active_stat_filter']) : $existing_prefs['active_stat_filter'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -191,6 +197,7 @@ class HHDL_Display {
         $this->render_header($selected_date);
         $this->render_view_controls();
         $this->render_filters();
+        $this->render_stat_filters();
         $this->render_room_list($location_id, $selected_date);
         $this->render_modal();
     }
@@ -265,6 +272,7 @@ class HHDL_Display {
         $user_prefs = self::get_user_preferences(null, $location_id);
         $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
         $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
+        $stat_filters_visible = isset($user_prefs['stat_filters_visible']) ? $user_prefs['stat_filters_visible'] : true;
         $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
         $hidden_class = $controls_visible ? '' : ' hhdl-controls-hidden';
         ?>
@@ -284,9 +292,15 @@ class HHDL_Display {
                 </button>
                 <button class="hhdl-view-mode-btn <?php echo $filters_visible ? 'active' : ''; ?>"
                         id="hhdl-toggle-filters"
-                        title="<?php esc_attr_e('Show/Hide Filters', 'hhdl'); ?>">
+                        title="<?php esc_attr_e('Show/Hide Room Filters', 'hhdl'); ?>">
                     <span class="material-symbols-outlined">filter_list</span>
-                    <?php _e('Show Filters', 'hhdl'); ?>
+                    <?php _e('State Filters', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-view-mode-btn <?php echo $stat_filters_visible ? 'active' : ''; ?>"
+                        id="hhdl-toggle-stat-filters"
+                        title="<?php esc_attr_e('Show/Hide Stat Filters', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <?php _e('Stat Filters', 'hhdl'); ?>
                 </button>
                 <button class="hhdl-view-mode-btn"
                         id="hhdl-reset-preferences"
@@ -349,6 +363,72 @@ class HHDL_Display {
             </button>
             </div>
             <button class="hhdl-filters-scroll-btn right" id="hhdl-scroll-filters-right">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render stat filter buttons
+     */
+    private function render_stat_filters() {
+        // Get user preferences to check if stat filters should be visible
+        $location_id = $this->get_current_location();
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $stat_filters_visible = isset($user_prefs['stat_filters_visible']) ? $user_prefs['stat_filters_visible'] : true;
+        $active_stat_filter = isset($user_prefs['active_stat_filter']) ? $user_prefs['active_stat_filter'] : 'all';
+
+        // Stat filters maintain independent visibility state
+        $hidden_class = $stat_filters_visible ? '' : ' hhdl-stat-filters-hidden';
+        ?>
+        <div class="hhdl-stat-filters-wrapper<?php echo $hidden_class; ?>">
+            <button class="hhdl-stat-filters-scroll-btn left" id="hhdl-scroll-stat-filters-left">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <div class="hhdl-stat-filters"
+                 data-active-stat-filter="<?php echo esc_attr($active_stat_filter); ?>">
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'all' ? 'active' : ''; ?>" data-stat-filter="all">
+                    <?php _e('All Rooms', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'newbook-tasks-outstanding' ? 'active' : ''; ?>" data-stat-filter="newbook-tasks-outstanding">
+                    <span class="material-symbols-outlined">assignment_late</span>
+                    <?php _e('NewBook Tasks', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'newbook-tasks-complete' ? 'active' : ''; ?>" data-stat-filter="newbook-tasks-complete">
+                    <span class="material-symbols-outlined">assignment_turned_in</span>
+                    <?php _e('NewBook Complete', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'recurring-tasks-outstanding' ? 'active' : ''; ?>" data-stat-filter="recurring-tasks-outstanding">
+                    <span class="material-symbols-outlined">checklist_rtl</span>
+                    <?php _e('Recurring Tasks', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'recurring-tasks-complete' ? 'active' : ''; ?>" data-stat-filter="recurring-tasks-complete">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    <?php _e('Recurring Complete', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-none' ? 'active' : ''; ?>" data-stat-filter="linen-none">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <?php _e('No Linen Count', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-unsaved' ? 'active' : ''; ?>" data-stat-filter="linen-unsaved">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <?php _e('Linen Unsaved', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-submitted' ? 'active' : ''; ?>" data-stat-filter="linen-submitted">
+                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <?php _e('Linen Submitted', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'clean' ? 'active' : ''; ?>" data-stat-filter="clean">
+                    <span class="material-symbols-outlined">cleaning_services</span>
+                    <?php _e('Clean', 'hhdl'); ?>
+                </button>
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'dirty' ? 'active' : ''; ?>" data-stat-filter="dirty">
+                    <span class="material-symbols-outlined">cleaning_services</span>
+                    <?php _e('Dirty', 'hhdl'); ?>
+                </button>
+            </div>
+            <button class="hhdl-stat-filters-scroll-btn right" id="hhdl-scroll-stat-filters-right">
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
         </div>
