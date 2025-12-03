@@ -257,7 +257,7 @@ class HHDL_Display {
                         data-view-mode="grouped"
                         title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
                     <span class="material-symbols-outlined">view_list</span>
-                    <?php _e('Grouped', 'hhdl'); ?>
+                    <?php _e('Categories', 'hhdl'); ?>
                 </button>
                 <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
                         data-view-mode="flat"
@@ -269,7 +269,7 @@ class HHDL_Display {
                         id="hhdl-toggle-filters"
                         title="<?php esc_attr_e('Show/Hide Filters', 'hhdl'); ?>">
                     <span class="material-symbols-outlined">filter_list</span>
-                    <?php _e('Filters', 'hhdl'); ?>
+                    <?php _e('Show Filters', 'hhdl'); ?>
                 </button>
                 <button class="hhdl-view-mode-btn"
                         id="hhdl-reset-preferences"
