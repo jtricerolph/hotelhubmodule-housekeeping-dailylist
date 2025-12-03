@@ -848,7 +848,8 @@
             const statFilter = $btn.data('stat-filter');
             if (statFilter !== 'all') {
                 const mode = $btn.data('stat-filter-mode') || 'outstanding';
-                updateStatFilterButtonLabel($btn, statFilter, mode);
+                const isActive = $btn.hasClass('active');
+                updateStatFilterButtonLabel($btn, statFilter, mode, isActive);
             }
         });
 
@@ -857,6 +858,9 @@
             filterRoomsByStats(savedStatFilter, savedStatFilterMode);
             // Scroll to show the active filter
             scrollToActiveStatFilter();
+        } else if (savedStatFilter === 'all') {
+            // Make sure All Rooms button has the green class
+            $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('stat-filter-all-rooms');
         }
 
         $('.hhdl-stat-filter-btn').on('click', function() {
@@ -865,8 +869,17 @@
 
             // 'All Rooms' button always clears all filters
             if (statFilter === 'all') {
-                $('.hhdl-stat-filter-btn').removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
-                $btn.addClass('active');
+                $('.hhdl-stat-filter-btn').removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none stat-filter-all-rooms');
+                // Reset all other buttons to show their default counts
+                $('.hhdl-stat-filter-btn').not($btn).each(function() {
+                    const $otherBtn = $(this);
+                    const otherFilter = $otherBtn.data('stat-filter');
+                    if (otherFilter !== 'all') {
+                        const defaultMode = $otherBtn.data('stat-filter-mode');
+                        updateStatFilterButtonLabel($otherBtn, otherFilter, defaultMode, false);
+                    }
+                });
+                $btn.addClass('active stat-filter-all-rooms');
                 filterRoomsByStats('all', null);
                 saveStatFilterPreference('all', 'outstanding');
                 return;
@@ -900,23 +913,31 @@
                 nextMode = modes[currentIndex + 1];
             }
 
-            // Clear all other stat filters
+            // Clear all other stat filters and reset them to inactive state
             $('.hhdl-stat-filter-btn').not($btn).removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
-            $('.hhdl-stat-filter-btn[data-stat-filter="all"]').removeClass('active');
+            $('.hhdl-stat-filter-btn').not($btn).each(function() {
+                const $otherBtn = $(this);
+                const otherFilter = $otherBtn.data('stat-filter');
+                if (otherFilter !== 'all') {
+                    const defaultMode = $otherBtn.data('stat-filter-mode');
+                    updateStatFilterButtonLabel($otherBtn, otherFilter, defaultMode, false);
+                }
+            });
+            $('.hhdl-stat-filter-btn[data-stat-filter="all"]').removeClass('active stat-filter-all-rooms');
 
             if (nextMode === null) {
                 // Clear this filter - go back to 'all'
                 $btn.removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
                 $btn.data('stat-filter-mode', modes[0]); // Reset to first mode
-                updateStatFilterButtonLabel($btn, statFilter, modes[0]);
-                $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('active');
+                updateStatFilterButtonLabel($btn, statFilter, modes[0], false);
+                $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('active stat-filter-all-rooms');
                 filterRoomsByStats('all', null);
                 saveStatFilterPreference('all', 'outstanding');
             } else {
                 // Apply next mode
                 $btn.addClass('active');
                 $btn.data('stat-filter-mode', nextMode);
-                updateStatFilterButtonLabel($btn, statFilter, nextMode);
+                updateStatFilterButtonLabel($btn, statFilter, nextMode, true);
                 filterRoomsByStats(statFilter, nextMode);
                 saveStatFilterPreference(statFilter, nextMode);
                 scrollToActiveStatFilter();
@@ -926,8 +947,12 @@
 
     /**
      * Update stat filter button label, icon, and count based on mode
+     * @param {jQuery} $btn - The button element
+     * @param {string} statFilter - The filter type
+     * @param {string} mode - The current mode
+     * @param {boolean} isActive - Whether the button is active (applies color classes)
      */
-    function updateStatFilterButtonLabel($btn, statFilter, mode) {
+    function updateStatFilterButtonLabel($btn, statFilter, mode, isActive = false) {
         let label = '';
         let icon = '';
         let count = 0;
@@ -935,19 +960,20 @@
         // Remove all state classes
         $btn.removeClass('stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
 
-        // Update icon, label, and class based on filter and mode
+        // Calculate count for the current mode
+        count = calculateStatFilterCount(statFilter, mode);
+
+        // Update icon, label, and optionally class based on filter and mode
         switch(statFilter) {
             case 'newbook-tasks':
                 if (mode === 'outstanding') {
                     icon = 'assignment_late';
-                    label = 'Outstanding';
-                    $btn.addClass('stat-filter-outstanding');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Outstanding' : 'NewBook Tasks';
+                    if (isActive) $btn.addClass('stat-filter-outstanding');
                 } else if (mode === 'complete') {
                     icon = 'assignment_turned_in';
-                    label = 'Complete';
-                    $btn.addClass('stat-filter-complete');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Complete' : 'NewBook Tasks';
+                    if (isActive) $btn.addClass('stat-filter-complete');
                 } else {
                     icon = 'assignment_late';
                     label = 'NewBook Tasks';
@@ -957,14 +983,12 @@
             case 'recurring-tasks':
                 if (mode === 'outstanding') {
                     icon = 'checklist_rtl';
-                    label = 'Outstanding';
-                    $btn.addClass('stat-filter-outstanding');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Outstanding' : 'Recurring Tasks';
+                    if (isActive) $btn.addClass('stat-filter-outstanding');
                 } else if (mode === 'complete') {
                     icon = 'task_alt';
-                    label = 'Complete';
-                    $btn.addClass('stat-filter-complete');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Complete' : 'Recurring Tasks';
+                    if (isActive) $btn.addClass('stat-filter-complete');
                 } else {
                     icon = 'checklist_rtl';
                     label = 'Recurring Tasks';
@@ -974,19 +998,16 @@
             case 'linen-count':
                 if (mode === 'none') {
                     icon = 'dry_cleaning';
-                    label = 'No Count';
-                    $btn.addClass('stat-filter-none');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'No Count' : 'Linen Count';
+                    if (isActive) $btn.addClass('stat-filter-none');
                 } else if (mode === 'unsaved') {
                     icon = 'dry_cleaning';
-                    label = 'Unsaved';
-                    $btn.addClass('stat-filter-unsaved');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Unsaved' : 'Linen Count';
+                    if (isActive) $btn.addClass('stat-filter-unsaved');
                 } else if (mode === 'submitted') {
                     icon = 'dry_cleaning';
-                    label = 'Submitted';
-                    $btn.addClass('stat-filter-submitted');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Submitted' : 'Linen Count';
+                    if (isActive) $btn.addClass('stat-filter-submitted');
                 } else {
                     icon = 'dry_cleaning';
                     label = 'Linen Count';
@@ -996,14 +1017,12 @@
             case 'clean-dirty':
                 if (mode === 'dirty') {
                     icon = 'cleaning_services';
-                    label = 'Dirty';
-                    $btn.addClass('stat-filter-outstanding');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Dirty' : 'Clean/Dirty';
+                    if (isActive) $btn.addClass('stat-filter-outstanding');
                 } else if (mode === 'clean') {
                     icon = 'cleaning_services';
-                    label = 'Clean';
-                    $btn.addClass('stat-filter-complete');
-                    count = calculateStatFilterCount(statFilter, mode);
+                    label = isActive ? 'Clean' : 'Clean/Dirty';
+                    if (isActive) $btn.addClass('stat-filter-complete');
                 } else {
                     icon = 'cleaning_services';
                     label = 'Clean/Dirty';

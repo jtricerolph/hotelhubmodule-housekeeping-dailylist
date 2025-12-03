@@ -394,7 +394,7 @@ class HHDL_Display {
                  data-active-stat-filter-mode="<?php echo esc_attr($active_stat_filter_mode); ?>">
 
                 <!-- All Rooms button -->
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'all' ? 'active' : ''; ?>"
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'all' ? 'active stat-filter-all-rooms' : ''; ?>"
                         data-stat-filter="all">
                     <?php _e('All Rooms', 'hhdl'); ?>
                 </button>
@@ -402,16 +402,19 @@ class HHDL_Display {
                 <!-- NewBook Tasks rotating button -->
                 <?php
                 $newbook_active = $active_stat_filter === 'newbook-tasks';
-                $newbook_class = $newbook_active ? 'active' : '';
-                if ($newbook_active && $active_stat_filter_mode === 'outstanding') {
-                    $newbook_class .= ' stat-filter-outstanding';
-                } elseif ($newbook_active && $active_stat_filter_mode === 'complete') {
-                    $newbook_class .= ' stat-filter-complete';
+                $newbook_class = '';
+                if ($newbook_active) {
+                    $newbook_class = 'active';
+                    if ($active_stat_filter_mode === 'outstanding') {
+                        $newbook_class .= ' stat-filter-outstanding';
+                    } elseif ($active_stat_filter_mode === 'complete') {
+                        $newbook_class .= ' stat-filter-complete';
+                    }
                 }
                 ?>
                 <button class="hhdl-stat-filter-btn <?php echo $newbook_class; ?>"
                         data-stat-filter="newbook-tasks"
-                        data-stat-filter-mode="<?php echo $newbook_active ? esc_attr($active_stat_filter_mode) : 'outstanding'; ?>">
+                        data-stat-filter-mode="outstanding">
                     <span class="material-symbols-outlined">assignment_late</span>
                     <span class="hhdl-stat-filter-label"><?php _e('NewBook Tasks', 'hhdl'); ?></span>
                     <span class="hhdl-stat-count-badge">0</span>
@@ -420,16 +423,19 @@ class HHDL_Display {
                 <!-- Recurring Tasks rotating button -->
                 <?php
                 $recurring_active = $active_stat_filter === 'recurring-tasks';
-                $recurring_class = $recurring_active ? 'active' : '';
-                if ($recurring_active && $active_stat_filter_mode === 'outstanding') {
-                    $recurring_class .= ' stat-filter-outstanding';
-                } elseif ($recurring_active && $active_stat_filter_mode === 'complete') {
-                    $recurring_class .= ' stat-filter-complete';
+                $recurring_class = '';
+                if ($recurring_active) {
+                    $recurring_class = 'active';
+                    if ($active_stat_filter_mode === 'outstanding') {
+                        $recurring_class .= ' stat-filter-outstanding';
+                    } elseif ($active_stat_filter_mode === 'complete') {
+                        $recurring_class .= ' stat-filter-complete';
+                    }
                 }
                 ?>
                 <button class="hhdl-stat-filter-btn <?php echo $recurring_class; ?>"
                         data-stat-filter="recurring-tasks"
-                        data-stat-filter-mode="<?php echo $recurring_active ? esc_attr($active_stat_filter_mode) : 'outstanding'; ?>">
+                        data-stat-filter-mode="outstanding">
                     <span class="material-symbols-outlined">checklist_rtl</span>
                     <span class="hhdl-stat-filter-label"><?php _e('Recurring Tasks', 'hhdl'); ?></span>
                     <span class="hhdl-stat-count-badge">0</span>
@@ -438,18 +444,21 @@ class HHDL_Display {
                 <!-- Linen Count rotating button -->
                 <?php
                 $linen_active = $active_stat_filter === 'linen-count';
-                $linen_class = $linen_active ? 'active' : '';
-                if ($linen_active && $active_stat_filter_mode === 'none') {
-                    $linen_class .= ' stat-filter-none';
-                } elseif ($linen_active && $active_stat_filter_mode === 'unsaved') {
-                    $linen_class .= ' stat-filter-unsaved';
-                } elseif ($linen_active && $active_stat_filter_mode === 'submitted') {
-                    $linen_class .= ' stat-filter-submitted';
+                $linen_class = '';
+                if ($linen_active) {
+                    $linen_class = 'active';
+                    if ($active_stat_filter_mode === 'none') {
+                        $linen_class .= ' stat-filter-none';
+                    } elseif ($active_stat_filter_mode === 'unsaved') {
+                        $linen_class .= ' stat-filter-unsaved';
+                    } elseif ($active_stat_filter_mode === 'submitted') {
+                        $linen_class .= ' stat-filter-submitted';
+                    }
                 }
                 ?>
                 <button class="hhdl-stat-filter-btn <?php echo $linen_class; ?>"
                         data-stat-filter="linen-count"
-                        data-stat-filter-mode="<?php echo $linen_active ? esc_attr($active_stat_filter_mode) : 'none'; ?>">
+                        data-stat-filter-mode="none">
                     <span class="material-symbols-outlined">dry_cleaning</span>
                     <span class="hhdl-stat-filter-label"><?php _e('Linen Count', 'hhdl'); ?></span>
                     <span class="hhdl-stat-count-badge">0</span>
@@ -458,16 +467,19 @@ class HHDL_Display {
                 <!-- Clean/Dirty rotating button -->
                 <?php
                 $clean_dirty_active = $active_stat_filter === 'clean-dirty';
-                $clean_dirty_class = $clean_dirty_active ? 'active' : '';
-                if ($clean_dirty_active && $active_stat_filter_mode === 'dirty') {
-                    $clean_dirty_class .= ' stat-filter-outstanding';
-                } elseif ($clean_dirty_active && $active_stat_filter_mode === 'clean') {
-                    $clean_dirty_class .= ' stat-filter-complete';
+                $clean_dirty_class = '';
+                if ($clean_dirty_active) {
+                    $clean_dirty_class = 'active';
+                    if ($active_stat_filter_mode === 'dirty') {
+                        $clean_dirty_class .= ' stat-filter-outstanding';
+                    } elseif ($active_stat_filter_mode === 'clean') {
+                        $clean_dirty_class .= ' stat-filter-complete';
+                    }
                 }
                 ?>
                 <button class="hhdl-stat-filter-btn <?php echo $clean_dirty_class; ?>"
                         data-stat-filter="clean-dirty"
-                        data-stat-filter-mode="<?php echo $clean_dirty_active ? esc_attr($active_stat_filter_mode) : 'dirty'; ?>">
+                        data-stat-filter-mode="dirty">
                     <span class="material-symbols-outlined">cleaning_services</span>
                     <span class="hhdl-stat-filter-label"><?php _e('Clean/Dirty', 'hhdl'); ?></span>
                     <span class="hhdl-stat-count-badge">0</span>

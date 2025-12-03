@@ -505,6 +505,13 @@
     color: #fff;
 }
 
+/* All Rooms active state - green */
+.hhdl-stat-filter-btn.stat-filter-all-rooms {
+    background: #10b981;
+    border-color: #059669;
+    color: #fff;
+}
+
 /* State-based styling for stat filters */
 .hhdl-stat-filter-btn.stat-filter-outstanding {
     background: #ef4444;
