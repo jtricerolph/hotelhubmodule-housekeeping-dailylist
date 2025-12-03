@@ -132,6 +132,7 @@
 
     /**
      * Render calendar for current month
+     * Always shows 6 weeks (42 cells) for consistent height
      */
     function renderCalendar() {
         const year = calendarDate.getFullYear();
@@ -143,7 +144,7 @@
         $('#hhdl-calendar-title').text(`${monthNames[month]} ${year}`);
 
         // Get first day of month and number of days
-        const firstDay = new Date(year, month, 1).getDay();
+        const firstDay = new Date(year, month, 1).getDay(); // 0=Sunday, 6=Saturday
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const daysInPrevMonth = new Date(year, month, 0).getDate();
 
@@ -156,10 +157,11 @@
         const isSelectedMonth = selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month;
         const selectedDay = selectedDate ? selectedDate.getDate() : null;
 
-        // Build calendar grid
+        // Build calendar grid - always show 6 weeks (42 cells) for consistent height
+        const totalCells = 42;
         let html = '';
 
-        // Previous month days (greyed out)
+        // Previous month days (fill from start of week to day before 1st of month)
         for (let i = firstDay - 1; i >= 0; i--) {
             const day = daysInPrevMonth - i;
             html += `<div class="hhdl-calendar-day hhdl-calendar-day-other">${day}</div>`;
@@ -177,9 +179,11 @@
             html += `<div class="${classes}" data-day="${day}">${day}</div>`;
         }
 
-        // Next month days (greyed out)
-        const totalCells = firstDay + daysInMonth;
-        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        // Calculate how many cells we've used
+        const cellsUsed = firstDay + daysInMonth;
+
+        // Next month days - always fill to exactly 42 cells (6 weeks)
+        const remainingCells = totalCells - cellsUsed;
         for (let day = 1; day <= remainingCells; day++) {
             html += `<div class="hhdl-calendar-day hhdl-calendar-day-other">${day}</div>`;
         }
