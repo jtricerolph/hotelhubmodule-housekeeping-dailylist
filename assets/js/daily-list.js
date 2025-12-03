@@ -2233,12 +2233,8 @@
         const notification = $('<div class="hhdl-checkout-notification" id="' + notificationId + '">' +
             '<div class="hhdl-notification-header" style="padding: 8px 12px !important;">' +
                 '<span class="material-symbols-outlined" style="font-size: 18px;">logout</span>' +
-                '<h3 style="margin: 0; font-size: 14px;">Guest Checked Out</h3>' +
+                '<h3 style="margin: 0; font-size: 14px;">Room ' + roomNumber + ' Checked Out</h3>' +
                 '<button class="hhdl-notification-close" data-id="' + notificationId + '" style="padding: 2px 6px; font-size: 18px;">&times;</button>' +
-            '</div>' +
-            '<div class="hhdl-notification-body" style="padding: 10px 12px !important;">' +
-                '<p style="margin: 0 0 4px 0;"><strong>Room ' + roomNumber + '</strong></p>' +
-                '<p style="margin: 0;">' + guestNameHtml + ' has checked out.</p>' +
             '</div>' +
         '</div>');
 
