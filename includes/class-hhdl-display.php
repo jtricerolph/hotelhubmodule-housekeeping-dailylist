@@ -418,10 +418,11 @@ class HHDL_Display {
                 <!-- NewBook Tasks Badge (greyed out for future dates) -->
                 <?php
                 $newbook_badge_class = $is_viewing_today ? '' : ' hhdl-task-future';
+                $newbook_icon = $is_viewing_today ? 'assignment_late' : 'assignment';
                 ?>
                 <?php if ($newbook_tasks > 0): ?>
                     <span class="hhdl-task-badge hhdl-task-outstanding<?php echo $newbook_badge_class; ?>" title="<?php echo esc_attr($newbook_tasks . ' NewBook tasks outstanding'); ?>">
-                        <span class="material-symbols-outlined">assignment_late</span>
+                        <span class="material-symbols-outlined"><?php echo esc_html($newbook_icon); ?></span>
                         <span class="hhdl-task-count"><?php echo $newbook_tasks; ?></span>
                     </span>
                 <?php else: ?>
