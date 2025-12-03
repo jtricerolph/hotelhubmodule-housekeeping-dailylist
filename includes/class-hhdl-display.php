@@ -63,6 +63,7 @@ class HHDL_Display {
                 'collapsed_categories' => array(),  // Array of collapsed category IDs
                 'default_filter' => 'all',  // Default filter to apply
                 'filters_visible' => true,  // Whether filters section is shown
+                'controls_visible' => true,  // Whether view controls and filters are shown
             );
         }
 
@@ -106,6 +107,8 @@ class HHDL_Display {
                 ? sanitize_text_field($preferences['default_filter']) : $existing_prefs['default_filter'],
             'filters_visible' => isset($preferences['filters_visible'])
                 ? (bool)$preferences['filters_visible'] : $existing_prefs['filters_visible'],
+            'controls_visible' => isset($preferences['controls_visible'])
+                ? (bool)$preferences['controls_visible'] : $existing_prefs['controls_visible'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -179,11 +182,20 @@ class HHDL_Display {
      * Render header with date display and modal picker button
      */
     private function render_header($selected_date) {
+        // Get user preferences for controls visibility
+        $location_id = $this->get_current_location();
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
         ?>
-        <div class="hhdl-header" id="hhdl-open-date-picker" title="<?php esc_attr_e('Click to change date', 'hhdl'); ?>">
-            <div class="hhdl-header-info">
+        <div class="hhdl-header">
+            <div class="hhdl-header-date-area" id="hhdl-open-date-picker" title="<?php esc_attr_e('Click to change date', 'hhdl'); ?>">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
             </div>
+            <button class="hhdl-header-settings-btn <?php echo $controls_visible ? 'active' : ''; ?>"
+                    id="hhdl-toggle-controls"
+                    title="<?php esc_attr_e('Show/Hide Controls', 'hhdl'); ?>">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
         </div>
 
         <!-- Date Picker Modal -->
@@ -236,8 +248,10 @@ class HHDL_Display {
         $user_prefs = self::get_user_preferences(null, $location_id);
         $view_mode = isset($user_prefs['view_mode']) ? $user_prefs['view_mode'] : 'grouped';
         $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
+        $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
+        $hidden_class = $controls_visible ? '' : ' hhdl-controls-hidden';
         ?>
-        <div class="hhdl-view-controls">
+        <div class="hhdl-view-controls<?php echo $hidden_class; ?>">
             <div class="hhdl-view-mode-toggle">
                 <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
                         data-view-mode="grouped"
@@ -276,7 +290,9 @@ class HHDL_Display {
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
-        $hidden_class = $filters_visible ? '' : ' hhdl-filters-hidden';
+        $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
+        // Hide if either controls are hidden OR filters are specifically hidden
+        $hidden_class = ($controls_visible && $filters_visible) ? '' : ' hhdl-filters-hidden';
         ?>
         <div class="hhdl-filters<?php echo $hidden_class; ?>">
             <button class="hhdl-filter-btn active" data-filter="all">

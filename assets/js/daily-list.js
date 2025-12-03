@@ -524,6 +524,23 @@
             saveUserPreference('filters_visible', !isCurrentlyVisible);
         });
 
+        // Handle controls toggle button (gear icon in header)
+        $(document).on('click', '#hhdl-toggle-controls', function(e) {
+            e.stopPropagation(); // Prevent triggering date picker
+            const $btn = $(this);
+            const $controls = $('.hhdl-view-controls');
+            const $filters = $('.hhdl-filters');
+            const isCurrentlyVisible = !$controls.hasClass('hhdl-controls-hidden');
+
+            // Toggle visibility of both view controls and filters
+            $controls.toggleClass('hhdl-controls-hidden');
+            $filters.toggleClass('hhdl-filters-hidden');
+            $btn.toggleClass('active');
+
+            // Save preference (new state is opposite of current)
+            saveUserPreference('controls_visible', !isCurrentlyVisible);
+        });
+
         // Handle reset preferences button
         $(document).on('click', '#hhdl-reset-preferences', function() {
             if (confirm('Reset all view preferences to defaults?')) {

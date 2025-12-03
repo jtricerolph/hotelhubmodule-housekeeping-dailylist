@@ -21,11 +21,22 @@
     border-bottom: 2px solid #e5e7eb;
     padding: 10px 16px;
     margin: 0;
-    cursor: pointer;
-    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.hhdl-header:hover {
+.hhdl-header-date-area {
+    flex: 1;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: 4px;
+}
+
+.hhdl-header-date-area:hover {
     background: #f9fafb;
 }
 
@@ -33,6 +44,40 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.hhdl-header-settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.hhdl-header-settings-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.hhdl-header-settings-btn.active {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.hhdl-header-settings-btn .material-symbols-outlined {
+    font-size: 20px;
+    color: #6b7280;
+}
+
+.hhdl-header-settings-btn.active .material-symbols-outlined {
+    color: #fff;
 }
 
 .hhdl-viewing-date {
@@ -2066,6 +2111,11 @@
     justify-content: flex-end;
     padding: 12px 16px;
     background: #fff;
+    transition: all 0.3s ease;
+}
+
+.hhdl-view-controls.hhdl-controls-hidden {
+    display: none;
 }
 
 .hhdl-view-mode-toggle {
