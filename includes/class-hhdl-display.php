@@ -72,6 +72,7 @@ class HHDL_Display {
                 'controls_visible' => true,  // Whether view controls and filters are shown
                 'active_filter' => 'all',  // Currently active filter
                 'active_filter_mode' => 'inclusive',  // 'inclusive' or 'exclusive'
+                'selected_date' => '',  // Last selected date (Y-m-d format)
             );
         }
 
@@ -121,6 +122,8 @@ class HHDL_Display {
                 ? sanitize_text_field($preferences['active_filter']) : $existing_prefs['active_filter'],
             'active_filter_mode' => isset($preferences['active_filter_mode']) && in_array($preferences['active_filter_mode'], array('inclusive', 'exclusive'))
                 ? $preferences['active_filter_mode'] : $existing_prefs['active_filter_mode'],
+            'selected_date' => isset($preferences['selected_date'])
+                ? sanitize_text_field($preferences['selected_date']) : $existing_prefs['selected_date'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -179,8 +182,10 @@ class HHDL_Display {
             return;
         }
 
-        // Get selected date (default to today)
-        $selected_date = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : date('Y-m-d');
+        // Get selected date - priority order: GET param, saved preference, today
+        $user_prefs = self::get_user_preferences(null, $location_id);
+        $saved_date = !empty($user_prefs['selected_date']) ? $user_prefs['selected_date'] : date('Y-m-d');
+        $selected_date = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : $saved_date;
 
         // Render the view
         $this->render_header($selected_date);

@@ -99,6 +99,9 @@
             currentDate = dateString;
             updateDateDisplay(dateString);
 
+            // Save selected date preference
+            saveUserPreference('selected_date', dateString);
+
             // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
 
@@ -116,6 +119,9 @@
             $('#hhdl-date-picker').val(dateString);
             currentDate = dateString;
             updateDateDisplay(dateString);
+
+            // Save selected date preference
+            saveUserPreference('selected_date', dateString);
 
             // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
