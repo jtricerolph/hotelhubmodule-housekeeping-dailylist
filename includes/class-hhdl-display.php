@@ -515,6 +515,9 @@ class HHDL_Display {
         $recurring_tasks_incomplete = 0;
         $room_count = count($room_cards);
         $visible_room_count = $room_count;  // Will be updated based on filters
+        $linen_none = 0;
+        $linen_unsaved = 0;
+        $linen_submitted = 0;
 
         // Get default tasks for comparison
         $default_tasks = HHDL_Settings::get_default_tasks($location_id);
@@ -531,6 +534,16 @@ class HHDL_Display {
                 // Check if room has completed today's default tasks
                 // This would need to check against your completion tracking
                 $recurring_tasks_incomplete += count($default_tasks);
+            }
+
+            // Count linen status
+            $linen_data = $this->get_linen_data($location_id, $room['room_id'], $this->current_date);
+            if ($linen_data['status'] === 'none') {
+                $linen_none++;
+            } elseif ($linen_data['status'] === 'unsaved') {
+                $linen_unsaved++;
+            } elseif ($linen_data['status'] === 'submitted') {
+                $linen_submitted++;
             }
         }
 
@@ -577,6 +590,28 @@ class HHDL_Display {
                 <span class="hhdl-task-badge hhdl-task-complete" title="<?php esc_attr_e('Recurring tasks complete', 'hhdl'); ?>">
                     <span class="material-symbols-outlined">checklist_rtl</span>
                 </span>
+
+                <!-- Linen Count Badges -->
+                <?php if ($linen_none > 0): ?>
+                    <span class="hhdl-task-badge hhdl-linen-status hhdl-linen-none" title="<?php echo esc_attr($linen_none . ' rooms with no linen count'); ?>">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <span class="hhdl-task-count"><?php echo $linen_none; ?></span>
+                    </span>
+                <?php endif; ?>
+
+                <?php if ($linen_unsaved > 0): ?>
+                    <span class="hhdl-task-badge hhdl-linen-status hhdl-linen-unsaved" title="<?php echo esc_attr($linen_unsaved . ' rooms with unsaved linen count'); ?>">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <span class="hhdl-task-count"><?php echo $linen_unsaved; ?></span>
+                    </span>
+                <?php endif; ?>
+
+                <?php if ($linen_submitted > 0): ?>
+                    <span class="hhdl-task-badge hhdl-linen-status hhdl-linen-submitted" title="<?php echo esc_attr($linen_submitted . ' rooms with submitted linen count'); ?>">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <span class="hhdl-task-count"><?php echo $linen_submitted; ?></span>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
         <?php
@@ -589,7 +624,10 @@ class HHDL_Display {
         $counts = array(
             'newbook_tasks' => 0,
             'recurring_tasks' => 0,
-            'room_count' => count($room_cards)
+            'room_count' => count($room_cards),
+            'linen_none' => 0,
+            'linen_unsaved' => 0,
+            'linen_submitted' => 0
         );
 
         $default_tasks = HHDL_Settings::get_default_tasks($location_id);
@@ -604,6 +642,16 @@ class HHDL_Display {
             if (!empty($default_tasks)) {
                 // Simplified - would need actual completion checking
                 $counts['recurring_tasks'] += count($default_tasks);
+            }
+
+            // Count linen status
+            $linen_data = $this->get_linen_data($location_id, $room['room_id'], $this->current_date);
+            if ($linen_data['status'] === 'none') {
+                $counts['linen_none']++;
+            } elseif ($linen_data['status'] === 'unsaved') {
+                $counts['linen_unsaved']++;
+            } elseif ($linen_data['status'] === 'submitted') {
+                $counts['linen_submitted']++;
             }
         }
 
