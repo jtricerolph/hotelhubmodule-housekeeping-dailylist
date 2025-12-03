@@ -75,6 +75,7 @@ class HHDL_Display {
                 'selected_date' => '',  // Last selected date (Y-m-d format)
                 'stat_filters_visible' => true,  // Whether stat filters section is shown
                 'active_stat_filter' => 'all',  // Currently active stat filter
+                'active_stat_filter_mode' => 'outstanding',  // Current mode for active stat filter
             );
         }
 
@@ -130,6 +131,8 @@ class HHDL_Display {
                 ? (bool)$preferences['stat_filters_visible'] : $existing_prefs['stat_filters_visible'],
             'active_stat_filter' => isset($preferences['active_stat_filter'])
                 ? sanitize_text_field($preferences['active_stat_filter']) : $existing_prefs['active_stat_filter'],
+            'active_stat_filter_mode' => isset($preferences['active_stat_filter_mode'])
+                ? sanitize_text_field($preferences['active_stat_filter_mode']) : $existing_prefs['active_stat_filter_mode'],
         );
 
         // DEBUG: Log final preferences being saved
@@ -373,13 +376,13 @@ class HHDL_Display {
      * Render stat filter buttons
      */
     private function render_stat_filters() {
-        // Get user preferences to check if stat filters should be visible
+        // Get user preferences
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $stat_filters_visible = isset($user_prefs['stat_filters_visible']) ? $user_prefs['stat_filters_visible'] : true;
         $active_stat_filter = isset($user_prefs['active_stat_filter']) ? $user_prefs['active_stat_filter'] : 'all';
+        $active_stat_filter_mode = isset($user_prefs['active_stat_filter_mode']) ? $user_prefs['active_stat_filter_mode'] : 'outstanding';
 
-        // Stat filters maintain independent visibility state
         $hidden_class = $stat_filters_visible ? '' : ' hhdl-stat-filters-hidden';
         ?>
         <div class="hhdl-stat-filters-wrapper<?php echo $hidden_class; ?>">
@@ -387,45 +390,87 @@ class HHDL_Display {
                 <span class="material-symbols-outlined">chevron_left</span>
             </button>
             <div class="hhdl-stat-filters"
-                 data-active-stat-filter="<?php echo esc_attr($active_stat_filter); ?>">
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'all' ? 'active' : ''; ?>" data-stat-filter="all">
+                 data-active-stat-filter="<?php echo esc_attr($active_stat_filter); ?>"
+                 data-active-stat-filter-mode="<?php echo esc_attr($active_stat_filter_mode); ?>">
+
+                <!-- All Rooms button -->
+                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'all' ? 'active' : ''; ?>"
+                        data-stat-filter="all">
                     <?php _e('All Rooms', 'hhdl'); ?>
                 </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'newbook-tasks-outstanding' ? 'active' : ''; ?>" data-stat-filter="newbook-tasks-outstanding">
+
+                <!-- NewBook Tasks rotating button -->
+                <?php
+                $newbook_active = $active_stat_filter === 'newbook-tasks';
+                $newbook_class = $newbook_active ? 'active' : '';
+                if ($newbook_active && $active_stat_filter_mode === 'outstanding') {
+                    $newbook_class .= ' stat-filter-outstanding';
+                } elseif ($newbook_active && $active_stat_filter_mode === 'complete') {
+                    $newbook_class .= ' stat-filter-complete';
+                }
+                ?>
+                <button class="hhdl-stat-filter-btn <?php echo $newbook_class; ?>"
+                        data-stat-filter="newbook-tasks"
+                        data-stat-filter-mode="<?php echo $newbook_active ? esc_attr($active_stat_filter_mode) : 'outstanding'; ?>">
                     <span class="material-symbols-outlined">assignment_late</span>
-                    <?php _e('NewBook Tasks', 'hhdl'); ?>
+                    <span class="hhdl-stat-filter-label"><?php _e('NewBook Tasks', 'hhdl'); ?></span>
+                    <span class="hhdl-stat-count-badge">0</span>
                 </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'newbook-tasks-complete' ? 'active' : ''; ?>" data-stat-filter="newbook-tasks-complete">
-                    <span class="material-symbols-outlined">assignment_turned_in</span>
-                    <?php _e('NewBook Complete', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'recurring-tasks-outstanding' ? 'active' : ''; ?>" data-stat-filter="recurring-tasks-outstanding">
+
+                <!-- Recurring Tasks rotating button -->
+                <?php
+                $recurring_active = $active_stat_filter === 'recurring-tasks';
+                $recurring_class = $recurring_active ? 'active' : '';
+                if ($recurring_active && $active_stat_filter_mode === 'outstanding') {
+                    $recurring_class .= ' stat-filter-outstanding';
+                } elseif ($recurring_active && $active_stat_filter_mode === 'complete') {
+                    $recurring_class .= ' stat-filter-complete';
+                }
+                ?>
+                <button class="hhdl-stat-filter-btn <?php echo $recurring_class; ?>"
+                        data-stat-filter="recurring-tasks"
+                        data-stat-filter-mode="<?php echo $recurring_active ? esc_attr($active_stat_filter_mode) : 'outstanding'; ?>">
                     <span class="material-symbols-outlined">checklist_rtl</span>
-                    <?php _e('Recurring Tasks', 'hhdl'); ?>
+                    <span class="hhdl-stat-filter-label"><?php _e('Recurring Tasks', 'hhdl'); ?></span>
+                    <span class="hhdl-stat-count-badge">0</span>
                 </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'recurring-tasks-complete' ? 'active' : ''; ?>" data-stat-filter="recurring-tasks-complete">
-                    <span class="material-symbols-outlined">task_alt</span>
-                    <?php _e('Recurring Complete', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-none' ? 'active' : ''; ?>" data-stat-filter="linen-none">
+
+                <!-- Linen Count rotating button -->
+                <?php
+                $linen_active = $active_stat_filter === 'linen-count';
+                $linen_class = $linen_active ? 'active' : '';
+                if ($linen_active && $active_stat_filter_mode === 'none') {
+                    $linen_class .= ' stat-filter-none';
+                } elseif ($linen_active && $active_stat_filter_mode === 'unsaved') {
+                    $linen_class .= ' stat-filter-unsaved';
+                } elseif ($linen_active && $active_stat_filter_mode === 'submitted') {
+                    $linen_class .= ' stat-filter-submitted';
+                }
+                ?>
+                <button class="hhdl-stat-filter-btn <?php echo $linen_class; ?>"
+                        data-stat-filter="linen-count"
+                        data-stat-filter-mode="<?php echo $linen_active ? esc_attr($active_stat_filter_mode) : 'none'; ?>">
                     <span class="material-symbols-outlined">dry_cleaning</span>
-                    <?php _e('No Linen Count', 'hhdl'); ?>
+                    <span class="hhdl-stat-filter-label"><?php _e('Linen Count', 'hhdl'); ?></span>
+                    <span class="hhdl-stat-count-badge">0</span>
                 </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-unsaved' ? 'active' : ''; ?>" data-stat-filter="linen-unsaved">
-                    <span class="material-symbols-outlined">dry_cleaning</span>
-                    <?php _e('Linen Unsaved', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'linen-submitted' ? 'active' : ''; ?>" data-stat-filter="linen-submitted">
-                    <span class="material-symbols-outlined">dry_cleaning</span>
-                    <?php _e('Linen Submitted', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'clean' ? 'active' : ''; ?>" data-stat-filter="clean">
+
+                <!-- Clean/Dirty rotating button -->
+                <?php
+                $clean_dirty_active = $active_stat_filter === 'clean-dirty';
+                $clean_dirty_class = $clean_dirty_active ? 'active' : '';
+                if ($clean_dirty_active && $active_stat_filter_mode === 'dirty') {
+                    $clean_dirty_class .= ' stat-filter-outstanding';
+                } elseif ($clean_dirty_active && $active_stat_filter_mode === 'clean') {
+                    $clean_dirty_class .= ' stat-filter-complete';
+                }
+                ?>
+                <button class="hhdl-stat-filter-btn <?php echo $clean_dirty_class; ?>"
+                        data-stat-filter="clean-dirty"
+                        data-stat-filter-mode="<?php echo $clean_dirty_active ? esc_attr($active_stat_filter_mode) : 'dirty'; ?>">
                     <span class="material-symbols-outlined">cleaning_services</span>
-                    <?php _e('Clean', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-stat-filter-btn <?php echo $active_stat_filter === 'dirty' ? 'active' : ''; ?>" data-stat-filter="dirty">
-                    <span class="material-symbols-outlined">cleaning_services</span>
-                    <?php _e('Dirty', 'hhdl'); ?>
+                    <span class="hhdl-stat-filter-label"><?php _e('Clean/Dirty', 'hhdl'); ?></span>
+                    <span class="hhdl-stat-count-badge">0</span>
                 </button>
             </div>
             <button class="hhdl-stat-filters-scroll-btn right" id="hhdl-scroll-stat-filters-right">

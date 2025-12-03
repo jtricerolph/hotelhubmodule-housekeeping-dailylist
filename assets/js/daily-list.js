@@ -492,52 +492,46 @@
     /**
      * Filter rooms by stat filters
      */
-    function filterRoomsByStats(statFilterType) {
+    function filterRoomsByStats(statFilterType, mode) {
         $('.hhdl-room-card').each(function() {
             const card = $(this);
             let matchesFilter = false;
 
-            // Determine if room matches the stat filter criteria
-            switch(statFilterType) {
-                case 'newbook-tasks-outstanding':
-                    // Check if room has outstanding NewBook tasks (red/amber icon)
-                    matchesFilter = card.find('.hhdl-task-late, .hhdl-task-return').length > 0;
-                    break;
-                case 'newbook-tasks-complete':
-                    // Check if room has no outstanding NewBook tasks (green icon or no tasks)
-                    matchesFilter = card.find('.hhdl-task-complete').length > 0 || card.find('.hhdl-task-late, .hhdl-task-return').length === 0;
-                    break;
-                case 'recurring-tasks-outstanding':
-                    // TODO: Implement when recurring task tracking is added
-                    matchesFilter = false;
-                    break;
-                case 'recurring-tasks-complete':
-                    // TODO: Implement when recurring task tracking is added
-                    matchesFilter = true;
-                    break;
-                case 'linen-none':
-                    // Rooms with no linen count data (grey icon)
-                    matchesFilter = card.find('.hhdl-linen-none').length > 0;
-                    break;
-                case 'linen-unsaved':
-                    // Rooms with unsaved linen counts (amber icon)
-                    matchesFilter = card.find('.hhdl-linen-unsaved').length > 0;
-                    break;
-                case 'linen-submitted':
-                    // Rooms with submitted linen counts (green icon)
-                    matchesFilter = card.find('.hhdl-linen-submitted').length > 0;
-                    break;
-                case 'clean':
-                    // TODO: Implement when clean/dirty status is available
-                    matchesFilter = false;
-                    break;
-                case 'dirty':
-                    // TODO: Implement when clean/dirty status is available
-                    matchesFilter = false;
-                    break;
-                case 'all':
-                default:
-                    matchesFilter = true;
+            // If 'all', show all rooms
+            if (statFilterType === 'all' || !mode) {
+                matchesFilter = true;
+            } else {
+                // Determine if room matches the stat filter criteria based on type and mode
+                switch(statFilterType) {
+                    case 'newbook-tasks':
+                        if (mode === 'outstanding') {
+                            matchesFilter = card.find('.hhdl-task-late, .hhdl-task-return').length > 0;
+                        } else if (mode === 'complete') {
+                            matchesFilter = card.find('.hhdl-task-complete').length > 0 ||
+                                          card.find('.hhdl-task-late, .hhdl-task-return').length === 0;
+                        }
+                        break;
+
+                    case 'recurring-tasks':
+                        // TODO: Implement when recurring task tracking is added
+                        matchesFilter = false;
+                        break;
+
+                    case 'linen-count':
+                        if (mode === 'none') {
+                            matchesFilter = card.find('.hhdl-linen-none').length > 0;
+                        } else if (mode === 'unsaved') {
+                            matchesFilter = card.find('.hhdl-linen-unsaved').length > 0;
+                        } else if (mode === 'submitted') {
+                            matchesFilter = card.find('.hhdl-linen-submitted').length > 0;
+                        }
+                        break;
+
+                    case 'clean-dirty':
+                        // TODO: Implement when clean/dirty status is available
+                        matchesFilter = false;
+                        break;
+                }
             }
 
             card.toggle(matchesFilter);
@@ -846,10 +840,21 @@
         // Apply saved stat filter on init
         const $statFilters = $('.hhdl-stat-filters');
         const savedStatFilter = $statFilters.data('active-stat-filter');
+        const savedStatFilterMode = $statFilters.data('active-stat-filter-mode');
+
+        // Initialize all stat filter buttons with counts
+        $('.hhdl-stat-filter-btn').each(function() {
+            const $btn = $(this);
+            const statFilter = $btn.data('stat-filter');
+            if (statFilter !== 'all') {
+                const mode = $btn.data('stat-filter-mode') || 'outstanding';
+                updateStatFilterButtonLabel($btn, statFilter, mode);
+            }
+        });
 
         if (savedStatFilter && savedStatFilter !== 'all') {
             // Apply the saved stat filter
-            filterRoomsByStats(savedStatFilter);
+            filterRoomsByStats(savedStatFilter, savedStatFilterMode);
             // Scroll to show the active filter
             scrollToActiveStatFilter();
         }
@@ -858,18 +863,228 @@
             const $btn = $(this);
             const statFilter = $btn.data('stat-filter');
 
+            // 'All Rooms' button always clears all filters
+            if (statFilter === 'all') {
+                $('.hhdl-stat-filter-btn').removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
+                $btn.addClass('active');
+                filterRoomsByStats('all', null);
+                saveStatFilterPreference('all', 'outstanding');
+                return;
+            }
+
+            // Get current state
+            const currentMode = $btn.data('stat-filter-mode');
+            const isActive = $btn.hasClass('active');
+
+            // Define mode sequences for each filter type
+            let modes = [];
+            switch(statFilter) {
+                case 'newbook-tasks':
+                case 'recurring-tasks':
+                    modes = ['outstanding', 'complete', null]; // 3 states: outstanding, complete, clear
+                    break;
+                case 'linen-count':
+                    modes = ['none', 'unsaved', 'submitted', null]; // 4 states: none, unsaved, submitted, clear
+                    break;
+                case 'clean-dirty':
+                    modes = ['dirty', 'clean', null]; // 3 states: dirty, clean, clear
+                    break;
+            }
+
+            // Determine next mode
+            let nextMode;
+            if (!isActive) {
+                nextMode = modes[0]; // Start with first mode
+            } else {
+                const currentIndex = modes.indexOf(currentMode);
+                nextMode = modes[currentIndex + 1];
+            }
+
             // Clear all other stat filters
-            $('.hhdl-stat-filter-btn').removeClass('active');
-            $btn.addClass('active');
+            $('.hhdl-stat-filter-btn').not($btn).removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
+            $('.hhdl-stat-filter-btn[data-stat-filter="all"]').removeClass('active');
 
-            // Apply the stat filter
-            filterRoomsByStats(statFilter);
+            if (nextMode === null) {
+                // Clear this filter - go back to 'all'
+                $btn.removeClass('active stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
+                $btn.data('stat-filter-mode', modes[0]); // Reset to first mode
+                updateStatFilterButtonLabel($btn, statFilter, modes[0]);
+                $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('active');
+                filterRoomsByStats('all', null);
+                saveStatFilterPreference('all', 'outstanding');
+            } else {
+                // Apply next mode
+                $btn.addClass('active');
+                $btn.data('stat-filter-mode', nextMode);
+                updateStatFilterButtonLabel($btn, statFilter, nextMode);
+                filterRoomsByStats(statFilter, nextMode);
+                saveStatFilterPreference(statFilter, nextMode);
+                scrollToActiveStatFilter();
+            }
+        });
+    }
 
-            // Save stat filter preference
-            saveUserPreference('active_stat_filter', statFilter);
+    /**
+     * Update stat filter button label, icon, and count based on mode
+     */
+    function updateStatFilterButtonLabel($btn, statFilter, mode) {
+        let label = '';
+        let icon = '';
+        let count = 0;
 
-            // Scroll to show the active filter
-            scrollToActiveStatFilter();
+        // Remove all state classes
+        $btn.removeClass('stat-filter-outstanding stat-filter-complete stat-filter-unsaved stat-filter-submitted stat-filter-none');
+
+        // Update icon, label, and class based on filter and mode
+        switch(statFilter) {
+            case 'newbook-tasks':
+                if (mode === 'outstanding') {
+                    icon = 'assignment_late';
+                    label = 'Outstanding';
+                    $btn.addClass('stat-filter-outstanding');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else if (mode === 'complete') {
+                    icon = 'assignment_turned_in';
+                    label = 'Complete';
+                    $btn.addClass('stat-filter-complete');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else {
+                    icon = 'assignment_late';
+                    label = 'NewBook Tasks';
+                }
+                break;
+
+            case 'recurring-tasks':
+                if (mode === 'outstanding') {
+                    icon = 'checklist_rtl';
+                    label = 'Outstanding';
+                    $btn.addClass('stat-filter-outstanding');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else if (mode === 'complete') {
+                    icon = 'task_alt';
+                    label = 'Complete';
+                    $btn.addClass('stat-filter-complete');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else {
+                    icon = 'checklist_rtl';
+                    label = 'Recurring Tasks';
+                }
+                break;
+
+            case 'linen-count':
+                if (mode === 'none') {
+                    icon = 'dry_cleaning';
+                    label = 'No Count';
+                    $btn.addClass('stat-filter-none');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else if (mode === 'unsaved') {
+                    icon = 'dry_cleaning';
+                    label = 'Unsaved';
+                    $btn.addClass('stat-filter-unsaved');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else if (mode === 'submitted') {
+                    icon = 'dry_cleaning';
+                    label = 'Submitted';
+                    $btn.addClass('stat-filter-submitted');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else {
+                    icon = 'dry_cleaning';
+                    label = 'Linen Count';
+                }
+                break;
+
+            case 'clean-dirty':
+                if (mode === 'dirty') {
+                    icon = 'cleaning_services';
+                    label = 'Dirty';
+                    $btn.addClass('stat-filter-outstanding');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else if (mode === 'clean') {
+                    icon = 'cleaning_services';
+                    label = 'Clean';
+                    $btn.addClass('stat-filter-complete');
+                    count = calculateStatFilterCount(statFilter, mode);
+                } else {
+                    icon = 'cleaning_services';
+                    label = 'Clean/Dirty';
+                }
+                break;
+        }
+
+        // Update button content
+        $btn.find('.material-symbols-outlined').text(icon);
+        $btn.find('.hhdl-stat-filter-label').text(label);
+        $btn.find('.hhdl-stat-count-badge').text(count);
+    }
+
+    /**
+     * Calculate count for a specific stat filter and mode
+     */
+    function calculateStatFilterCount(statFilter, mode) {
+        let count = 0;
+
+        $('.hhdl-room-card').each(function() {
+            const card = $(this);
+            let matchesFilter = false;
+
+            switch(statFilter) {
+                case 'newbook-tasks':
+                    if (mode === 'outstanding') {
+                        matchesFilter = card.find('.hhdl-task-late, .hhdl-task-return').length > 0;
+                    } else if (mode === 'complete') {
+                        matchesFilter = card.find('.hhdl-task-complete').length > 0 ||
+                                      card.find('.hhdl-task-late, .hhdl-task-return').length === 0;
+                    }
+                    break;
+
+                case 'recurring-tasks':
+                    // TODO: Implement when recurring task tracking is added
+                    matchesFilter = false;
+                    break;
+
+                case 'linen-count':
+                    if (mode === 'none') {
+                        matchesFilter = card.find('.hhdl-linen-none').length > 0;
+                    } else if (mode === 'unsaved') {
+                        matchesFilter = card.find('.hhdl-linen-unsaved').length > 0;
+                    } else if (mode === 'submitted') {
+                        matchesFilter = card.find('.hhdl-linen-submitted').length > 0;
+                    }
+                    break;
+
+                case 'clean-dirty':
+                    // TODO: Implement when clean/dirty status is available
+                    matchesFilter = false;
+                    break;
+            }
+
+            if (matchesFilter) {
+                count++;
+            }
+        });
+
+        return count;
+    }
+
+    /**
+     * Save stat filter preference
+     */
+    function saveStatFilterPreference(filter, mode) {
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'hhdl_save_user_preferences',
+                nonce: hhdlAjax.nonce,
+                location_id: currentLocationId,
+                preferences: JSON.stringify({
+                    active_stat_filter: filter,
+                    active_stat_filter_mode: mode
+                })
+            },
+            error: function() {
+                console.error('[HHDL] Failed to save stat filter preference');
+            }
         });
     }
 
