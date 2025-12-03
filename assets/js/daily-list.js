@@ -533,12 +533,10 @@
             e.stopPropagation(); // Prevent triggering date picker
             const $btn = $(this);
             const $controls = $('.hhdl-view-controls');
-            const $filters = $('.hhdl-filters');
             const isCurrentlyVisible = !$controls.hasClass('hhdl-controls-hidden');
 
-            // Toggle visibility of both view controls and filters
+            // Toggle visibility of view controls only (filters maintain independent state)
             $controls.toggleClass('hhdl-controls-hidden');
-            $filters.toggleClass('hhdl-filters-hidden');
             $btn.toggleClass('active');
 
             // Save preference (new state is opposite of current)

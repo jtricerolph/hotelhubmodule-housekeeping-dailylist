@@ -290,9 +290,8 @@ class HHDL_Display {
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $filters_visible = isset($user_prefs['filters_visible']) ? $user_prefs['filters_visible'] : true;
-        $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
-        // Hide if either controls are hidden OR filters are specifically hidden
-        $hidden_class = ($controls_visible && $filters_visible) ? '' : ' hhdl-filters-hidden';
+        // Filters maintain independent visibility state
+        $hidden_class = $filters_visible ? '' : ' hhdl-filters-hidden';
         ?>
         <div class="hhdl-filters<?php echo $hidden_class; ?>">
             <button class="hhdl-filter-btn active" data-filter="all">
