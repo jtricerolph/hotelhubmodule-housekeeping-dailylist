@@ -1267,6 +1267,7 @@
 
 /* Spoilt Linen Module Icons */
 .hhdl-stat-content.hhdl-linen-status {
+    position: relative;
     padding: 3px 6px;
     border-radius: 4px;
     border: 1px solid;
@@ -1278,13 +1279,39 @@
     font-size: 16px;
 }
 
-/* Unsubmitted count (amber) */
-.hhdl-stat-content.hhdl-linen-pending {
+/* Linen Counter Badge */
+.hhdl-linen-count {
+    display: inline-flex;
+    align-items: center;
+}
+
+.hhdl-linen-count-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+    color: white;
+    border-radius: 7px;
+    pointer-events: none;
+}
+
+/* Unsaved count (amber) */
+.hhdl-stat-content.hhdl-linen-unsaved {
     border-color: #f59e0b;
 }
 
-.hhdl-stat-content.hhdl-linen-pending .material-symbols-outlined {
+.hhdl-stat-content.hhdl-linen-unsaved .material-symbols-outlined {
     color: #f59e0b;
+}
+
+.hhdl-stat-content.hhdl-linen-unsaved .hhdl-linen-count-badge {
+    background: #f59e0b;
 }
 
 /* Submitted count (green) */
@@ -1294,6 +1321,10 @@
 
 .hhdl-stat-content.hhdl-linen-submitted .material-symbols-outlined {
     color: #10b981;
+}
+
+.hhdl-stat-content.hhdl-linen-submitted .hhdl-linen-count-badge {
+    background: #10b981;
 }
 
 /* No values (grey) */

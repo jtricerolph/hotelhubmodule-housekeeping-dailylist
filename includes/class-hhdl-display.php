@@ -21,6 +21,12 @@ class HHDL_Display {
     private static $instance = null;
 
     /**
+     * Current rendering context
+     */
+    private $current_location_id = null;
+    private $current_date = null;
+
+    /**
      * Get singleton instance
      */
     public static function instance() {
@@ -465,6 +471,10 @@ class HHDL_Display {
      * Render room cards (called via AJAX)
      */
     public function render_room_cards($location_id, $date) {
+        // Store rendering context for use in child methods
+        $this->current_location_id = $location_id;
+        $this->current_date = $date;
+
         // Fetch 3-day data from NewBook
         $rooms_data = $this->fetch_rooms_data($location_id, $date);
 
@@ -883,13 +893,26 @@ class HHDL_Display {
             <!-- Block 5: Spoilt Linen Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add spoilt linen module integration
-                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
-                $linen_class = 'hhdl-linen-status hhdl-linen-none';
-                $linen_title = __('No linen data', 'hhdl');
+                // Get linen count data
+                $linen_data = $this->get_linen_data($this->current_location_id, $room['room_id'], $this->current_date);
+                $linen_class = 'hhdl-linen-status hhdl-linen-' . $linen_data['status'];
+
+                // Set title based on status
+                if ($linen_data['status'] === 'none') {
+                    $linen_title = __('No linen data', 'hhdl');
+                } elseif ($linen_data['status'] === 'unsaved') {
+                    $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
+                } else {
+                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
-                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <span class="hhdl-linen-count">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <?php if ($linen_data['total_count'] > 0): ?>
+                            <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1043,13 +1066,26 @@ class HHDL_Display {
             <!-- Block 5: Spoilt Linen Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add spoilt linen module integration
-                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
-                $linen_class = 'hhdl-linen-status hhdl-linen-none';
-                $linen_title = __('No linen data', 'hhdl');
+                // Get linen count data
+                $linen_data = $this->get_linen_data($this->current_location_id, $room['room_id'], $this->current_date);
+                $linen_class = 'hhdl-linen-status hhdl-linen-' . $linen_data['status'];
+
+                // Set title based on status
+                if ($linen_data['status'] === 'none') {
+                    $linen_title = __('No linen data', 'hhdl');
+                } elseif ($linen_data['status'] === 'unsaved') {
+                    $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
+                } else {
+                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
-                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <span class="hhdl-linen-count">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <?php if ($linen_data['total_count'] > 0): ?>
+                            <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1307,13 +1343,26 @@ class HHDL_Display {
             <!-- Block 5: Spoilt Linen Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add spoilt linen module integration
-                // dry_cleaning - grey if no values, amber if unsubmitted, green if submitted
-                $linen_class = 'hhdl-linen-status hhdl-linen-none';
-                $linen_title = __('No linen data', 'hhdl');
+                // Get linen count data
+                $linen_data = $this->get_linen_data($this->current_location_id, $room['room_id'], $this->current_date);
+                $linen_class = 'hhdl-linen-status hhdl-linen-' . $linen_data['status'];
+
+                // Set title based on status
+                if ($linen_data['status'] === 'none') {
+                    $linen_title = __('No linen data', 'hhdl');
+                } elseif ($linen_data['status'] === 'unsaved') {
+                    $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
+                } else {
+                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
-                    <span class="material-symbols-outlined">dry_cleaning</span>
+                    <span class="hhdl-linen-count">
+                        <span class="material-symbols-outlined">dry_cleaning</span>
+                        <?php if ($linen_data['total_count'] > 0): ?>
+                            <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
+                        <?php endif; ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1839,6 +1888,67 @@ class HHDL_Display {
 
         // Fallback
         return isset($_GET['location_id']) ? intval($_GET['location_id']) : 1;
+    }
+
+    /**
+     * Get linen count data for a specific room and date
+     *
+     * @param int $location_id
+     * @param string $room_id
+     * @param string $service_date Format: Y-m-d
+     * @return array Array with keys: status (none/unsaved/submitted), total_count, has_unlocked
+     */
+    private function get_linen_data($location_id, $room_id, $service_date) {
+        global $wpdb;
+
+        // Check if linen count module table exists
+        $table_name = $wpdb->prefix . 'hhlc_linen_counts';
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+            return array(
+                'status' => 'none',
+                'total_count' => 0,
+                'has_unlocked' => false
+            );
+        }
+
+        // Query linen counts for this room and date
+        $results = $wpdb->get_results($wpdb->prepare("
+            SELECT
+                SUM(count) as total_count,
+                SUM(CASE WHEN is_locked = 0 THEN 1 ELSE 0 END) as unlocked_count,
+                COUNT(*) as item_count
+            FROM {$table_name}
+            WHERE location_id = %d
+                AND room_id = %s
+                AND service_date = %s
+                AND count > 0
+        ", $location_id, $room_id, $service_date));
+
+        if (empty($results) || $results[0]->item_count == 0) {
+            return array(
+                'status' => 'none',
+                'total_count' => 0,
+                'has_unlocked' => false
+            );
+        }
+
+        $total_count = (int)$results[0]->total_count;
+        $has_unlocked = (int)$results[0]->unlocked_count > 0;
+
+        // Determine status
+        if ($total_count == 0) {
+            $status = 'none';
+        } elseif ($has_unlocked) {
+            $status = 'unsaved'; // Amber - live save
+        } else {
+            $status = 'submitted'; // Green - all locked
+        }
+
+        return array(
+            'status' => $status,
+            'total_count' => $total_count,
+            'has_unlocked' => $has_unlocked
+        );
     }
 
     /**
