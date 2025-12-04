@@ -281,36 +281,47 @@ class HHDL_Display {
         ?>
         <div class="hhdl-view-controls<?php echo $hidden_class; ?>">
             <div class="hhdl-view-mode-toggle">
-                <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
-                        data-view-mode="grouped"
-                        title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">view_list</span>
-                    <?php _e('Categories', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
-                        data-view-mode="flat"
-                        title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">format_list_bulleted</span>
-                    <?php _e('Flat', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-view-mode-btn <?php echo $filters_visible ? 'active' : ''; ?>"
-                        id="hhdl-toggle-filters"
-                        title="<?php esc_attr_e('Show/Hide Room Filters', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">filter_list</span>
-                    <?php _e('State Filters', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-view-mode-btn <?php echo $stat_filters_visible ? 'active' : ''; ?>"
-                        id="hhdl-toggle-stat-filters"
-                        title="<?php esc_attr_e('Show/Hide Stat Filters', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <?php _e('Stat Filters', 'hhdl'); ?>
-                </button>
-                <button class="hhdl-view-mode-btn"
-                        id="hhdl-reset-preferences"
-                        title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
-                    <span class="material-symbols-outlined">restart_alt</span>
-                    <?php _e('Reset View', 'hhdl'); ?>
-                </button>
+                <!-- View mode group -->
+                <div class="hhdl-control-group hhdl-view-group">
+                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
+                            data-view-mode="grouped"
+                            title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">view_list</span>
+                        <span class="hhdl-btn-text"><?php _e('Categories', 'hhdl'); ?></span>
+                    </button>
+                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
+                            data-view-mode="flat"
+                            title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                        <span class="hhdl-btn-text"><?php _e('Flat List', 'hhdl'); ?></span>
+                    </button>
+                </div>
+
+                <!-- Filter toggles group -->
+                <div class="hhdl-control-group hhdl-filter-group">
+                    <button class="hhdl-view-mode-btn <?php echo $filters_visible ? 'active' : ''; ?>"
+                            id="hhdl-toggle-filters"
+                            title="<?php esc_attr_e('Show/Hide Room Filters', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">filter_list</span>
+                        <span class="hhdl-btn-text"><?php _e('States', 'hhdl'); ?></span>
+                    </button>
+                    <button class="hhdl-view-mode-btn <?php echo $stat_filters_visible ? 'active' : ''; ?>"
+                            id="hhdl-toggle-stat-filters"
+                            title="<?php esc_attr_e('Show/Hide Stat Filters', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">analytics</span>
+                        <span class="hhdl-btn-text"><?php _e('Stats', 'hhdl'); ?></span>
+                    </button>
+                </div>
+
+                <!-- Reset button group -->
+                <div class="hhdl-control-group hhdl-reset-group">
+                    <button class="hhdl-view-mode-btn"
+                            id="hhdl-reset-preferences"
+                            title="<?php esc_attr_e('Reset view to defaults', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">restart_alt</span>
+                        <span class="hhdl-btn-text"><?php _e('Reset View', 'hhdl'); ?></span>
+                    </button>
+                </div>
             </div>
         </div>
         <?php

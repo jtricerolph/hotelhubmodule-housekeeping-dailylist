@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Hub Module - Housekeeping - Daily List
  * Plugin URI: https://github.com/jtricerolph/hotelhubmodule-housekeeping-dailylist
  * Description: Daily housekeeping task management with NewBook integration and real-time sync
- * Version: 2.2.0
+ * Version: 2.2.1
  * Author: JTR
  * License: GPL v2 or later
  * Text Domain: hhdl
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('HHDL_VERSION', '2.2.0');
+define('HHDL_VERSION', '2.2.1');
 define('HHDL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HHDL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HHDL_PLUGIN_BASENAME', plugin_basename(__FILE__));

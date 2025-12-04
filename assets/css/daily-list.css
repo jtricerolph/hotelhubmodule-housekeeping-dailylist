@@ -2396,10 +2396,24 @@
 
 .hhdl-view-mode-toggle {
     display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+/* Control groups */
+.hhdl-control-group {
+    display: flex;
     gap: 0;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     overflow: hidden;
+}
+
+/* View and filter groups stay together, reset goes to the right */
+.hhdl-reset-group {
+    margin-left: auto;
 }
 
 .hhdl-view-mode-btn {
@@ -2413,9 +2427,10 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 
-.hhdl-view-mode-btn:not(:last-child) {
+.hhdl-control-group .hhdl-view-mode-btn:not(:last-child) {
     border-right: 1px solid #d1d5db;
 }
 
@@ -2430,6 +2445,20 @@
 
 .hhdl-view-mode-btn .material-symbols-outlined {
     font-size: 18px;
+}
+
+/* Responsive: Stack icon above text on narrow screens */
+@media (max-width: 640px) {
+    .hhdl-view-mode-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .hhdl-view-mode-btn .material-symbols-outlined {
+        font-size: 20px;
+    }
 }
 
 /* ============================================
