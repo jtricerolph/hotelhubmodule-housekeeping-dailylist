@@ -1773,7 +1773,10 @@
 
                     // Update room status badge if NewBook returned site_status
                     if (response.data.site_status) {
-                        updateRoomStatusBadge(taskData.roomId, response.data.site_status);
+                        // Determine if there are still tasks remaining
+                        // If all_tasks_complete is true, there are no more tasks
+                        var hasTasks = !response.data.all_tasks_complete;
+                        updateRoomStatusBadge(taskData.roomId, response.data.site_status, hasTasks);
                     }
 
                     // Fade out and remove task
@@ -1808,7 +1811,12 @@
     /**
      * Update room status badge in room card and modal header
      */
-    function updateRoomStatusBadge(roomId, siteStatus) {
+    function updateRoomStatusBadge(roomId, siteStatus, hasTasks) {
+        // Default hasTasks to false if not provided
+        if (typeof hasTasks === 'undefined') {
+            hasTasks = false;
+        }
+
         // Update status badge in room card on main list
         var roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
         if (roomCard.length) {
@@ -1830,6 +1838,14 @@
                 modalStatusBadge.removeClass('clean dirty inspected unknown arrived')
                     .addClass(siteStatus.toLowerCase())
                     .text(siteStatus);
+
+                // Update data attributes if badge is a toggle button
+                if (modalStatusBadge.hasClass('hhdl-status-toggle-btn')) {
+                    modalStatusBadge.attr('data-current-status', siteStatus);
+                    modalStatusBadge.data('current-status', siteStatus);
+                    modalStatusBadge.attr('data-has-tasks', hasTasks ? 'true' : 'false');
+                    modalStatusBadge.data('has-tasks', hasTasks);
+                }
             }
         }
     }
