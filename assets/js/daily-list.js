@@ -2006,6 +2006,7 @@
         const toggleBtn = $('#hhdl-toggle-activity-log');
         const closeBtn = $('#hhdl-close-activity-panel');
         const panel = $('#hhdl-activity-panel');
+        const overlay = $('#hhdl-activity-modal-overlay');
 
         // Toggle button handler
         toggleBtn.on('click', function() {
@@ -2013,15 +2014,17 @@
             console.log('[HHDL Activity] Toggle button clicked, panel is currently:', isOpen ? 'open' : 'closed');
 
             if (isOpen) {
-                // Close panel
+                // Close modal
                 panel.removeClass('open');
+                overlay.removeClass('open');
                 toggleBtn.removeClass('active');
                 $('body').removeClass('hhdl-activity-panel-open');
                 clearInterval(activityRefreshInterval);
                 activityRefreshInterval = null;
             } else {
-                // Open panel
+                // Open modal
                 panel.addClass('open');
+                overlay.addClass('open');
                 toggleBtn.addClass('active');
                 $('body').addClass('hhdl-activity-panel-open');
                 console.log('[HHDL Activity] Opening panel, loading activity for date:', currentDate);
@@ -2038,6 +2041,18 @@
         // Close button handler
         closeBtn.on('click', function() {
             panel.removeClass('open');
+            overlay.removeClass('open');
+            toggleBtn.removeClass('active');
+            $('body').removeClass('hhdl-activity-panel-open');
+            clearInterval(activityRefreshInterval);
+            activityRefreshInterval = null;
+            saveUserPreference('activity_panel_open', false);
+        });
+
+        // Overlay click handler - close modal when clicking overlay
+        overlay.on('click', function() {
+            panel.removeClass('open');
+            overlay.removeClass('open');
             toggleBtn.removeClass('active');
             $('body').removeClass('hhdl-activity-panel-open');
             clearInterval(activityRefreshInterval);
@@ -2047,6 +2062,7 @@
 
         // Load initial activity if panel is open
         if (panel.hasClass('open')) {
+            overlay.addClass('open');
             $('body').addClass('hhdl-activity-panel-open');
             loadActivityLog(currentDate);
             activityRefreshInterval = setInterval(refreshActivityTimes, 30000);

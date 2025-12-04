@@ -2676,32 +2676,53 @@
    Activity Log Panel
    ============================================ */
 
-.hhdl-activity-panel {
+/* Activity Modal Overlay */
+.hhdl-activity-modal-overlay {
     position: fixed;
-    top: 98px; /* Below header and filters */
+    top: 0;
+    left: 0;
     right: 0;
     bottom: 0;
-    width: 400px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.hhdl-activity-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Activity Modal Panel */
+.hhdl-activity-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
     background: #fff;
-    border-left: 1px solid #d1d5db;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-    transform: translateX(100%);
-    transition: transform 0.3s ease-in-out;
-    z-index: 95;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .hhdl-activity-panel.open {
-    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
 }
 
-/* Lock scrolling on main list when activity panel is open */
-body.hhdl-activity-panel-open #hhdl-room-list {
-    overflow: hidden !important;
-}
-
-body.hhdl-activity-panel-open .hha-module-container {
+/* Lock scrolling when activity modal is open */
+body.hhdl-activity-panel-open {
     overflow: hidden !important;
 }
 
@@ -2896,7 +2917,8 @@ body.hhdl-activity-panel-open .hha-module-container {
 /* Responsive */
 @media (max-width: 768px) {
     .hhdl-activity-panel {
-        width: 100%;
-        max-width: 400px;
+        width: 95%;
+        max-width: 95%;
+        max-height: 90vh;
     }
 }

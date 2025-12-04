@@ -525,7 +525,10 @@ class HHDL_Display {
             </div>
         </div>
 
-        <!-- Activity Log Panel -->
+        <!-- Activity Log Modal Overlay -->
+        <div class="hhdl-activity-modal-overlay <?php echo $activity_panel_open ? 'open' : ''; ?>" id="hhdl-activity-modal-overlay"></div>
+
+        <!-- Activity Log Modal -->
         <div class="hhdl-activity-panel <?php echo $activity_panel_open ? 'open' : ''; ?>" id="hhdl-activity-panel">
             <div class="hhdl-activity-panel-header">
                 <h3 class="hhdl-activity-panel-title">
