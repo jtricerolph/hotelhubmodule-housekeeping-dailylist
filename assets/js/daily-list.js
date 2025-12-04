@@ -1983,10 +1983,14 @@
 
             // Handle activity log updates
             if (data.hhdl_activity_updates && data.hhdl_activity_updates.events) {
+                console.log('[HHDL Activity] Heartbeat received', data.hhdl_activity_updates.events.length, 'new events');
                 const panel = $('#hhdl-activity-panel');
                 if (panel.hasClass('open')) {
+                    console.log('[HHDL Activity] Panel is open, prepending events');
                     prependActivityEvents(data.hhdl_activity_updates.events);
                     lastActivityCheck = data.hhdl_activity_updates.timestamp;
+                } else {
+                    console.log('[HHDL Activity] Panel is closed, skipping event prepend');
                 }
             }
         });
@@ -2006,6 +2010,7 @@
         // Toggle button handler
         toggleBtn.on('click', function() {
             const isOpen = panel.hasClass('open');
+            console.log('[HHDL Activity] Toggle button clicked, panel is currently:', isOpen ? 'open' : 'closed');
 
             if (isOpen) {
                 // Close panel
@@ -2017,6 +2022,7 @@
                 // Open panel
                 panel.addClass('open');
                 toggleBtn.addClass('active');
+                console.log('[HHDL Activity] Opening panel, loading activity for date:', currentDate);
                 loadActivityLog(currentDate);
 
                 // Start time refresh interval (every 30 seconds)
@@ -2061,6 +2067,8 @@
     function loadActivityLog(date) {
         const list = $('#hhdl-activity-list');
 
+        console.log('[HHDL Activity] Loading activity log for date:', date, 'location:', currentLocationId);
+
         // Show loading state
         list.html('<div class="hhdl-activity-loading"><span class="spinner"></span><p>Loading activity...</p></div>');
 
@@ -2074,13 +2082,17 @@
                 service_date: date
             },
             success: function(response) {
+                console.log('[HHDL Activity] AJAX response:', response);
                 if (response.success && response.data.events) {
+                    console.log('[HHDL Activity] Found', response.data.events.length, 'events');
                     renderActivityLog(response.data.events);
                 } else {
+                    console.log('[HHDL Activity] No events found or request failed');
                     list.html('<div class="hhdl-activity-empty"><span class="material-symbols-outlined">inbox</span><p>No activity yet</p></div>');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('[HHDL Activity] AJAX error:', status, error, xhr.responseText);
                 list.html('<div class="hhdl-activity-empty"><span class="material-symbols-outlined">error</span><p>Failed to load activity</p></div>');
             }
         });
@@ -2540,6 +2552,7 @@
      * Log check-in/out event to activity log
      */
     function logCheckInOutEvent(eventType, roomId, guestName, bookingRef) {
+        console.log('[HHDL Activity] Logging', eventType, 'event for room', roomId, 'guest:', guestName);
         $.ajax({
             url: hhdlAjax.ajaxUrl,
             type: 'POST',
@@ -2554,13 +2567,13 @@
             },
             success: function(response) {
                 if (response.success) {
-                    console.log('[HHDL] Logged ' + eventType + ' event for room ' + roomId);
+                    console.log('[HHDL Activity] Successfully logged ' + eventType + ' event for room ' + roomId);
                 } else {
-                    console.warn('[HHDL] Failed to log ' + eventType + ' event:', response.data);
+                    console.warn('[HHDL Activity] Failed to log ' + eventType + ' event:', response.data);
                 }
             },
-            error: function() {
-                console.error('[HHDL] Error logging ' + eventType + ' event');
+            error: function(xhr, status, error) {
+                console.error('[HHDL Activity] Error logging ' + eventType + ' event:', status, error, xhr.responseText);
             }
         });
     }
