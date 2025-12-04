@@ -2027,20 +2027,22 @@
         type = type || 'info';
 
         const toast = $('<div class="hhdl-toast hhdl-toast-' + type + '">' + message + '</div>');
-        $('body').append(toast);
+        // Append inside #hha-standalone-app if it exists, otherwise append to body
+        const $container = $('#hha-standalone-app').length ? $('#hha-standalone-app') : $('body');
+        $container.append(toast);
 
         // Trigger animation
         setTimeout(function() {
             toast.addClass('hhdl-toast-show');
         }, 10);
 
-        // Auto-hide after 30 seconds (extended for debugging)
+        // Auto-hide after 3 seconds
         setTimeout(function() {
             toast.removeClass('hhdl-toast-show');
             setTimeout(function() {
                 toast.remove();
             }, 300);
-        }, 30000);
+        }, 3000);
     }
 
     /**
