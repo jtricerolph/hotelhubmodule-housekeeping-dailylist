@@ -2479,10 +2479,11 @@
                         }
                     }
 
-                    // Log arrival event
-                    logCheckInOutEvent('checkin', booking.site_id, guestName, booking.booking_ref);
+                    // Log arrival event (use arrival date as service_date)
+                    const arrivalDate = bookingArrival || currentDate;
+                    logCheckInOutEvent('checkin', booking.site_id, guestName, booking.booking_ref, arrivalDate);
 
-                    console.log('[HHDL] Logged arrival for room:', booking.site_name, 'guest:', guestName);
+                    console.log('[HHDL] Logged arrival for room:', booking.site_name, 'guest:', guestName, 'date:', arrivalDate);
                 } else {
                     console.log('[HHDL] Guest already marked as arrived, skipping');
                 }
@@ -2539,8 +2540,9 @@
         // Log for debugging
         console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName, 'blurred:', shouldBlurName);
 
-        // Log checkout event to activity log
-        logCheckInOutEvent('checkout', booking.site_id, hasGuestNamePermission ? guestName : null, booking.booking_ref);
+        // Log checkout event to activity log (use departure date as service_date)
+        const departureDate = booking.booking_departure ? booking.booking_departure.split(' ')[0] : currentDate;
+        logCheckInOutEvent('checkout', booking.site_id, hasGuestNamePermission ? guestName : null, booking.booking_ref, departureDate);
 
         // Ensure notification shows with a slight delay to avoid race conditions
         setTimeout(function() {
@@ -2551,8 +2553,8 @@
     /**
      * Log check-in/out event to activity log
      */
-    function logCheckInOutEvent(eventType, roomId, guestName, bookingRef) {
-        console.log('[HHDL Activity] Logging', eventType, 'event for room', roomId, 'guest:', guestName);
+    function logCheckInOutEvent(eventType, roomId, guestName, bookingRef, serviceDate) {
+        console.log('[HHDL Activity] Logging', eventType, 'event for room', roomId, 'guest:', guestName, 'date:', serviceDate);
         $.ajax({
             url: hhdlAjax.ajaxUrl,
             type: 'POST',
@@ -2563,7 +2565,8 @@
                 room_id: roomId,
                 event_type: eventType,
                 guest_name: guestName,
-                booking_ref: bookingRef
+                booking_ref: bookingRef,
+                service_date: serviceDate
             },
             success: function(response) {
                 if (response.success) {

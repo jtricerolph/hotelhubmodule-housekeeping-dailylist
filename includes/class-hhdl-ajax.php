@@ -1771,6 +1771,7 @@ class HHDL_Ajax {
         $event_type = isset($_POST['event_type']) ? sanitize_text_field($_POST['event_type']) : '';
         $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
         $guest_name = isset($_POST['guest_name']) ? sanitize_text_field($_POST['guest_name']) : '';
+        $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
 
         // Validate
         if (!$location_id || !$room_id || !in_array($event_type, array('checkin', 'checkout'))) {
@@ -1783,13 +1784,13 @@ class HHDL_Ajax {
             $event_data['guest_name'] = $guest_name;
         }
 
-        // Log the activity
+        // Log the activity (use booking's scheduled date, not today)
         self::log_activity(
             $location_id,
             $room_id,
             $event_type,
             $event_data,
-            date('Y-m-d'), // Use today as service_date
+            $service_date,
             $booking_ref
         );
 
