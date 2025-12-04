@@ -34,6 +34,7 @@
         initHeartbeat();
         initViewControls();  // Initialize view mode and reset controls
         initCategoryHeaders();  // Initialize category header interactions
+        initActivityPanel();  // Initialize activity log panel
 
         // Load initial room list
         loadRoomList(currentDate);
@@ -107,6 +108,9 @@
             // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
 
+            // Trigger custom event for date change
+            $(document).trigger('hhdl-date-changed', [currentDate]);
+
             // Close modal after selection
             $('#hhdl-date-modal').removeClass('hhdl-modal-open');
         });
@@ -127,6 +131,9 @@
 
             // Keep current filter when date changes (persistent filters)
             loadRoomList(currentDate);
+
+            // Trigger custom event for date change
+            $(document).trigger('hhdl-date-changed', [currentDate]);
 
             // Close modal after selection
             $('#hhdl-date-modal').removeClass('hhdl-modal-open');
@@ -1948,6 +1955,16 @@
                 date_to: getDateOffset(currentDate, +1),
                 last_check: lastPollingCheck
             };
+
+            // Activity log monitoring (only if panel is open)
+            const panel = $('#hhdl-activity-panel');
+            if (panel.hasClass('open')) {
+                data.hhdl_activity_monitor = {
+                    location_id: currentLocationId,
+                    service_date: currentDate,
+                    last_check: lastActivityCheck
+                };
+            }
         });
 
         // Receive updates from server
@@ -1963,7 +1980,269 @@
                 handleBookingUpdates(data.nbp_updates.bookings);
                 lastPollingCheck = data.nbp_updates.timestamp;
             }
+
+            // Handle activity log updates
+            if (data.hhdl_activity_updates && data.hhdl_activity_updates.events) {
+                const panel = $('#hhdl-activity-panel');
+                if (panel.hasClass('open')) {
+                    prependActivityEvents(data.hhdl_activity_updates.events);
+                    lastActivityCheck = data.hhdl_activity_updates.timestamp;
+                }
+            }
         });
+    }
+
+    /**
+     * Initialize Activity Log Panel
+     */
+    let lastActivityCheck = new Date().toISOString();
+    let activityRefreshInterval = null;
+
+    function initActivityPanel() {
+        const toggleBtn = $('#hhdl-toggle-activity-log');
+        const closeBtn = $('#hhdl-close-activity-panel');
+        const panel = $('#hhdl-activity-panel');
+
+        // Toggle button handler
+        toggleBtn.on('click', function() {
+            const isOpen = panel.hasClass('open');
+
+            if (isOpen) {
+                // Close panel
+                panel.removeClass('open');
+                toggleBtn.removeClass('active');
+                clearInterval(activityRefreshInterval);
+                activityRefreshInterval = null;
+            } else {
+                // Open panel
+                panel.addClass('open');
+                toggleBtn.addClass('active');
+                loadActivityLog(currentDate);
+
+                // Start time refresh interval (every 30 seconds)
+                activityRefreshInterval = setInterval(refreshActivityTimes, 30000);
+            }
+
+            // Save preference
+            saveUserPreference('activity_panel_open', !isOpen);
+        });
+
+        // Close button handler
+        closeBtn.on('click', function() {
+            panel.removeClass('open');
+            toggleBtn.removeClass('active');
+            clearInterval(activityRefreshInterval);
+            activityRefreshInterval = null;
+            saveUserPreference('activity_panel_open', false);
+        });
+
+        // Load initial activity if panel is open
+        if (panel.hasClass('open')) {
+            loadActivityLog(currentDate);
+            activityRefreshInterval = setInterval(refreshActivityTimes, 30000);
+        }
+
+        // Listen for date changes
+        $(document).on('hhdl-date-changed', function(e, newDate) {
+            if (panel.hasClass('open')) {
+                loadActivityLog(newDate);
+
+                // Update header date
+                const dateObj = new Date(newDate + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                $('.hhdl-activity-date').text(formattedDate);
+            }
+        });
+    }
+
+    /**
+     * Load activity log from server
+     */
+    function loadActivityLog(date) {
+        const list = $('#hhdl-activity-list');
+
+        // Show loading state
+        list.html('<div class="hhdl-activity-loading"><span class="spinner"></span><p>Loading activity...</p></div>');
+
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'hhdl_get_activity_log',
+                nonce: hhdlAjax.nonce,
+                location_id: currentLocationId,
+                service_date: date
+            },
+            success: function(response) {
+                if (response.success && response.data.events) {
+                    renderActivityLog(response.data.events);
+                } else {
+                    list.html('<div class="hhdl-activity-empty"><span class="material-symbols-outlined">inbox</span><p>No activity yet</p></div>');
+                }
+            },
+            error: function() {
+                list.html('<div class="hhdl-activity-empty"><span class="material-symbols-outlined">error</span><p>Failed to load activity</p></div>');
+            }
+        });
+    }
+
+    /**
+     * Render activity log entries
+     */
+    function renderActivityLog(events) {
+        const list = $('#hhdl-activity-list');
+
+        if (!events || events.length === 0) {
+            list.html('<div class="hhdl-activity-empty"><span class="material-symbols-outlined">inbox</span><p>No activity yet</p></div>');
+            return;
+        }
+
+        let html = '';
+
+        events.forEach(function(event) {
+            const icon = getActivityIcon(event.event_type);
+            const message = getActivityMessage(event);
+            const timeAgo = formatTimeAgo(event.occurred_at);
+
+            html += '<div class="hhdl-activity-entry" data-event-type="' + event.event_type + '" data-event-id="' + event.id + '">';
+            html += '  <div class="hhdl-activity-icon">';
+            html += '    <span class="material-symbols-outlined">' + icon + '</span>';
+            html += '  </div>';
+            html += '  <div class="hhdl-activity-content">';
+            html += '    <div class="hhdl-activity-message">' + message + '</div>';
+            html += '    <div class="hhdl-activity-meta">';
+            html += '      <span class="hhdl-activity-time" data-timestamp="' + event.occurred_at + '">' + timeAgo + '</span>';
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+        });
+
+        list.html(html);
+    }
+
+    /**
+     * Get icon for activity event type
+     */
+    function getActivityIcon(eventType) {
+        const icons = {
+            'checkout': 'logout',
+            'checkin': 'login',
+            'status_clean': 'check_circle',
+            'status_dirty': 'cancel',
+            'tasks_complete': 'task_alt',
+            'linen_submit': 'inventory_2'
+        };
+        return icons[eventType] || 'info';
+    }
+
+    /**
+     * Generate activity message from event data
+     */
+    function getActivityMessage(event) {
+        const roomId = '<strong>Room ' + event.room_id + '</strong>';
+        const eventData = event.event_data || {};
+
+        switch (event.event_type) {
+            case 'checkout':
+                const guestName = eventData.guest_name ? ' (' + eventData.guest_name + ')' : '';
+                return roomId + ' checked out' + guestName;
+
+            case 'checkin':
+                const arrivalName = eventData.guest_name ? ' (' + eventData.guest_name + ')' : '';
+                return roomId + ' checked in' + arrivalName;
+
+            case 'status_clean':
+                const cleanedBy = eventData.changed_by || 'Someone';
+                return roomId + ' marked <span class="hhdl-status-badge clean">Clean</span> by ' + cleanedBy;
+
+            case 'status_dirty':
+                const dirtiedBy = eventData.changed_by || 'Someone';
+                return roomId + ' marked <span class="hhdl-status-badge dirty">Dirty</span> by ' + dirtiedBy;
+
+            case 'tasks_complete':
+                const completedBy = eventData.completed_by || 'Someone';
+                return roomId + ' - all tasks completed by ' + completedBy;
+
+            case 'linen_submit':
+                const submittedBy = eventData.submitted_by || 'Someone';
+                const itemCount = eventData.item_count || 0;
+                return roomId + ' - linen count submitted by ' + submittedBy + ' (' + itemCount + ' items)';
+
+            default:
+                return roomId + ' - ' + event.event_type;
+        }
+    }
+
+    /**
+     * Format timestamp as relative time
+     */
+    function formatTimeAgo(datetime) {
+        const now = new Date();
+        const eventTime = new Date(datetime);
+        const diffMs = now - eventTime;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) {
+            return 'Just now';
+        } else if (diffMins < 60) {
+            return diffMins + ' min' + (diffMins !== 1 ? 's' : '') + ' ago';
+        } else {
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) {
+                return diffHours + ' hour' + (diffHours !== 1 ? 's' : '') + ' ago';
+            } else {
+                const diffDays = Math.floor(diffHours / 24);
+                return diffDays + ' day' + (diffDays !== 1 ? 's' : '') + ' ago';
+            }
+        }
+    }
+
+    /**
+     * Refresh all relative timestamps
+     */
+    function refreshActivityTimes() {
+        $('.hhdl-activity-time').each(function() {
+            const timestamp = $(this).data('timestamp');
+            if (timestamp) {
+                $(this).text(formatTimeAgo(timestamp));
+            }
+        });
+    }
+
+    /**
+     * Prepend new activity events with animation
+     */
+    function prependActivityEvents(events) {
+        if (!events || events.length === 0) return;
+
+        const list = $('#hhdl-activity-list');
+        const isEmpty = list.find('.hhdl-activity-empty').length > 0;
+
+        if (isEmpty) {
+            renderActivityLog(events);
+            return;
+        }
+
+        let html = '';
+        events.forEach(function(event) {
+            const icon = getActivityIcon(event.event_type);
+            const message = getActivityMessage(event);
+            const timeAgo = formatTimeAgo(event.occurred_at);
+
+            html += '<div class="hhdl-activity-entry hhdl-activity-new" data-event-type="' + event.event_type + '" data-event-id="' + event.id + '">';
+            html += '  <div class="hhdl-activity-icon">';
+            html += '    <span class="material-symbols-outlined">' + icon + '</span>';
+            html += '  </div>';
+            html += '  <div class="hhdl-activity-content">';
+            html += '    <div class="hhdl-activity-message">' + message + '</div>';
+            html += '    <div class="hhdl-activity-meta">';
+            html += '      <span class="hhdl-activity-time" data-timestamp="' + event.occurred_at + '">' + timeAgo + '</span>';
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+        });
+
+        list.prepend(html);
     }
 
     /**
@@ -2157,6 +2436,46 @@
                            'Departure date:', bookingDeparture, 'Viewing date:', currentDate, '- SKIPPING UPDATE');
             }
 
+            // Detect check-in (arrival) - only if we're viewing the arrival date
+            if (newStatus && newStatus.toLowerCase() === 'arrived' && isArrivalRelevant) {
+                const previousBookingStatus = roomCard.attr('data-booking-status');
+                console.log('[HHDL] Checking arrival: Previous booking status:', previousBookingStatus, 'New status:', newStatus);
+
+                if (previousBookingStatus && previousBookingStatus.toLowerCase() !== 'arrived') {
+                    console.log('[HHDL] Arrival detected for room: ' + booking.site_name);
+
+                    // Update booking status attribute
+                    roomCard.attr('data-booking-status', 'arrived');
+
+                    // Update booking status badge
+                    const statusBadge = roomCard.find('.hhdl-booking-status-badge');
+                    if (statusBadge.length) {
+                        statusBadge.removeClass('hhdl-status-departed')
+                                   .addClass('hhdl-status-arrived')
+                                   .text('Arrived');
+                    }
+
+                    // Check guest name permission
+                    const hasGuestNamePermission = roomCard.find('.hhdl-guest-name').length > 0 &&
+                                                  !roomCard.find('.hhdl-guest-name').hasClass('hhdl-guest-blurred');
+
+                    let guestName = null;
+                    if (hasGuestNamePermission && booking.guests && booking.guests.length > 0 && booking.guests[0].firstname) {
+                        guestName = booking.guests[0].firstname;
+                        if (booking.guests[0].lastname) {
+                            guestName += ' ' + booking.guests[0].lastname;
+                        }
+                    }
+
+                    // Log arrival event
+                    logCheckInOutEvent('checkin', booking.site_id, guestName, booking.booking_ref);
+
+                    console.log('[HHDL] Logged arrival for room:', booking.site_name, 'guest:', guestName);
+                } else {
+                    console.log('[HHDL] Guest already marked as arrived, skipping');
+                }
+            }
+
             // Update room status (Clean/Dirty/Inspected) if provided - always relevant
             if (booking.site_status) {
                 updateRoomStatusDisplay(roomCard, booking.site_status);
@@ -2208,10 +2527,42 @@
         // Log for debugging
         console.log('[HHDL] Showing checkout notification for room:', booking.site_name, 'guest:', guestName, 'blurred:', shouldBlurName);
 
+        // Log checkout event to activity log
+        logCheckInOutEvent('checkout', booking.site_id, hasGuestNamePermission ? guestName : null, booking.booking_ref);
+
         // Ensure notification shows with a slight delay to avoid race conditions
         setTimeout(function() {
             showCheckoutNotification(booking.site_name, guestName, shouldBlurName);
         }, 100);
+    }
+
+    /**
+     * Log check-in/out event to activity log
+     */
+    function logCheckInOutEvent(eventType, roomId, guestName, bookingRef) {
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'hhdl_log_checkin_checkout',
+                nonce: hhdlAjax.nonce,
+                location_id: currentLocationId,
+                room_id: roomId,
+                event_type: eventType,
+                guest_name: guestName,
+                booking_ref: bookingRef
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('[HHDL] Logged ' + eventType + ' event for room ' + roomId);
+                } else {
+                    console.warn('[HHDL] Failed to log ' + eventType + ' event:', response.data);
+                }
+            },
+            error: function() {
+                console.error('[HHDL] Error logging ' + eventType + ' event');
+            }
+        });
     }
 
     /**
