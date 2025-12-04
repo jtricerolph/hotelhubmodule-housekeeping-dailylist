@@ -1085,13 +1085,18 @@ class HHDL_Display {
                 } elseif ($linen_data['status'] === 'unsaved') {
                     $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
                 } else {
-                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    // Submitted status
+                    if ($linen_data['total_count'] === 0) {
+                        $linen_title = __('No spoilt linen (submitted)', 'hhdl');
+                    } else {
+                        $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
                     <span class="hhdl-linen-count">
                         <span class="material-symbols-outlined">dry_cleaning</span>
-                        <?php if ($linen_data['total_count'] > 0): ?>
+                        <?php if ($linen_data['status'] !== 'none'): ?>
                             <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
                         <?php endif; ?>
                     </span>
@@ -1258,13 +1263,18 @@ class HHDL_Display {
                 } elseif ($linen_data['status'] === 'unsaved') {
                     $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
                 } else {
-                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    // Submitted status
+                    if ($linen_data['total_count'] === 0) {
+                        $linen_title = __('No spoilt linen (submitted)', 'hhdl');
+                    } else {
+                        $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
                     <span class="hhdl-linen-count">
                         <span class="material-symbols-outlined">dry_cleaning</span>
-                        <?php if ($linen_data['total_count'] > 0): ?>
+                        <?php if ($linen_data['status'] !== 'none'): ?>
                             <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
                         <?php endif; ?>
                     </span>
@@ -1535,13 +1545,18 @@ class HHDL_Display {
                 } elseif ($linen_data['status'] === 'unsaved') {
                     $linen_title = sprintf(__('%d linen items (unsaved)', 'hhdl'), $linen_data['total_count']);
                 } else {
-                    $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    // Submitted status
+                    if ($linen_data['total_count'] === 0) {
+                        $linen_title = __('No spoilt linen (submitted)', 'hhdl');
+                    } else {
+                        $linen_title = sprintf(__('%d linen items (submitted)', 'hhdl'), $linen_data['total_count']);
+                    }
                 }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($linen_class); ?>" title="<?php echo esc_attr($linen_title); ?>">
                     <span class="hhdl-linen-count">
                         <span class="material-symbols-outlined">dry_cleaning</span>
-                        <?php if ($linen_data['total_count'] > 0): ?>
+                        <?php if ($linen_data['status'] !== 'none'): ?>
                             <span class="hhdl-linen-count-badge"><?php echo esc_html($linen_data['total_count']); ?></span>
                         <?php endif; ?>
                     </span>
@@ -2098,12 +2113,12 @@ class HHDL_Display {
             SELECT
                 SUM(count) as total_count,
                 SUM(CASE WHEN is_locked = 0 THEN 1 ELSE 0 END) as unlocked_count,
-                COUNT(*) as item_count
+                COUNT(*) as item_count,
+                SUM(CASE WHEN is_locked = 1 THEN 1 ELSE 0 END) as locked_count
             FROM {$table_name}
             WHERE location_id = %d
                 AND room_id = %s
                 AND service_date = %s
-                AND count > 0
         ", $location_id, $room_id, $service_date));
 
         if (empty($results) || $results[0]->item_count == 0) {
@@ -2116,14 +2131,16 @@ class HHDL_Display {
 
         $total_count = (int)$results[0]->total_count;
         $has_unlocked = (int)$results[0]->unlocked_count > 0;
+        $has_locked = (int)$results[0]->locked_count > 0;
 
         // Determine status
-        if ($total_count == 0) {
-            $status = 'none';
+        // If any items are locked (submitted), check the overall status
+        if ($has_locked && !$has_unlocked) {
+            $status = 'submitted'; // Green - all items locked/submitted (even if count is 0)
         } elseif ($has_unlocked) {
-            $status = 'unsaved'; // Amber - live save
+            $status = 'unsaved'; // Amber - has unsaved/unlocked items
         } else {
-            $status = 'submitted'; // Green - all locked
+            $status = 'none';
         }
 
         return array(
