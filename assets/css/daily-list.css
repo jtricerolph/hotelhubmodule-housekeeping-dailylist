@@ -2111,6 +2111,7 @@
 }
 
 .hhdl-toast {
+    display: block;
     position: fixed;
     bottom: 20px;
     right: 20px;
