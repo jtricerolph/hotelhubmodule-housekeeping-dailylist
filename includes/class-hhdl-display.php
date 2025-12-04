@@ -65,7 +65,7 @@ class HHDL_Display {
         // Default preferences if none exist
         if (empty($preferences)) {
             $preferences = array(
-                'view_mode' => 'grouped',  // 'grouped' or 'flat'
+                'view_mode' => 'flat',  // 'grouped' or 'flat'
                 'collapsed_categories' => array(),  // Array of collapsed category IDs
                 'default_filter' => 'all',  // Default filter to apply
                 'filters_visible' => true,  // Whether room filters section is shown
@@ -73,7 +73,7 @@ class HHDL_Display {
                 'active_filter' => 'all',  // Currently active room filter
                 'active_filter_mode' => 'inclusive',  // 'inclusive' or 'exclusive'
                 'selected_date' => '',  // Last selected date (Y-m-d format)
-                'stat_filters_visible' => true,  // Whether stat filters section is shown
+                'stat_filters_visible' => false,  // Whether stat filters section is shown
                 'active_stat_filter' => 'all',  // Currently active stat filter
                 'active_stat_filter_mode' => 'outstanding',  // Current mode for active stat filter
             );
@@ -283,17 +283,17 @@ class HHDL_Display {
             <div class="hhdl-view-mode-toggle">
                 <!-- View mode group -->
                 <div class="hhdl-control-group hhdl-view-group">
-                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
-                            data-view-mode="grouped"
-                            title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
-                        <span class="material-symbols-outlined">view_list</span>
-                        <span class="hhdl-btn-text"><?php _e('Categories', 'hhdl'); ?></span>
-                    </button>
                     <button class="hhdl-view-mode-btn <?php echo $view_mode === 'flat' ? 'active' : ''; ?>"
                             data-view-mode="flat"
                             title="<?php esc_attr_e('Flat List', 'hhdl'); ?>">
                         <span class="material-symbols-outlined">format_list_bulleted</span>
                         <span class="hhdl-btn-text"><?php _e('Flat List', 'hhdl'); ?></span>
+                    </button>
+                    <button class="hhdl-view-mode-btn <?php echo $view_mode === 'grouped' ? 'active' : ''; ?>"
+                            data-view-mode="grouped"
+                            title="<?php esc_attr_e('Group by Category', 'hhdl'); ?>">
+                        <span class="material-symbols-outlined">view_list</span>
+                        <span class="hhdl-btn-text"><?php _e('Categories', 'hhdl'); ?></span>
                     </button>
                 </div>
 
@@ -303,13 +303,13 @@ class HHDL_Display {
                             id="hhdl-toggle-filters"
                             title="<?php esc_attr_e('Show/Hide Room Filters', 'hhdl'); ?>">
                         <span class="material-symbols-outlined">filter_list</span>
-                        <span class="hhdl-btn-text"><?php _e('States', 'hhdl'); ?></span>
+                        <span class="hhdl-btn-text"><?php _e('States Filter', 'hhdl'); ?></span>
                     </button>
                     <button class="hhdl-view-mode-btn <?php echo $stat_filters_visible ? 'active' : ''; ?>"
                             id="hhdl-toggle-stat-filters"
                             title="<?php esc_attr_e('Show/Hide Stat Filters', 'hhdl'); ?>">
                         <span class="material-symbols-outlined">analytics</span>
-                        <span class="hhdl-btn-text"><?php _e('Stats', 'hhdl'); ?></span>
+                        <span class="hhdl-btn-text"><?php _e('Stats Filter', 'hhdl'); ?></span>
                     </button>
                 </div>
 
