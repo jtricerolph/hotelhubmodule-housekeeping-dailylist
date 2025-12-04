@@ -177,10 +177,10 @@ class HHDL_Core {
             return;
         }
 
-        // Material Symbols font
+        // Material Symbols font (with display=block to prevent FOUT)
         wp_enqueue_style(
             'material-symbols-outlined',
-            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block',
             array(),
             null
         );
@@ -236,10 +236,10 @@ class HHDL_Core {
             return;
         }
 
-        // Material Symbols for note type icons
+        // Material Symbols for note type icons (with display=block to prevent FOUT)
         wp_enqueue_style(
             'material-symbols',
-            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block',
             array(),
             null
         );
