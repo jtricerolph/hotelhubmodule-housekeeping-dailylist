@@ -1703,6 +1703,8 @@ class HHDL_Ajax {
         $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
         $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
 
+        error_log('[HHDL Activity] get_activity_log called - location_id: ' . $location_id . ', service_date: ' . $service_date);
+
         if (!$location_id) {
             wp_send_json_error(array('message' => __('Invalid location', 'hhdl')));
         }
@@ -1711,16 +1713,27 @@ class HHDL_Ajax {
         global $wpdb;
         $table_name = $wpdb->prefix . 'hhdl_activity_log';
 
-        $events = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM {$table_name}
-                 WHERE location_id = %d AND service_date = %s
-                 ORDER BY occurred_at DESC",
-                $location_id,
-                $service_date
-            ),
-            ARRAY_A
+        $query = $wpdb->prepare(
+            "SELECT * FROM {$table_name}
+             WHERE location_id = %d AND service_date = %s
+             ORDER BY occurred_at DESC",
+            $location_id,
+            $service_date
         );
+
+        error_log('[HHDL Activity] Executing query: ' . $query);
+
+        $events = $wpdb->get_results($query, ARRAY_A);
+
+        error_log('[HHDL Activity] Query returned ' . count($events) . ' raw events');
+        if ($wpdb->last_error) {
+            error_log('[HHDL Activity] Database error: ' . $wpdb->last_error);
+        }
+
+        // Log first event if exists
+        if (!empty($events)) {
+            error_log('[HHDL Activity] First event: ' . print_r($events[0], true));
+        }
 
         // Check if user can view guest details
         $can_view_guest_details = current_user_can('hhdl_view_guest_details');
@@ -1913,6 +1926,10 @@ class HHDL_Ajax {
             $user_name = $user ? $user->display_name : '';
         }
 
+        $occurred_at = current_time('mysql');
+
+        error_log('[HHDL Activity] log_activity called - location_id: ' . $location_id . ', room_id: ' . $room_id . ', event_type: ' . $event_type . ', service_date: ' . $service_date . ', occurred_at: ' . $occurred_at);
+
         // Insert activity log entry
         $result = $wpdb->insert(
             $table_name,
@@ -1923,12 +1940,18 @@ class HHDL_Ajax {
                 'event_data' => json_encode($event_data),
                 'user_id' => $user_id ? $user_id : null,
                 'user_name' => $user_name,
-                'occurred_at' => current_time('mysql'),
+                'occurred_at' => $occurred_at,
                 'service_date' => $service_date,
                 'booking_ref' => $booking_ref
             ),
             array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
         );
+
+        if ($result === false) {
+            error_log('[HHDL Activity] Insert FAILED - Error: ' . $wpdb->last_error);
+        } else {
+            error_log('[HHDL Activity] Insert successful - Insert ID: ' . $wpdb->insert_id);
+        }
 
         return $result !== false;
     }
