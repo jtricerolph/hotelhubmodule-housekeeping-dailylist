@@ -2034,13 +2034,13 @@
             toast.addClass('hhdl-toast-show');
         }, 10);
 
-        // Auto-hide after 3 seconds
+        // Auto-hide after 30 seconds (extended for debugging)
         setTimeout(function() {
             toast.removeClass('hhdl-toast-show');
             setTimeout(function() {
                 toast.remove();
             }, 300);
-        }, 3000);
+        }, 30000);
     }
 
     /**
