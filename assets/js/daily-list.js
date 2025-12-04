@@ -2482,4 +2482,8 @@
         }
     }, 100);
 
+    // Expose showToast to window for use by other modules
+    window.showToast = showToast;
+    console.log('[HHDL] showToast exposed to window');
+
 })(jQuery);
