@@ -596,6 +596,24 @@
             const $filtersWrapper = $('.hhdl-filters-wrapper');
             const isCurrentlyVisible = !$filtersWrapper.hasClass('hhdl-filters-hidden');
 
+            // If showing States, hide Stats (mutually exclusive)
+            if (isCurrentlyVisible) {
+                // Currently visible, will be hidden - no need to hide stats
+            } else {
+                // Will be shown - hide the other filter
+                const $statFiltersWrapper = $('.hhdl-stat-filters-wrapper');
+                const $statBtn = $('#hhdl-toggle-stat-filters');
+                if (!$statFiltersWrapper.hasClass('hhdl-stat-filters-hidden')) {
+                    $statFiltersWrapper.addClass('hhdl-stat-filters-hidden');
+                    $statBtn.removeClass('active');
+                    // Reset stat filters
+                    $('.hhdl-stat-filter-btn').removeClass('active');
+                    $('.hhdl-stat-filter-btn[data-stat-filter="all"]').addClass('active');
+                    filterRoomsByStats('all');
+                    saveUserPreference('stat_filters_visible', false);
+                }
+            }
+
             // Toggle visibility
             $filtersWrapper.toggleClass('hhdl-filters-hidden');
             $btn.toggleClass('active');
@@ -618,6 +636,25 @@
             const $btn = $(this);
             const $statFiltersWrapper = $('.hhdl-stat-filters-wrapper');
             const isCurrentlyVisible = !$statFiltersWrapper.hasClass('hhdl-stat-filters-hidden');
+
+            // If showing Stats, hide States (mutually exclusive)
+            if (isCurrentlyVisible) {
+                // Currently visible, will be hidden - no need to hide states
+            } else {
+                // Will be shown - hide the other filter
+                const $filtersWrapper = $('.hhdl-filters-wrapper');
+                const $stateBtn = $('#hhdl-toggle-filters');
+                if (!$filtersWrapper.hasClass('hhdl-filters-hidden')) {
+                    $filtersWrapper.addClass('hhdl-filters-hidden');
+                    $stateBtn.removeClass('active');
+                    // Reset state filters
+                    $('.hhdl-filter-btn').removeClass('active filter-exclusive');
+                    $('.hhdl-filter-btn[data-filter="all"]').addClass('active');
+                    filterRooms('all');
+                    $filtersWrapper.removeClass('hhdl-filters-sticky');
+                    saveUserPreference('filters_visible', false);
+                }
+            }
 
             // Toggle visibility
             $statFiltersWrapper.toggleClass('hhdl-stat-filters-hidden');
