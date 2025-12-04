@@ -2840,11 +2840,11 @@ body.hhdl-activity-panel-open {
 
 /* Event-type specific icon colors */
 .hhdl-activity-entry[data-event-type="checkout"] .hhdl-activity-icon {
-    background: #dbeafe;
+    background: #e9d5ff;
 }
 
 .hhdl-activity-entry[data-event-type="checkout"] .material-symbols-outlined {
-    color: #3b82f6;
+    color: #9333ea;
 }
 
 .hhdl-activity-entry[data-event-type="checkin"] .hhdl-activity-icon {

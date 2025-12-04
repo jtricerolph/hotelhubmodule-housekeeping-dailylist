@@ -2162,7 +2162,7 @@
             'status_clean': 'check_circle',
             'status_dirty': 'cancel',
             'tasks_complete': 'task_alt',
-            'linen_submit': 'inventory_2'
+            'linen_submit': 'dry_cleaning'
         };
         return icons[eventType] || 'info';
     }
