@@ -222,15 +222,15 @@ class HHDL_Display {
             <div class="hhdl-header-date-area" id="hhdl-open-date-picker" title="<?php esc_attr_e('Click to change date', 'hhdl'); ?>">
                 <span class="hhdl-viewing-date"><?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
             </div>
-            <button class="hhdl-header-settings-btn <?php echo $controls_visible ? 'active' : ''; ?>"
-                    id="hhdl-toggle-controls"
-                    title="<?php esc_attr_e('Show/Hide Controls', 'hhdl'); ?>">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
             <button class="hhdl-header-settings-btn hhdl-activity-log-btn <?php echo $activity_panel_open ? 'active' : ''; ?>"
                     id="hhdl-toggle-activity-log"
                     title="<?php esc_attr_e('Show/Hide Activity Log', 'hhdl'); ?>">
                 <span class="material-symbols-outlined">receipt_long</span>
+            </button>
+            <button class="hhdl-header-settings-btn <?php echo $controls_visible ? 'active' : ''; ?>"
+                    id="hhdl-toggle-controls"
+                    title="<?php esc_attr_e('Show/Hide Controls', 'hhdl'); ?>">
+                <span class="material-symbols-outlined">settings</span>
             </button>
         </div>
 
