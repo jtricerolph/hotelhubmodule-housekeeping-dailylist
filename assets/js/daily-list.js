@@ -2236,7 +2236,14 @@
         }
 
         let html = '';
+        let addedCount = 0;
         events.forEach(function(event) {
+            // Check if this event already exists (by event ID)
+            if (list.find('[data-event-id="' + event.id + '"]').length > 0) {
+                console.log('[HHDL Activity] Skipping duplicate event ID:', event.id);
+                return; // Skip this event
+            }
+
             const icon = getActivityIcon(event.event_type);
             const message = getActivityMessage(event);
             const timeAgo = formatTimeAgo(event.occurred_at);
@@ -2252,9 +2259,13 @@
             html += '    </div>';
             html += '  </div>';
             html += '</div>';
+            addedCount++;
         });
 
-        list.prepend(html);
+        if (html) {
+            console.log('[HHDL Activity] Prepending', addedCount, 'new events (skipped', (events.length - addedCount), 'duplicates)');
+            list.prepend(html);
+        }
     }
 
     /**
