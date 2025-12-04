@@ -2027,6 +2027,12 @@
         type = type || 'info';
 
         const toast = $('<div class="hhdl-toast hhdl-toast-' + type + '">' + message + '</div>');
+
+        // Calculate stacked position based on existing toasts
+        const existingToasts = $('.hhdl-toast').length;
+        const bottomOffset = 20 + (existingToasts * 70); // 70px spacing per toast
+        toast.css('bottom', bottomOffset + 'px');
+
         // Append inside #hha-standalone-app if it exists, otherwise append to body
         const $container = $('#hha-standalone-app').length ? $('#hha-standalone-app') : $('body');
         $container.append(toast);
