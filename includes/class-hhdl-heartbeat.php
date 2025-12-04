@@ -81,6 +81,25 @@ class HHDL_Heartbeat {
             'timestamp'   => current_time('mysql')
         );
 
+        // Check for activity log monitoring
+        if (isset($data['hhdl_activity_monitor'])) {
+            $activity_data = $data['hhdl_activity_monitor'];
+
+            if (isset($activity_data['location_id']) && isset($activity_data['service_date']) && isset($activity_data['last_check'])) {
+                $activity_location_id = intval($activity_data['location_id']);
+                $activity_service_date = sanitize_text_field($activity_data['service_date']);
+                $activity_last_check = sanitize_text_field($activity_data['last_check']);
+
+                // Get recent activity events
+                $recent_events = $this->get_recent_activity_events($activity_location_id, $activity_service_date, $activity_last_check);
+
+                $response['hhdl_activity_updates'] = array(
+                    'events' => $recent_events,
+                    'timestamp' => current_time('mysql')
+                );
+            }
+        }
+
         return $response;
     }
 
@@ -137,6 +156,60 @@ class HHDL_Heartbeat {
         }
 
         return $completions;
+    }
+
+    /**
+     * Get recent activity log events
+     *
+     * @param int    $location_id Location ID
+     * @param string $service_date Service date
+     * @param string $last_check Last check timestamp
+     * @return array Recent activity events
+     */
+    private function get_recent_activity_events($location_id, $service_date, $last_check) {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'hhdl_activity_log';
+
+        // Query recent activity events
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT *
+             FROM {$table_name}
+             WHERE location_id = %d
+             AND service_date = %s
+             AND occurred_at > %s
+             ORDER BY occurred_at DESC",
+            $location_id,
+            $service_date,
+            $last_check
+        ), ARRAY_A);
+
+        // Check if user can view guest details
+        $can_view_guest_details = current_user_can('hhdl_view_guest_details');
+
+        // Format results
+        $events = array();
+        foreach ($results as $row) {
+            $event_data = json_decode($row['event_data'], true);
+
+            // Filter guest details if user lacks permission
+            if (!$can_view_guest_details && isset($event_data['guest_name'])) {
+                unset($event_data['guest_name']);
+            }
+
+            $events[] = array(
+                'id' => $row['id'],
+                'room_id' => $row['room_id'],
+                'event_type' => $row['event_type'],
+                'event_data' => $event_data,
+                'user_id' => $row['user_id'],
+                'user_name' => $row['user_name'],
+                'occurred_at' => $row['occurred_at'],
+                'booking_ref' => $row['booking_ref']
+            );
+        }
+
+        return $events;
     }
 
     /**

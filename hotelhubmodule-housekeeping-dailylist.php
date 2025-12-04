@@ -70,6 +70,12 @@ class HotelHub_Housekeeping_DailyList {
 
         // Initialize core functionality
         add_action('plugins_loaded', array($this, 'init'));
+
+        // Activity log cleanup
+        add_action('hhdl_cleanup_activity_log', array($this, 'cleanup_activity_log'));
+
+        // Hook into linen count submission for activity logging
+        add_action('hhlc_linen_submitted', array($this, 'log_linen_submission'), 10, 6);
     }
 
     /**
@@ -85,6 +91,7 @@ class HotelHub_Housekeeping_DailyList {
      */
     public function activate() {
         $this->create_tables();
+        $this->schedule_cleanup();
         flush_rewrite_rules();
     }
 
@@ -134,15 +141,102 @@ class HotelHub_Housekeeping_DailyList {
             error_log('HHDL: Migrated task_type_id column to support negative integers');
         }
 
+        // Activity log table
+        $activity_table = $wpdb->prefix . 'hhdl_activity_log';
+
+        $sql_activity = "CREATE TABLE {$activity_table} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            location_id BIGINT(20) UNSIGNED NOT NULL,
+            room_id VARCHAR(50) NOT NULL,
+            event_type VARCHAR(50) NOT NULL,
+            event_data TEXT DEFAULT NULL,
+            user_id BIGINT(20) UNSIGNED DEFAULT NULL,
+            user_name VARCHAR(255) DEFAULT NULL,
+            occurred_at DATETIME NOT NULL,
+            service_date DATE NOT NULL,
+            booking_ref VARCHAR(100) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY location_date_idx (location_id, service_date),
+            KEY room_date_idx (room_id, service_date),
+            KEY event_type_idx (event_type),
+            KEY occurred_at_idx (occurred_at)
+        ) $charset_collate;";
+
+        dbDelta($sql_activity);
+
         // Store database version
         update_option('hhdl_db_version', HHDL_VERSION);
+    }
+
+    /**
+     * Schedule cleanup cron job
+     */
+    private function schedule_cleanup() {
+        if (!wp_next_scheduled('hhdl_cleanup_activity_log')) {
+            wp_schedule_event(time(), 'daily', 'hhdl_cleanup_activity_log');
+        }
     }
 
     /**
      * Deactivation hook
      */
     public function deactivate() {
+        wp_clear_scheduled_hook('hhdl_cleanup_activity_log');
         flush_rewrite_rules();
+    }
+
+    /**
+     * Cleanup activity log - delete events older than 5 days
+     */
+    public function cleanup_activity_log() {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'hhdl_activity_log';
+        $cutoff_date = date('Y-m-d', strtotime('-5 days'));
+
+        $deleted = $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$table_name} WHERE service_date < %s",
+                $cutoff_date
+            )
+        );
+
+        if ($deleted !== false) {
+            error_log("HHDL: Cleaned up {$deleted} activity log entries older than {$cutoff_date}");
+        }
+    }
+
+    /**
+     * Log linen count submission to activity log
+     *
+     * @param int $location_id Location ID
+     * @param string $room_id Room ID
+     * @param string $service_date Service date
+     * @param array $counts Linen counts
+     * @param string $booking_ref Booking reference
+     * @param string $user_name User display name
+     */
+    public function log_linen_submission($location_id, $room_id, $service_date, $counts, $booking_ref, $user_name) {
+        // Only log if HHDL_Ajax class is available
+        if (!class_exists('HHDL_Ajax')) {
+            return;
+        }
+
+        // Calculate total count
+        $total_count = array_sum($counts);
+
+        HHDL_Ajax::log_activity(
+            $location_id,
+            $room_id,
+            'linen_submit',
+            array(
+                'submitted_by' => $user_name,
+                'total_count' => $total_count,
+                'item_count' => count($counts)
+            ),
+            $service_date,
+            $booking_ref
+        );
     }
 }
 

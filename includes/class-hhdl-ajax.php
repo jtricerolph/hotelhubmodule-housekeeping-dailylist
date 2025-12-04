@@ -41,6 +41,8 @@ class HHDL_Ajax {
         add_action('wp_ajax_hhdl_update_room_status', array($this, 'update_room_status'));
         add_action('wp_ajax_hhdl_save_user_preferences', array($this, 'save_user_preferences'));
         add_action('wp_ajax_hhdl_reset_user_preferences', array($this, 'reset_user_preferences'));
+        add_action('wp_ajax_hhdl_get_activity_log', array($this, 'get_activity_log'));
+        add_action('wp_ajax_hhdl_log_checkin_checkout', array($this, 'log_checkin_checkout'));
     }
 
     /**
@@ -229,6 +231,26 @@ class HHDL_Ajax {
             // Commit transaction
             $wpdb->query('COMMIT');
 
+            // Check if all tasks are complete for this room
+            $remaining_newbook = $this->count_incomplete_newbook_tasks($location_id, $room_id, $service_date);
+            $remaining_recurring = $this->count_incomplete_recurring_tasks($location_id, $room_id, $service_date);
+            $total_remaining = $remaining_newbook + $remaining_recurring;
+
+            // If no tasks remain, log "all tasks complete" event
+            if ($total_remaining === 0) {
+                // Get user info
+                $user = wp_get_current_user();
+
+                self::log_activity(
+                    $location_id,
+                    $room_id,
+                    'tasks_complete',
+                    array('completed_by' => $user->display_name),
+                    $service_date,
+                    $booking_ref
+                );
+            }
+
             // Get user info for response
             $user = wp_get_current_user();
 
@@ -237,7 +259,8 @@ class HHDL_Ajax {
                 'completed_by'  => $user->display_name,
                 'completed_at'  => current_time('mysql'),
                 'completion_id' => $wpdb->insert_id,
-                'site_status'   => $site_status // Return site_status to frontend
+                'site_status'   => $site_status, // Return site_status to frontend
+                'all_tasks_complete' => ($total_remaining === 0) // Indicate if all tasks are done
             ));
 
         } catch (Exception $e) {
@@ -287,6 +310,21 @@ class HHDL_Ajax {
             if (!$response['success']) {
                 $error_msg = isset($response['message']) ? $response['message'] : __('Unknown error', 'hhdl');
                 wp_send_json_error(array('message' => sprintf(__('Failed to update NewBook: %s', 'hhdl'), $error_msg)));
+            }
+
+            // Log activity event (only for Clean and Dirty, not Inspected)
+            if ($site_status === 'Clean' || $site_status === 'Dirty') {
+                $event_type = $site_status === 'Clean' ? 'status_clean' : 'status_dirty';
+                $user = wp_get_current_user();
+
+                self::log_activity(
+                    $location_id,
+                    $room_id,
+                    $event_type,
+                    array('changed_by' => $user->display_name, 'status' => $site_status),
+                    date('Y-m-d'), // Use today's date as service_date
+                    null // No booking_ref available in this context
+                );
             }
 
             wp_send_json_success(array(
@@ -1647,5 +1685,250 @@ class HHDL_Ajax {
         } else {
             wp_send_json_error(array('message' => __('Failed to reset preferences', 'hhdl')));
         }
+    }
+
+    /**
+     * Get activity log (AJAX handler)
+     */
+    public function get_activity_log() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
+
+        if (!$location_id) {
+            wp_send_json_error(array('message' => __('Invalid location', 'hhdl')));
+        }
+
+        // Query activity log
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'hhdl_activity_log';
+
+        $events = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table_name}
+                 WHERE location_id = %d AND service_date = %s
+                 ORDER BY occurred_at DESC",
+                $location_id,
+                $service_date
+            ),
+            ARRAY_A
+        );
+
+        // Check if user can view guest details
+        $can_view_guest_details = current_user_can('hhdl_view_guest_details');
+
+        // Process events
+        $processed_events = array();
+        foreach ($events as $event) {
+            $event_data = json_decode($event['event_data'], true);
+
+            // Filter guest details if user lacks permission
+            if (!$can_view_guest_details && isset($event_data['guest_name'])) {
+                unset($event_data['guest_name']);
+            }
+
+            $processed_events[] = array(
+                'id' => $event['id'],
+                'room_id' => $event['room_id'],
+                'event_type' => $event['event_type'],
+                'event_data' => $event_data,
+                'user_id' => $event['user_id'],
+                'user_name' => $event['user_name'],
+                'occurred_at' => $event['occurred_at'],
+                'booking_ref' => $event['booking_ref']
+            );
+        }
+
+        wp_send_json_success(array(
+            'events' => $processed_events,
+            'service_date' => $service_date
+        ));
+    }
+
+    /**
+     * Log check-in/check-out event (AJAX handler)
+     */
+    public function log_checkin_checkout() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+        $event_type = isset($_POST['event_type']) ? sanitize_text_field($_POST['event_type']) : '';
+        $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
+        $guest_name = isset($_POST['guest_name']) ? sanitize_text_field($_POST['guest_name']) : '';
+
+        // Validate
+        if (!$location_id || !$room_id || !in_array($event_type, array('checkin', 'checkout'))) {
+            wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
+        }
+
+        // Prepare event data
+        $event_data = array();
+        if (!empty($guest_name)) {
+            $event_data['guest_name'] = $guest_name;
+        }
+
+        // Log the activity
+        self::log_activity(
+            $location_id,
+            $room_id,
+            $event_type,
+            $event_data,
+            date('Y-m-d'), // Use today as service_date
+            $booking_ref
+        );
+
+        wp_send_json_success(array(
+            'message' => sprintf(__('%s logged successfully', 'hhdl'), ucfirst($event_type))
+        ));
+    }
+
+    /**
+     * Count remaining incomplete NewBook tasks for a room
+     *
+     * @param int $location_id Location ID
+     * @param string $room_id Room ID
+     * @param string $service_date Service date (Y-m-d)
+     * @return int Number of incomplete NewBook tasks
+     */
+    private function count_incomplete_newbook_tasks($location_id, $room_id, $service_date) {
+        // Get NewBook API client
+        $api = $this->get_newbook_api($location_id);
+        if (!$api) {
+            return 0;
+        }
+
+        // Get NewBook integration settings
+        $hotel = $this->get_hotel_from_location($location_id);
+        if (!$hotel) {
+            return 0;
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return 0;
+        }
+
+        // Get task type IDs from settings
+        $task_type_ids = $this->get_all_task_type_ids($integration);
+
+        // Fetch tasks from NewBook
+        $nb_tasks = $api->get_tasks($task_type_ids, $room_id, $service_date, $service_date);
+
+        if (empty($nb_tasks) || !is_array($nb_tasks)) {
+            return 0;
+        }
+
+        // Count incomplete tasks
+        $incomplete_count = 0;
+        foreach ($nb_tasks as $task) {
+            // Check if task is completed in NewBook or locally
+            $is_completed = !empty($task['completed']);
+
+            if (!$is_completed && !empty($task['description'])) {
+                // Check local completion
+                $locally_completed = $this->is_task_completed($room_id, $task['description'], $service_date);
+                if (!$locally_completed) {
+                    $incomplete_count++;
+                }
+            }
+        }
+
+        return $incomplete_count;
+    }
+
+    /**
+     * Count remaining incomplete recurring/default tasks for a room
+     *
+     * @param int $location_id Location ID
+     * @param string $room_id Room ID
+     * @param string $service_date Service date (Y-m-d)
+     * @return int Number of incomplete recurring tasks
+     */
+    private function count_incomplete_recurring_tasks($location_id, $room_id, $service_date) {
+        // Get default tasks for this location
+        $default_tasks = HHDL_Settings::get_default_tasks($location_id);
+
+        if (empty($default_tasks) || !is_array($default_tasks)) {
+            return 0;
+        }
+
+        // Count incomplete default tasks
+        $incomplete_count = 0;
+        foreach ($default_tasks as $task) {
+            if (!empty($task['name'])) {
+                // Check if task is locally completed
+                $is_completed = $this->is_task_completed($room_id, $task['name'], $service_date);
+                if (!$is_completed) {
+                    $incomplete_count++;
+                }
+            }
+        }
+
+        return $incomplete_count;
+    }
+
+    /**
+     * Log activity event (static helper method)
+     *
+     * @param int $location_id Location ID
+     * @param string $room_id Room ID
+     * @param string $event_type Event type
+     * @param array $event_data Event data
+     * @param string $service_date Service date (Y-m-d)
+     * @param string|null $booking_ref Booking reference
+     * @return bool True on success, false on failure
+     */
+    public static function log_activity($location_id, $room_id, $event_type, $event_data = array(), $service_date = null, $booking_ref = null) {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'hhdl_activity_log';
+
+        // Default service_date to today if not provided
+        if (is_null($service_date)) {
+            $service_date = date('Y-m-d');
+        }
+
+        // Get current user info
+        $user_id = get_current_user_id();
+        $user_name = '';
+        if ($user_id) {
+            $user = get_userdata($user_id);
+            $user_name = $user ? $user->display_name : '';
+        }
+
+        // Insert activity log entry
+        $result = $wpdb->insert(
+            $table_name,
+            array(
+                'location_id' => $location_id,
+                'room_id' => $room_id,
+                'event_type' => $event_type,
+                'event_data' => json_encode($event_data),
+                'user_id' => $user_id ? $user_id : null,
+                'user_name' => $user_name,
+                'occurred_at' => current_time('mysql'),
+                'service_date' => $service_date,
+                'booking_ref' => $booking_ref
+            ),
+            array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
+        );
+
+        return $result !== false;
     }
 }
