@@ -2678,7 +2678,7 @@
 
 .hhdl-activity-panel {
     position: fixed;
-    top: 46px; /* Below header */
+    top: 98px; /* Below header and filters */
     right: 0;
     bottom: 0;
     width: 400px;
@@ -2694,6 +2694,15 @@
 
 .hhdl-activity-panel.open {
     transform: translateX(0);
+}
+
+/* Lock scrolling on main list when activity panel is open */
+body.hhdl-activity-panel-open #hhdl-room-list {
+    overflow: hidden !important;
+}
+
+body.hhdl-activity-panel-open .hha-module-container {
+    overflow: hidden !important;
 }
 
 .hhdl-activity-panel-header {
