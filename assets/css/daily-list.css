@@ -2678,7 +2678,7 @@
 
 .hhdl-activity-panel {
     position: fixed;
-    top: 0;
+    top: 46px; /* Below header */
     right: 0;
     bottom: 0;
     width: 400px;
