@@ -76,6 +76,7 @@ class HHDL_Display {
                 'stat_filters_visible' => false,  // Whether stat filters section is shown
                 'active_stat_filter' => 'all',  // Currently active stat filter
                 'active_stat_filter_mode' => 'outstanding',  // Current mode for active stat filter
+                'activity_panel_open' => false,  // Whether activity log panel is open
             );
         }
 
@@ -133,6 +134,8 @@ class HHDL_Display {
                 ? sanitize_text_field($preferences['active_stat_filter']) : $existing_prefs['active_stat_filter'],
             'active_stat_filter_mode' => isset($preferences['active_stat_filter_mode'])
                 ? sanitize_text_field($preferences['active_stat_filter_mode']) : $existing_prefs['active_stat_filter_mode'],
+            'activity_panel_open' => isset($preferences['activity_panel_open'])
+                ? (bool)$preferences['activity_panel_open'] : (isset($existing_prefs['activity_panel_open']) ? $existing_prefs['activity_panel_open'] : false),
         );
 
         // DEBUG: Log final preferences being saved
@@ -201,7 +204,7 @@ class HHDL_Display {
         $this->render_view_controls();
         $this->render_filters();
         $this->render_stat_filters();
-        $this->render_room_list($location_id, $selected_date);
+        $this->render_room_list($location_id, $selected_date, $user_prefs);
         $this->render_modal();
     }
 
@@ -213,6 +216,7 @@ class HHDL_Display {
         $location_id = $this->get_current_location();
         $user_prefs = self::get_user_preferences(null, $location_id);
         $controls_visible = isset($user_prefs['controls_visible']) ? $user_prefs['controls_visible'] : true;
+        $activity_panel_open = isset($user_prefs['activity_panel_open']) ? $user_prefs['activity_panel_open'] : false;
         ?>
         <div class="hhdl-header">
             <div class="hhdl-header-date-area" id="hhdl-open-date-picker" title="<?php esc_attr_e('Click to change date', 'hhdl'); ?>">
@@ -222,6 +226,11 @@ class HHDL_Display {
                     id="hhdl-toggle-controls"
                     title="<?php esc_attr_e('Show/Hide Controls', 'hhdl'); ?>">
                 <span class="material-symbols-outlined">settings</span>
+            </button>
+            <button class="hhdl-header-settings-btn hhdl-activity-log-btn <?php echo $activity_panel_open ? 'active' : ''; ?>"
+                    id="hhdl-toggle-activity-log"
+                    title="<?php esc_attr_e('Show/Hide Activity Log', 'hhdl'); ?>">
+                <span class="material-symbols-outlined">receipt_long</span>
             </button>
         </div>
 
@@ -506,12 +515,31 @@ class HHDL_Display {
     /**
      * Render room list
      */
-    private function render_room_list($location_id, $date) {
+    private function render_room_list($location_id, $date, $user_prefs = array()) {
+        $activity_panel_open = isset($user_prefs['activity_panel_open']) ? $user_prefs['activity_panel_open'] : false;
         ?>
         <div class="hhdl-room-list" id="hhdl-room-list" data-location="<?php echo esc_attr($location_id); ?>" data-date="<?php echo esc_attr($date); ?>">
             <div class="hhdl-loading">
                 <span class="spinner"></span>
                 <p><?php _e('Loading rooms...', 'hhdl'); ?></p>
+            </div>
+        </div>
+
+        <!-- Activity Log Panel -->
+        <div class="hhdl-activity-panel <?php echo $activity_panel_open ? 'open' : ''; ?>" id="hhdl-activity-panel">
+            <div class="hhdl-activity-panel-header">
+                <h3 class="hhdl-activity-panel-title">
+                    <?php _e('Activity Log', 'hhdl'); ?> - <span class="hhdl-activity-date"><?php echo date('M j', strtotime($date)); ?></span>
+                </h3>
+                <button class="hhdl-activity-panel-close" id="hhdl-close-activity-panel" title="<?php esc_attr_e('Close', 'hhdl'); ?>">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="hhdl-activity-list" id="hhdl-activity-list">
+                <div class="hhdl-activity-loading">
+                    <span class="spinner"></span>
+                    <p><?php _e('Loading activity...', 'hhdl'); ?></p>
+                </div>
             </div>
         </div>
         <?php

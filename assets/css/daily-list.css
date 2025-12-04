@@ -2671,3 +2671,223 @@
         right: -15px;
     }
 }
+
+/* ============================================
+   Activity Log Panel
+   ============================================ */
+
+.hhdl-activity-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 400px;
+    background: #fff;
+    border-left: 1px solid #d1d5db;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+}
+
+.hhdl-activity-panel.open {
+    transform: translateX(0);
+}
+
+.hhdl-activity-panel-header {
+    padding: 12px 16px;
+    border-bottom: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: #f9fafb;
+}
+
+.hhdl-activity-panel-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.hhdl-activity-date {
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.hhdl-activity-panel-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hhdl-activity-panel-close:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.hhdl-activity-panel-close .material-symbols-outlined {
+    font-size: 18px;
+    color: #6b7280;
+}
+
+.hhdl-activity-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.hhdl-activity-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+.hhdl-activity-loading .spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 12px;
+}
+
+.hhdl-activity-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* Activity Entry */
+.hhdl-activity-entry {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s;
+}
+
+.hhdl-activity-entry:hover {
+    background: #f9fafb;
+}
+
+.hhdl-activity-entry.hhdl-activity-new {
+    background: #fef3c7;
+    animation: fadeToNormal 2s ease-in-out forwards;
+}
+
+@keyframes fadeToNormal {
+    from { background: #fef3c7; }
+    to { background: transparent; }
+}
+
+.hhdl-activity-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f3f4f6;
+}
+
+.hhdl-activity-icon .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* Event-type specific icon colors */
+.hhdl-activity-entry[data-event-type="checkout"] .hhdl-activity-icon {
+    background: #dbeafe;
+}
+
+.hhdl-activity-entry[data-event-type="checkout"] .material-symbols-outlined {
+    color: #3b82f6;
+}
+
+.hhdl-activity-entry[data-event-type="checkin"] .hhdl-activity-icon {
+    background: #dbeafe;
+}
+
+.hhdl-activity-entry[data-event-type="checkin"] .material-symbols-outlined {
+    color: #3b82f6;
+}
+
+.hhdl-activity-entry[data-event-type="status_clean"] .hhdl-activity-icon {
+    background: #d1fae5;
+}
+
+.hhdl-activity-entry[data-event-type="status_clean"] .material-symbols-outlined {
+    color: #10b981;
+}
+
+.hhdl-activity-entry[data-event-type="status_dirty"] .hhdl-activity-icon {
+    background: #fee2e2;
+}
+
+.hhdl-activity-entry[data-event-type="status_dirty"] .material-symbols-outlined {
+    color: #ef4444;
+}
+
+.hhdl-activity-entry[data-event-type="tasks_complete"] .hhdl-activity-icon {
+    background: #d1fae5;
+}
+
+.hhdl-activity-entry[data-event-type="tasks_complete"] .material-symbols-outlined {
+    color: #10b981;
+}
+
+.hhdl-activity-entry[data-event-type="linen_submit"] .hhdl-activity-icon {
+    background: #d1fae5;
+}
+
+.hhdl-activity-entry[data-event-type="linen_submit"] .material-symbols-outlined {
+    color: #10b981;
+}
+
+.hhdl-activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.hhdl-activity-message {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.hhdl-activity-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.hhdl-activity-user {
+    font-weight: 400;
+}
+
+.hhdl-activity-time {
+    font-weight: 400;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hhdl-activity-panel {
+        width: 100%;
+        max-width: 400px;
+    }
+}
