@@ -1850,8 +1850,12 @@ class HHDL_Ajax {
         // Get task type IDs from settings
         $task_type_ids = $this->get_all_task_type_ids($integration);
 
-        // Fetch tasks from NewBook
-        $nb_tasks = $api->get_tasks($task_type_ids, $room_id, $service_date, $service_date);
+        // Fetch tasks from NewBook using correct API signature
+        // Parameters: (from_datetime, to_datetime, task_type_ids, show_uncomplete, site_id, include_completed)
+        $from_datetime = $service_date . ' 00:00:00';
+        $to_datetime = $service_date . ' 23:59:59';
+        $tasks_response = $api->get_tasks($from_datetime, $to_datetime, $task_type_ids, true, $room_id, true);
+        $nb_tasks = isset($tasks_response['data']) ? $tasks_response['data'] : array();
 
         error_log("HHDL count_incomplete: Room {$room_id}, Date {$service_date}, NewBook returned " . count($nb_tasks ?: []) . " tasks");
 
@@ -1860,9 +1864,16 @@ class HHDL_Ajax {
             return 0;
         }
 
+        // Filter to only tasks for this specific room (since API might return other rooms)
+        $room_tasks = array_filter($nb_tasks, function($task) use ($room_id) {
+            return isset($task['site_id']) && $task['site_id'] === $room_id;
+        });
+
+        error_log("HHDL count_incomplete: After filtering for room {$room_id}, " . count($room_tasks) . " tasks match");
+
         // Count incomplete tasks
         $incomplete_count = 0;
-        foreach ($nb_tasks as $task) {
+        foreach ($room_tasks as $task) {
             // Check if task is completed in NewBook or locally
             $is_completed = !empty($task['completed']);
 
