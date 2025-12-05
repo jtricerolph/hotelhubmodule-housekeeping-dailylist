@@ -187,6 +187,12 @@ class HHDL_Heartbeat {
         // Check if user can view guest details
         $can_view_guest_details = current_user_can('hhdl_view_guest_details');
 
+        // Get unique room IDs to resolve
+        $room_ids = array_unique(array_column($results, 'room_id'));
+
+        // Resolve room IDs to room numbers using HHDL_Ajax helper
+        $room_mapping = HHDL_Ajax::resolve_room_numbers($location_id, $room_ids);
+
         // Format results
         $events = array();
         foreach ($results as $row) {
@@ -197,9 +203,13 @@ class HHDL_Heartbeat {
                 unset($event_data['guest_name']);
             }
 
+            // Resolve room_id to room_number
+            $room_id = $row['room_id'];
+            $room_number = isset($room_mapping[$room_id]) ? $room_mapping[$room_id] : $room_id;
+
             $events[] = array(
                 'id' => $row['id'],
-                'room_id' => $row['room_id'],
+                'room_id' => $room_number,  // Use resolved room_number instead of site_id
                 'event_type' => $row['event_type'],
                 'event_data' => $event_data,
                 'user_id' => $row['user_id'],

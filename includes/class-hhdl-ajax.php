@@ -1728,6 +1728,12 @@ class HHDL_Ajax {
         // Check if user can view guest details
         $can_view_guest_details = current_user_can('hhdl_view_guest_details');
 
+        // Get unique room IDs to resolve
+        $room_ids = array_unique(array_column($events, 'room_id'));
+
+        // Resolve room IDs to room numbers
+        $room_mapping = self::resolve_room_numbers($location_id, $room_ids);
+
         // Process events
         $processed_events = array();
         foreach ($events as $event) {
@@ -1738,9 +1744,13 @@ class HHDL_Ajax {
                 unset($event_data['guest_name']);
             }
 
+            // Resolve room_id to room_number
+            $room_id = $event['room_id'];
+            $room_number = isset($room_mapping[$room_id]) ? $room_mapping[$room_id] : $room_id;
+
             $processed_events[] = array(
                 'id' => $event['id'],
-                'room_id' => $event['room_id'],
+                'room_id' => $room_number,  // Use resolved room_number instead of site_id
                 'event_type' => $event['event_type'],
                 'event_data' => $event_data,
                 'user_id' => $event['user_id'],
@@ -1886,6 +1896,66 @@ class HHDL_Ajax {
         }
 
         return $incomplete_count;
+    }
+
+    /**
+     * Resolve room IDs to room numbers using NewBook API
+     *
+     * @param int $location_id Location ID
+     * @param array $room_ids Array of room IDs (site_ids) to resolve
+     * @return array Mapping of room_id => room_number
+     */
+    public static function resolve_room_numbers($location_id, $room_ids) {
+        $mapping = array();
+
+        // Check if HHA functions are available
+        if (!function_exists('hha')) {
+            // Return identity mapping if HHA not available
+            foreach ($room_ids as $room_id) {
+                $mapping[$room_id] = $room_id;
+            }
+            return $mapping;
+        }
+
+        // Get hotel and integration settings
+        $hotel = hha()->hotels->get($location_id);
+        if (!$hotel) {
+            foreach ($room_ids as $room_id) {
+                $mapping[$room_id] = $room_id;
+            }
+            return $mapping;
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            foreach ($room_ids as $room_id) {
+                $mapping[$room_id] = $room_id;
+            }
+            return $mapping;
+        }
+
+        // Get sites from NewBook API
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
+        $api = new HHA_NewBook_API($integration);
+        $sites_response = $api->get_sites(true);
+        $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+
+        // Build mapping
+        foreach ($room_ids as $room_id) {
+            $room_number = $room_id; // Default to room_id
+
+            // Try to find matching site
+            foreach ($sites as $site) {
+                if ($site['site_id'] === $room_id) {
+                    $room_number = isset($site['site_name']) ? $site['site_name'] : $room_id;
+                    break;
+                }
+            }
+
+            $mapping[$room_id] = $room_number;
+        }
+
+        return $mapping;
     }
 
     /**
