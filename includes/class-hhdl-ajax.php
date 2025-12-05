@@ -234,13 +234,16 @@ class HHDL_Ajax {
 
             // Check if all tasks are complete for this room
             // Note: All tasks come from NewBook - there are no separate "recurring" tasks
+            error_log("HHDL complete_task: About to count remaining tasks for room {$room_id} (display: {$room_number}), task_id {$task_id}");
             $remaining_tasks = $this->count_incomplete_newbook_tasks($location_id, $room_id, $service_date);
+            error_log("HHDL complete_task: Remaining tasks = {$remaining_tasks}");
 
             // If no tasks remain, log "all tasks complete" event
             if ($remaining_tasks === 0) {
                 // Get user info
                 $user = wp_get_current_user();
 
+                error_log("HHDL complete_task: LOGGING 'all tasks complete' event for room {$room_number}");
                 self::log_activity(
                     $location_id,
                     $room_number, // Use room_number (site_name) for display in activity log
@@ -249,6 +252,8 @@ class HHDL_Ajax {
                     $service_date,
                     $booking_ref
                 );
+            } else {
+                error_log("HHDL complete_task: NOT logging 'all tasks complete' - still {$remaining_tasks} tasks remaining");
             }
 
             // Get user info for response
@@ -1825,17 +1830,20 @@ class HHDL_Ajax {
         // Get NewBook API client
         $api = $this->get_newbook_api($location_id);
         if (!$api) {
+            error_log("HHDL count_incomplete: API not available for location {$location_id}");
             return 0;
         }
 
         // Get NewBook integration settings
         $hotel = $this->get_hotel_from_location($location_id);
         if (!$hotel) {
+            error_log("HHDL count_incomplete: Hotel not found for location {$location_id}");
             return 0;
         }
 
         $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
         if (empty($integration)) {
+            error_log("HHDL count_incomplete: Integration not found for hotel {$hotel->id}");
             return 0;
         }
 
@@ -1845,7 +1853,10 @@ class HHDL_Ajax {
         // Fetch tasks from NewBook
         $nb_tasks = $api->get_tasks($task_type_ids, $room_id, $service_date, $service_date);
 
+        error_log("HHDL count_incomplete: Room {$room_id}, Date {$service_date}, NewBook returned " . count($nb_tasks ?: []) . " tasks");
+
         if (empty($nb_tasks) || !is_array($nb_tasks)) {
+            error_log("HHDL count_incomplete: No tasks returned from NewBook for room {$room_id}");
             return 0;
         }
 
@@ -1858,12 +1869,16 @@ class HHDL_Ajax {
             if (!$is_completed && !empty($task['id'])) {
                 // Check local completion by task_id (unique identifier)
                 $locally_completed = $this->is_task_completed($room_id, $task['id'], $service_date);
+                error_log("HHDL count_incomplete: Task {$task['id']} - NB complete: " . ($is_completed ? 'yes' : 'no') . ", Local complete: " . ($locally_completed ? 'yes' : 'no'));
                 if (!$locally_completed) {
                     $incomplete_count++;
                 }
+            } elseif ($is_completed) {
+                error_log("HHDL count_incomplete: Task {$task['id']} already completed in NewBook");
             }
         }
 
+        error_log("HHDL count_incomplete: Final count = {$incomplete_count}");
         return $incomplete_count;
     }
 
