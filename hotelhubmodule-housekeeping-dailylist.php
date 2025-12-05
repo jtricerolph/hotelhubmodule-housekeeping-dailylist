@@ -210,7 +210,7 @@ class HotelHub_Housekeeping_DailyList {
      * Log linen count submission to activity log
      *
      * @param int $location_id Location ID
-     * @param string $room_id Room ID
+     * @param string $room_id Room ID (site_id)
      * @param string $service_date Service date
      * @param array $counts Linen counts
      * @param string $booking_ref Booking reference
@@ -222,12 +222,15 @@ class HotelHub_Housekeeping_DailyList {
             return;
         }
 
+        // Get room_number (site_name) from NewBook API for display in activity log
+        $room_number = $this->get_room_number_from_api($location_id, $room_id);
+
         // Calculate total count
         $total_count = array_sum($counts);
 
         HHDL_Ajax::log_activity(
             $location_id,
-            $room_id,
+            $room_number, // Use room_number (site_name) for display in activity log
             'linen_submit',
             array(
                 'submitted_by' => $user_name,
@@ -237,6 +240,47 @@ class HotelHub_Housekeeping_DailyList {
             $service_date,
             $booking_ref
         );
+    }
+
+    /**
+     * Get room number (site_name) from NewBook API
+     *
+     * @param int $location_id Location ID
+     * @param string $room_id Room ID (site_id)
+     * @return string Room number or fallback to room_id
+     */
+    private function get_room_number_from_api($location_id, $room_id) {
+        // Get NewBook API client
+        if (!function_exists('hha')) {
+            return $room_id;
+        }
+
+        $hotel = hha()->hotels->get($location_id);
+        if (!$hotel) {
+            return $room_id;
+        }
+
+        $integration = hha()->integrations->get_settings($hotel->id, 'newbook');
+        if (empty($integration)) {
+            return $room_id;
+        }
+
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-newbook-api.php';
+        $api = new HHA_NewBook_API($integration);
+
+        // Get site details
+        $sites_response = $api->get_sites(true);
+        $sites = isset($sites_response['data']) ? $sites_response['data'] : array();
+
+        // Find room by site_id and return site_name
+        foreach ($sites as $site) {
+            if ($site['site_id'] === $room_id) {
+                return isset($site['site_name']) ? $site['site_name'] : $room_id;
+            }
+        }
+
+        // Fallback to room_id if not found
+        return $room_id;
     }
 }
 

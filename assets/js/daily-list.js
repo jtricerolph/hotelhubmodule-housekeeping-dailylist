@@ -1578,8 +1578,11 @@
             }
 
             const taskItem = checkbox.closest('.hhdl-task-item');
+            // Get room number from modal header for activity log display
+            const roomNumber = $('.hhdl-modal-room-number').text().trim();
             const taskData = {
                 roomId: checkbox.data('room-id'),
+                roomNumber: roomNumber,
                 taskId: checkbox.data('task-id'),
                 taskTypeId: checkbox.data('task-type-id') || null,
                 taskDescription: checkbox.data('task-description'),
@@ -1760,6 +1763,7 @@
                 nonce: hhdlAjax.nonce,
                 location_id: currentLocationId,
                 room_id: taskData.roomId,
+                room_number: taskData.roomNumber,
                 task_id: taskData.taskId,
                 task_type_id: taskData.taskTypeId,
                 task_description: taskData.taskDescription,
@@ -2209,7 +2213,7 @@
 
             case 'tasks_complete':
                 const completedBy = eventData.completed_by || 'Someone';
-                return roomId + ' - all tasks completed by ' + completedBy;
+                return roomId + ' - final newbook task completed by ' + completedBy;
 
             case 'linen_submit':
                 const submittedBy = eventData.submitted_by || 'Someone';
@@ -2528,7 +2532,7 @@
 
                     // Log arrival event (use arrival date as service_date)
                     const arrivalDate = bookingArrival || currentDate;
-                    logCheckInOutEvent('checkin', booking.site_id, guestName, booking.booking_ref, arrivalDate);
+                    logCheckInOutEvent('checkin', booking.site_id, booking.site_name, guestName, booking.booking_ref, arrivalDate);
 
                     console.log('[HHDL] Logged arrival for room:', booking.site_name, 'guest:', guestName, 'date:', arrivalDate);
                 } else {
@@ -2589,7 +2593,7 @@
 
         // Log checkout event to activity log (use departure date as service_date)
         const departureDate = booking.booking_departure ? booking.booking_departure.split(' ')[0] : currentDate;
-        logCheckInOutEvent('checkout', booking.site_id, hasGuestNamePermission ? guestName : null, booking.booking_ref, departureDate);
+        logCheckInOutEvent('checkout', booking.site_id, booking.site_name, hasGuestNamePermission ? guestName : null, booking.booking_ref, departureDate);
 
         // Ensure notification shows with a slight delay to avoid race conditions
         setTimeout(function() {
@@ -2600,8 +2604,8 @@
     /**
      * Log check-in/out event to activity log
      */
-    function logCheckInOutEvent(eventType, roomId, guestName, bookingRef, serviceDate) {
-        console.log('[HHDL Activity] Logging', eventType, 'event for room', roomId, 'guest:', guestName, 'date:', serviceDate);
+    function logCheckInOutEvent(eventType, roomId, roomNumber, guestName, bookingRef, serviceDate) {
+        console.log('[HHDL Activity] Logging', eventType, 'event for room', roomNumber, 'guest:', guestName, 'date:', serviceDate);
         $.ajax({
             url: hhdlAjax.ajaxUrl,
             type: 'POST',
@@ -2610,6 +2614,7 @@
                 nonce: hhdlAjax.nonce,
                 location_id: currentLocationId,
                 room_id: roomId,
+                room_number: roomNumber,
                 event_type: eventType,
                 guest_name: guestName,
                 booking_ref: bookingRef,
@@ -2833,6 +2838,13 @@
         const isCard = element.hasClass('hhdl-status-change-card');
         const isBadge = element.hasClass('hhdl-status-toggle-btn');
 
+        // Get room number for activity log - try modal header first, fallback to room card
+        let roomNumber = $('.hhdl-modal-room-number').text().trim();
+        if (!roomNumber) {
+            const roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+            roomNumber = roomCard.find('.hhdl-room-number').text().trim() || roomId;
+        }
+
         // Disable element during update
         element.css('opacity', '0.5').css('pointer-events', 'none');
 
@@ -2844,6 +2856,7 @@
                 nonce: hhdlAjax.nonce,
                 location_id: currentLocationId,
                 room_id: roomId,
+                room_number: roomNumber,
                 site_status: newStatus
             },
             success: function(response) {

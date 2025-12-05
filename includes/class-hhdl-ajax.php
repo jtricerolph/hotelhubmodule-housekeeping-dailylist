@@ -150,6 +150,7 @@ class HHDL_Ajax {
         // Get parameters
         $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
         $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+        $room_number = isset($_POST['room_number']) ? sanitize_text_field($_POST['room_number']) : $room_id; // Fallback to room_id if not provided
         $task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
         $task_type_id = isset($_POST['task_type_id']) ? intval($_POST['task_type_id']) : null;
         $task_description = isset($_POST['task_description']) ? sanitize_text_field($_POST['task_description']) : '';
@@ -232,18 +233,17 @@ class HHDL_Ajax {
             $wpdb->query('COMMIT');
 
             // Check if all tasks are complete for this room
-            $remaining_newbook = $this->count_incomplete_newbook_tasks($location_id, $room_id, $service_date);
-            $remaining_recurring = $this->count_incomplete_recurring_tasks($location_id, $room_id, $service_date);
-            $total_remaining = $remaining_newbook + $remaining_recurring;
+            // Note: All tasks come from NewBook - there are no separate "recurring" tasks
+            $remaining_tasks = $this->count_incomplete_newbook_tasks($location_id, $room_id, $service_date);
 
             // If no tasks remain, log "all tasks complete" event
-            if ($total_remaining === 0) {
+            if ($remaining_tasks === 0) {
                 // Get user info
                 $user = wp_get_current_user();
 
                 self::log_activity(
                     $location_id,
-                    $room_id,
+                    $room_number, // Use room_number (site_name) for display in activity log
                     'tasks_complete',
                     array('completed_by' => $user->display_name),
                     $service_date,
@@ -260,7 +260,7 @@ class HHDL_Ajax {
                 'completed_at'  => current_time('mysql'),
                 'completion_id' => $wpdb->insert_id,
                 'site_status'   => $site_status, // Return site_status to frontend
-                'all_tasks_complete' => ($total_remaining === 0) // Indicate if all tasks are done
+                'all_tasks_complete' => ($remaining_tasks === 0) // Indicate if all tasks are done
             ));
 
         } catch (Exception $e) {
@@ -285,6 +285,7 @@ class HHDL_Ajax {
             // Get parameters
             $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
             $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+            $room_number = isset($_POST['room_number']) ? sanitize_text_field($_POST['room_number']) : $room_id; // Fallback to room_id if not provided
             $site_status = isset($_POST['site_status']) ? sanitize_text_field($_POST['site_status']) : '';
 
             // Validate parameters
@@ -319,7 +320,7 @@ class HHDL_Ajax {
 
                 self::log_activity(
                     $location_id,
-                    $room_id,
+                    $room_number, // Use room_number (site_name) for display in activity log
                     $event_type,
                     array('changed_by' => $user->display_name, 'status' => $site_status),
                     date('Y-m-d'), // Use today's date as service_date
@@ -721,7 +722,7 @@ class HHDL_Ajax {
                 }
 
                 // Check if already completed locally (for user attribution)
-                $locally_completed = $this->is_task_completed($room_details['room_number'], $task_description, $date);
+                $locally_completed = $this->is_task_completed($room_details['room_number'], $nb_task['id'], $date);
 
                 // Get task type name from task_type_id
                 $task_type_display = 'Task';
@@ -776,15 +777,17 @@ class HHDL_Ajax {
     /**
      * Check if task is completed
      */
-    private function is_task_completed($room_id, $task_description, $service_date) {
+    private function is_task_completed($room_id, $task_id, $service_date) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'hhdl_task_completions';
 
+        // Check by task_id (unique identifier) instead of description
+        // Multiple tasks can have the same description
         $exists = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$table_name}
-             WHERE room_id = %s AND task_description = %s AND service_date = %s",
+             WHERE room_id = %s AND task_id = %d AND service_date = %s",
             $room_id,
-            $task_description,
+            $task_id,
             $service_date
         ));
 
@@ -1768,6 +1771,7 @@ class HHDL_Ajax {
         // Get parameters
         $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
         $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+        $room_number = isset($_POST['room_number']) ? sanitize_text_field($_POST['room_number']) : $room_id; // Fallback to room_id if not provided
         $event_type = isset($_POST['event_type']) ? sanitize_text_field($_POST['event_type']) : '';
         $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
         $guest_name = isset($_POST['guest_name']) ? sanitize_text_field($_POST['guest_name']) : '';
@@ -1787,7 +1791,7 @@ class HHDL_Ajax {
         // Log the activity (use booking's scheduled date, not today)
         self::log_activity(
             $location_id,
-            $room_id,
+            $room_number, // Use room_number (site_name) for display in activity log
             $event_type,
             $event_data,
             $service_date,
@@ -1841,9 +1845,9 @@ class HHDL_Ajax {
             // Check if task is completed in NewBook or locally
             $is_completed = !empty($task['completed']);
 
-            if (!$is_completed && !empty($task['description'])) {
-                // Check local completion
-                $locally_completed = $this->is_task_completed($room_id, $task['description'], $service_date);
+            if (!$is_completed && !empty($task['id'])) {
+                // Check local completion by task_id (unique identifier)
+                $locally_completed = $this->is_task_completed($room_id, $task['id'], $service_date);
                 if (!$locally_completed) {
                     $incomplete_count++;
                 }
