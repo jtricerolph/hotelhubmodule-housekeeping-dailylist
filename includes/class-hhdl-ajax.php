@@ -38,6 +38,7 @@ class HHDL_Ajax {
         add_action('wp_ajax_hhdl_get_rooms', array($this, 'get_rooms'));
         add_action('wp_ajax_hhdl_get_room_details', array($this, 'get_room_details'));
         add_action('wp_ajax_hhdl_complete_task', array($this, 'complete_task'));
+        add_action('wp_ajax_hhdl_log_all_tasks_complete', array($this, 'log_all_tasks_complete'));
         add_action('wp_ajax_hhdl_update_room_status', array($this, 'update_room_status'));
         add_action('wp_ajax_hhdl_save_user_preferences', array($this, 'save_user_preferences'));
         add_action('wp_ajax_hhdl_reset_user_preferences', array($this, 'reset_user_preferences'));
@@ -232,30 +233,6 @@ class HHDL_Ajax {
             // Commit transaction
             $wpdb->query('COMMIT');
 
-            // Check if all tasks are complete for this room
-            // Note: All tasks come from NewBook - there are no separate "recurring" tasks
-            error_log("HHDL complete_task: About to count remaining tasks for room {$room_id} (display: {$room_number}), task_id {$task_id}");
-            $remaining_tasks = $this->count_incomplete_newbook_tasks($location_id, $room_id, $service_date);
-            error_log("HHDL complete_task: Remaining tasks = {$remaining_tasks}");
-
-            // If no tasks remain, log "all tasks complete" event
-            if ($remaining_tasks === 0) {
-                // Get user info
-                $user = wp_get_current_user();
-
-                error_log("HHDL complete_task: LOGGING 'all tasks complete' event for room {$room_number}");
-                self::log_activity(
-                    $location_id,
-                    $room_number, // Use room_number (site_name) for display in activity log
-                    'tasks_complete',
-                    array('completed_by' => $user->display_name),
-                    $service_date,
-                    $booking_ref
-                );
-            } else {
-                error_log("HHDL complete_task: NOT logging 'all tasks complete' - still {$remaining_tasks} tasks remaining");
-            }
-
             // Get user info for response
             $user = wp_get_current_user();
 
@@ -265,13 +242,57 @@ class HHDL_Ajax {
                 'completed_at'  => current_time('mysql'),
                 'completion_id' => $wpdb->insert_id,
                 'site_status'   => $site_status, // Return site_status to frontend
-                'all_tasks_complete' => ($remaining_tasks === 0) // Indicate if all tasks are done
+                'task_id'       => $task_id, // Return task_id so frontend can check if all complete
+                'room_id'       => $room_id,
+                'room_number'   => $room_number,
+                'location_id'   => $location_id,
+                'service_date'  => $service_date,
+                'booking_ref'   => $booking_ref
             ));
 
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
             wp_send_json_error(array('message' => $e->getMessage()));
         }
+    }
+
+    /**
+     * Log "all tasks complete" activity event (AJAX handler)
+     */
+    public function log_all_tasks_complete() {
+        // Verify nonce
+        check_ajax_referer('hhdl_ajax_nonce', 'nonce');
+
+        // Check permissions
+        if (!$this->user_can_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'hhdl')));
+        }
+
+        // Get parameters
+        $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+        $room_id = isset($_POST['room_id']) ? sanitize_text_field($_POST['room_id']) : '';
+        $room_number = isset($_POST['room_number']) ? sanitize_text_field($_POST['room_number']) : $room_id;
+        $service_date = isset($_POST['service_date']) ? sanitize_text_field($_POST['service_date']) : date('Y-m-d');
+        $booking_ref = isset($_POST['booking_ref']) ? sanitize_text_field($_POST['booking_ref']) : '';
+
+        if (!$location_id || !$room_id || !$service_date) {
+            wp_send_json_error(array('message' => __('Invalid parameters', 'hhdl')));
+        }
+
+        // Get user info
+        $user = wp_get_current_user();
+
+        // Log the activity
+        self::log_activity(
+            $location_id,
+            $room_number,
+            'tasks_complete',
+            array('completed_by' => $user->display_name),
+            $service_date,
+            $booking_ref
+        );
+
+        wp_send_json_success(array('message' => __('Activity logged', 'hhdl')));
     }
 
     /**
@@ -1825,6 +1846,11 @@ class HHDL_Ajax {
      * @param string $room_id Room ID
      * @param string $service_date Service date (Y-m-d)
      * @return int Number of incomplete NewBook tasks
+     */
+    /**
+     * @deprecated No longer used - Frontend now counts tasks from DOM
+     * This method made an unnecessary API call after each task completion.
+     * Now the frontend counts remaining tasks from the already-loaded DOM.
      */
     private function count_incomplete_newbook_tasks($location_id, $room_id, $service_date) {
         // Get NewBook API client

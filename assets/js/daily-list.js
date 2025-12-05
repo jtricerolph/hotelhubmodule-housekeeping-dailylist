@@ -1777,9 +1777,9 @@
 
                     // Update room status badge if NewBook returned site_status
                     if (response.data.site_status) {
-                        // Determine if there are still tasks remaining
-                        // If all_tasks_complete is true, there are no more tasks
-                        var hasTasks = !response.data.all_tasks_complete;
+                        // Check DOM for remaining tasks after this one is removed
+                        var remainingTasks = $('.hhdl-task-list .hhdl-task-item:visible').not(taskItem).length;
+                        var hasTasks = remainingTasks > 0;
                         updateRoomStatusBadge(taskData.roomId, response.data.site_status, hasTasks);
                     }
 
@@ -1788,6 +1788,12 @@
                         $(this).remove();
                         // Update task count after removal
                         updateTaskCount(taskData.roomId);
+
+                        // Check if all tasks are now complete and log activity
+                        var remainingTasks = $('.hhdl-task-list .hhdl-task-item:visible').length;
+                        if (remainingTasks === 0) {
+                            logAllTasksComplete(response.data);
+                        }
                     });
 
                     showToast(hhdlAjax.strings.taskCompleted, 'success');
@@ -1953,6 +1959,41 @@
         } else {
             console.warn('HHDL: No roomId provided to updateTaskCount');
         }
+    }
+
+    /**
+     * Log "all tasks complete" activity event to the backend
+     */
+    function logAllTasksComplete(taskData) {
+        // Only log if we have the required data
+        if (!taskData || !taskData.location_id || !taskData.room_id || !taskData.service_date) {
+            console.warn('HHDL: Missing data for logging all tasks complete');
+            return;
+        }
+
+        $.ajax({
+            url: hhdlAjax.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'hhdl_log_all_tasks_complete',
+                nonce: hhdlAjax.nonce,
+                location_id: taskData.location_id,
+                room_id: taskData.room_id,
+                room_number: taskData.room_number,
+                service_date: taskData.service_date,
+                booking_ref: taskData.booking_ref
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('HHDL: All tasks complete activity logged');
+                } else {
+                    console.error('HHDL: Failed to log all tasks complete:', response.data);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('HHDL: Error logging all tasks complete:', error);
+            }
+        });
     }
 
     /**
