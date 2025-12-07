@@ -1201,6 +1201,9 @@ class HHDL_Ajax {
      * Render room modal body HTML
      */
     private function render_room_modal_body($room_details, $booking_data, $tasks, $date, $location_id) {
+        // Calculate booking status from booking_data for use in this method
+        $booking_status = $booking_data && isset($booking_data['booking_status']) ? $booking_data['booking_status'] : '';
+
         // Render notes section (if applicable note types exist)
         $this->render_notes_section($booking_data, $location_id);
         ?>
