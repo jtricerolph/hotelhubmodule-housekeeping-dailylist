@@ -1294,7 +1294,11 @@ class HHDL_Ajax {
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-                <?php if ($room_details['site_status'] === 'Dirty' && $booking_status !== 'arrived'): ?>
+                <?php
+                // Debug: Log booking status for troubleshooting
+                error_log("HHDL: Room {$room_details['room_number']} - site_status={$room_details['site_status']}, booking_status={$booking_status}");
+                ?>
+                <?php if ($room_details['site_status'] === 'Dirty' && strtolower($booking_status) !== 'arrived'): ?>
                     <!-- Show clickable card to mark room as clean when no tasks and room is dirty (but not occupied) -->
                     <div class="hhdl-task-item hhdl-status-change-card"
                          data-room-id="<?php echo esc_attr($room_details['room_id']); ?>"
