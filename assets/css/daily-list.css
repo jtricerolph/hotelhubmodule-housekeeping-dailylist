@@ -2449,15 +2449,55 @@
 
 /* Responsive: Stack icon above text on narrow screens */
 @media (max-width: 640px) {
+    .hhdl-view-controls {
+        gap: 6px;
+        padding: 8px 12px;
+    }
+
+    .hhdl-view-mode-toggle {
+        gap: 4px;
+    }
+
     .hhdl-view-mode-btn {
         flex-direction: column;
-        gap: 2px;
-        padding: 8px 10px;
-        font-size: 11px;
+        gap: 1px;
+        padding: 6px 6px;
+        font-size: 9px;
+        min-width: 0;
     }
 
     .hhdl-view-mode-btn .material-symbols-outlined {
-        font-size: 20px;
+        font-size: 16px;
+    }
+
+    /* Reset button - make more compact */
+    .hhdl-reset-group .hhdl-view-mode-btn {
+        padding: 6px 8px;
+    }
+}
+
+/* Extra small screens - even more compact */
+@media (max-width: 380px) {
+    .hhdl-view-controls {
+        gap: 4px;
+        padding: 6px 8px;
+    }
+
+    .hhdl-view-mode-toggle {
+        gap: 3px;
+    }
+
+    .hhdl-view-mode-btn {
+        padding: 5px 4px;
+        font-size: 8px;
+    }
+
+    .hhdl-view-mode-btn .material-symbols-outlined {
+        font-size: 14px;
+    }
+
+    .hhdl-reset-group .hhdl-view-mode-btn {
+        padding: 5px 6px;
     }
 }
 
