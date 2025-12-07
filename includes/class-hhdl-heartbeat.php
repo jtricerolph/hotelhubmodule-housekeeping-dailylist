@@ -100,6 +100,18 @@ class HHDL_Heartbeat {
             }
         }
 
+        // Check if linen count module is active and get linen updates
+        if (class_exists('HHLC_Heartbeat')) {
+            $recent_linen = $this->get_recent_linen_updates($location_id, $last_check, $viewing_date);
+
+            if (!empty($recent_linen)) {
+                $response['hhdl_linen_updates'] = array(
+                    'updates' => $recent_linen,
+                    'timestamp' => current_time('mysql')
+                );
+            }
+        }
+
         return $response;
     }
 
@@ -220,6 +232,71 @@ class HHDL_Heartbeat {
         }
 
         return $events;
+    }
+
+    /**
+     * Get recent linen count updates
+     *
+     * @param int    $location_id Location ID
+     * @param string $last_check Last check timestamp
+     * @param string $viewing_date Current viewing date
+     * @return array Recent linen count updates grouped by room
+     */
+    private function get_recent_linen_updates($location_id, $last_check, $viewing_date) {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'hhlc_linen_counts';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") != $table_name) {
+            return array();
+        }
+
+        // Query linen counts modified since last check, grouped by room
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT room_id,
+                    SUM(count) as total_count,
+                    SUM(CASE WHEN is_locked = 0 THEN 1 ELSE 0 END) as unlocked_count,
+                    SUM(CASE WHEN is_locked = 1 THEN 1 ELSE 0 END) as locked_count,
+                    MAX(GREATEST(submitted_at, IFNULL(last_updated_at, '0000-00-00 00:00:00'))) as last_modified
+             FROM {$table_name}
+             WHERE location_id = %d
+             AND service_date = %s
+             AND (submitted_at >= %s OR (last_updated_at IS NOT NULL AND last_updated_at >= %s))
+             GROUP BY room_id",
+            $location_id,
+            $viewing_date,
+            $last_check,
+            $last_check
+        ), ARRAY_A);
+
+        // Calculate status for each room
+        $updates = array();
+        foreach ($results as $row) {
+            $total_count = intval($row['total_count']);
+            $locked_count = intval($row['locked_count']);
+            $unlocked_count = intval($row['unlocked_count']);
+
+            // Determine status based on lock state
+            if ($locked_count > 0 && $unlocked_count == 0) {
+                $status = 'submitted';
+            } elseif ($unlocked_count > 0) {
+                $status = 'unsaved';
+            } else {
+                $status = 'none';
+            }
+
+            $updates[] = array(
+                'room_id' => $row['room_id'],
+                'total_count' => $total_count,
+                'status' => $status,
+                'locked_count' => $locked_count,
+                'unlocked_count' => $unlocked_count,
+                'last_modified' => $row['last_modified']
+            );
+        }
+
+        return $updates;
     }
 
     /**

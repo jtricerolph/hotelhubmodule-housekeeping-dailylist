@@ -2054,6 +2054,11 @@
                     console.log('[HHDL Activity] Panel is closed, skipping event prepend');
                 }
             }
+
+            // Handle linen count updates
+            if (data.hhdl_linen_updates && data.hhdl_linen_updates.updates) {
+                handleLinenCountUpdates(data.hhdl_linen_updates.updates);
+            }
         });
     }
 
@@ -2395,6 +2400,73 @@
         Object.keys(roomUpdates).forEach(function(roomId) {
             const completedCount = roomUpdates[roomId];
             updateRoomTaskBadge(roomId, -completedCount); // Decrement by number of completions
+        });
+    }
+
+    /**
+     * Handle linen count updates from heartbeat
+     */
+    function handleLinenCountUpdates(updates) {
+        if (!updates || updates.length === 0) return;
+
+        console.log('[HHDL] Processing ' + updates.length + ' linen count updates');
+
+        updates.forEach(function(update) {
+            const roomId = update.room_id;
+            const totalCount = parseInt(update.total_count) || 0;
+            const status = update.status; // 'none', 'unsaved', 'submitted'
+
+            // Find the room card
+            const $roomCard = $('.hhdl-room-card[data-room-id="' + roomId + '"]');
+            if (!$roomCard.length) {
+                console.log('[HHDL] Room card not found for linen update:', roomId);
+                return;
+            }
+
+            // Find the linen status element and badge
+            const $linenStatus = $roomCard.find('.hhdl-linen-status');
+            const $linenBadge = $roomCard.find('.hhdl-linen-count-badge');
+
+            if (!$linenStatus.length) {
+                console.log('[HHDL] Linen status element not found in room card:', roomId);
+                return;
+            }
+
+            // Update status classes
+            $linenStatus
+                .removeClass('hhdl-linen-none hhdl-linen-unsaved hhdl-linen-submitted')
+                .addClass('hhdl-linen-' + status);
+
+            // Update or create badge
+            if (totalCount > 0) {
+                if ($linenBadge.length) {
+                    $linenBadge.text(totalCount).show();
+                } else {
+                    // Create badge if it doesn't exist
+                    $linenStatus.find('.hhdl-linen-count').append(
+                        '<span class="hhdl-linen-count-badge">' + totalCount + '</span>'
+                    );
+                }
+            } else {
+                // Hide badge when count is 0
+                $linenBadge.hide();
+            }
+
+            // Update title/tooltip
+            let title = '';
+            if (status === 'none') {
+                title = 'No linen data';
+            } else if (status === 'unsaved') {
+                title = totalCount + ' linen items (unsaved)';
+            } else if (status === 'submitted') {
+                title = totalCount === 0 ?
+                    'No spoilt linen (submitted)' :
+                    totalCount + ' linen items (submitted)';
+            }
+            $linenStatus.attr('title', title);
+
+            console.log('[HHDL] Updated linen count for room ' + roomId +
+                       ': ' + totalCount + ' (' + status + ')');
         });
     }
 
