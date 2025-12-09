@@ -73,6 +73,7 @@ class HHDL_Display {
                 'active_filter' => 'all',  // Currently active room filter
                 'active_filter_mode' => 'inclusive',  // 'inclusive' or 'exclusive'
                 'selected_date' => '',  // Last selected date (Y-m-d format)
+                'selected_date_saved_on' => '',  // Date when selected_date was saved (for daily reset)
                 'stat_filters_visible' => false,  // Whether stat filters section is shown
                 'active_stat_filter' => 'all',  // Currently active stat filter
                 'active_stat_filter_mode' => 'outstanding',  // Current mode for active stat filter
@@ -128,6 +129,8 @@ class HHDL_Display {
                 ? $preferences['active_filter_mode'] : $existing_prefs['active_filter_mode'],
             'selected_date' => isset($preferences['selected_date'])
                 ? sanitize_text_field($preferences['selected_date']) : $existing_prefs['selected_date'],
+            'selected_date_saved_on' => isset($preferences['selected_date'])
+                ? date('Y-m-d') : (isset($existing_prefs['selected_date_saved_on']) ? $existing_prefs['selected_date_saved_on'] : ''),
             'stat_filters_visible' => isset($preferences['stat_filters_visible'])
                 ? (bool)$preferences['stat_filters_visible'] : $existing_prefs['stat_filters_visible'],
             'active_stat_filter' => isset($preferences['active_stat_filter'])
@@ -194,9 +197,16 @@ class HHDL_Display {
             return;
         }
 
-        // Get selected date - priority order: GET param, saved preference, today
+        // Get selected date - priority order: GET param, saved preference (if saved today), today
         $user_prefs = self::get_user_preferences(null, $location_id);
-        $saved_date = !empty($user_prefs['selected_date']) ? $user_prefs['selected_date'] : date('Y-m-d');
+        $today = date('Y-m-d');
+
+        // Only use saved date if it was saved today (daily reset to today for fresh sessions)
+        $saved_date_valid = !empty($user_prefs['selected_date'])
+            && !empty($user_prefs['selected_date_saved_on'])
+            && $user_prefs['selected_date_saved_on'] === $today;
+
+        $saved_date = $saved_date_valid ? $user_prefs['selected_date'] : $today;
         $selected_date = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : $saved_date;
 
         // Render the view
