@@ -1066,20 +1066,34 @@ class HHDL_Display {
                 </div>
             </div>
 
-            <!-- Block 4: Future Tasks Module -->
+            <!-- Block 4: Management Tasks Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add future tasks module integration
-                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
-                $future_class = 'hhdl-future-tasks hhdl-tasks-none';
-                $future_title = __('No current tasks', 'hhdl');
-                $module_tasks = 0; // TODO: Set actual count from future tasks module
+                // Get module tasks data (populated via hhdl_room_data filter by Management Tasks module)
+                $module_tasks = isset($room['module_tasks']) ? $room['module_tasks'] : array();
+                $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
+                $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
+                $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+
+                if ($task_count > 0 && $has_overdue) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
+                    $future_title = sprintf(_n('%d overdue task', '%d overdue tasks', $module_tasks['overdue'], 'hhdl'), $module_tasks['overdue']);
+                } elseif ($task_count > 0 && $has_due) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-due';
+                    $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
+                    $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
+                } else {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-none';
+                    $future_title = __('No tasks', 'hhdl');
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">checklist_rtl</span>
-                        <?php if ($module_tasks > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
+                        <?php if ($task_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -1244,20 +1258,34 @@ class HHDL_Display {
                 </div>
             </div>
 
-            <!-- Block 4: Future Tasks Module -->
+            <!-- Block 4: Management Tasks Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add future tasks module integration
-                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
-                $future_class = 'hhdl-future-tasks hhdl-tasks-none';
-                $future_title = __('No current tasks', 'hhdl');
-                $module_tasks = 0; // TODO: Set actual count from future tasks module
+                // Get module tasks data (populated via hhdl_room_data filter by Management Tasks module)
+                $module_tasks = isset($room['module_tasks']) ? $room['module_tasks'] : array();
+                $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
+                $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
+                $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+
+                if ($task_count > 0 && $has_overdue) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
+                    $future_title = sprintf(_n('%d overdue task', '%d overdue tasks', $module_tasks['overdue'], 'hhdl'), $module_tasks['overdue']);
+                } elseif ($task_count > 0 && $has_due) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-due';
+                    $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
+                    $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
+                } else {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-none';
+                    $future_title = __('No tasks', 'hhdl');
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">checklist_rtl</span>
-                        <?php if ($module_tasks > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
+                        <?php if ($task_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -1526,20 +1554,34 @@ class HHDL_Display {
                 </div>
             </div>
 
-            <!-- Block 4: Future Tasks Module -->
+            <!-- Block 4: Management Tasks Module -->
             <div class="hhdl-stat-block">
                 <?php
-                // TODO: Add future tasks module integration
-                // checklist_rtl - red if waiting tasks, green if all complete, grey if no current tasks
-                $future_class = 'hhdl-future-tasks hhdl-tasks-none';
-                $future_title = __('No current tasks', 'hhdl');
-                $module_tasks = 0; // TODO: Set actual count from future tasks module
+                // Get module tasks data (populated via hhdl_room_data filter by Management Tasks module)
+                $module_tasks = isset($room['module_tasks']) ? $room['module_tasks'] : array();
+                $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
+                $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
+                $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+
+                if ($task_count > 0 && $has_overdue) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
+                    $future_title = sprintf(_n('%d overdue task', '%d overdue tasks', $module_tasks['overdue'], 'hhdl'), $module_tasks['overdue']);
+                } elseif ($task_count > 0 && $has_due) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-due';
+                    $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
+                    $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
+                } else {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-none';
+                    $future_title = __('No tasks', 'hhdl');
+                }
                 ?>
                 <div class="hhdl-stat-content <?php echo esc_attr($future_class); ?>" title="<?php echo esc_attr($future_title); ?>">
                     <span class="hhdl-task-count">
                         <span class="material-symbols-outlined">checklist_rtl</span>
-                        <?php if ($module_tasks > 0): ?>
-                            <span class="hhdl-task-count-badge"><?php echo esc_html($module_tasks); ?></span>
+                        <?php if ($task_count > 0): ?>
+                            <span class="hhdl-task-count-badge"><?php echo esc_html($task_count); ?></span>
                         <?php endif; ?>
                     </span>
                 </div>
@@ -2042,6 +2084,18 @@ class HHDL_Display {
             }
             return $a['order']['site_order'] - $b['order']['site_order'];
         });
+
+        /**
+         * Filter room data before returning
+         *
+         * Allows modules (like Management Tasks) to add additional data to room cards.
+         *
+         * @since 2.3.0
+         * @param array  $room_cards  Array of room card data
+         * @param int    $location_id Location ID
+         * @param string $date        Date in Y-m-d format
+         */
+        $room_cards = apply_filters('hhdl_room_data', $room_cards, $location_id, $date);
 
         return $room_cards;
     }

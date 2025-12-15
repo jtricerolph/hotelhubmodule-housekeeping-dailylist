@@ -132,7 +132,10 @@ class HHDL_Settings {
                     'excluded_categories' => isset($location_data['excluded_categories']) && is_array($location_data['excluded_categories']) ? array_map('sanitize_text_field', $location_data['excluded_categories']) : array(),
                     'hide_excluded_categories' => isset($location_data['hide_excluded_categories']) ? true : false,
                     // Notification Settings
-                    'checkout_notification_timeout' => isset($location_data['checkout_notification_timeout']) ? intval($location_data['checkout_notification_timeout']) : 10
+                    'checkout_notification_timeout' => isset($location_data['checkout_notification_timeout']) ? intval($location_data['checkout_notification_timeout']) : 10,
+                    // Management Tasks Integration
+                    'task_departments_enabled' => isset($location_data['task_departments_enabled']) ? true : false,
+                    'task_departments_default' => isset($location_data['task_departments_default']) && is_array($location_data['task_departments_default']) ? array_map('intval', $location_data['task_departments_default']) : array()
                 );
 
                 // Process tasks if provided
@@ -256,7 +259,10 @@ class HHDL_Settings {
             'excluded_categories' => array(),
             'hide_excluded_categories' => false,
             // Notification Settings
-            'checkout_notification_timeout' => 10
+            'checkout_notification_timeout' => 10,
+            // Management Tasks Integration
+            'task_departments_enabled' => true,
+            'task_departments_default' => array()
         );
     }
 
@@ -432,6 +438,30 @@ class HHDL_Settings {
         }
 
         return array();
+    }
+
+    /**
+     * Get available task departments from Management Tasks module
+     *
+     * @param int $location_id Location ID
+     * @return array Departments array with id, dept_name, dept_slug, icon_name, color_hex
+     */
+    public static function get_available_task_departments($location_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'hhmgt_departments';
+
+        // Check if Tasks module table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) {
+            return array();
+        }
+
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT id, dept_name, dept_slug, icon_name, color_hex
+             FROM {$table}
+             WHERE location_id = %d AND is_enabled = 1
+             ORDER BY sort_order ASC",
+            $location_id
+        ), ARRAY_A);
     }
 
 }

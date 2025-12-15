@@ -1417,6 +1417,33 @@
     color: #9ca3af;
 }
 
+/* Overdue tasks (red) - from Management Tasks module */
+.hhdl-stat-content.hhdl-tasks-overdue {
+    border-color: #ef4444;
+}
+
+.hhdl-stat-content.hhdl-tasks-overdue .material-symbols-outlined {
+    color: #ef4444;
+}
+
+/* Due today tasks (amber) - from Management Tasks module */
+.hhdl-stat-content.hhdl-tasks-due {
+    border-color: #f59e0b;
+}
+
+.hhdl-stat-content.hhdl-tasks-due .material-symbols-outlined {
+    color: #f59e0b;
+}
+
+/* Pending tasks (blue) - from Management Tasks module */
+.hhdl-stat-content.hhdl-tasks-pending {
+    border-color: #3b82f6;
+}
+
+.hhdl-stat-content.hhdl-tasks-pending .material-symbols-outlined {
+    color: #3b82f6;
+}
+
 .hhdl-stat-content.hhdl-future-tasks:hover {
     transform: scale(1.05);
 }

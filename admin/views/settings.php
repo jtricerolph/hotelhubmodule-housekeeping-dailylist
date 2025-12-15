@@ -303,6 +303,56 @@ if (!defined('ABSPATH')) {
                                 </fieldset>
                             </div>
                         </div>
+
+                        <!-- Management Tasks Integration -->
+                        <?php
+                        $task_departments = HHDL_Settings::get_available_task_departments($location_id);
+                        $task_depts_enabled = isset($location_settings['task_departments_enabled']) ? $location_settings['task_departments_enabled'] : true;
+                        $task_depts_default = isset($location_settings['task_departments_default']) ? $location_settings['task_departments_default'] : array();
+                        ?>
+                        <div class="hhdl-settings-section">
+                            <h3><?php _e('Management Tasks Integration', 'hhdl'); ?></h3>
+                            <div class="hhdl-settings-grid">
+                                <fieldset class="hhdl-fieldset">
+                                    <legend><?php _e('Recurring Tasks Display', 'hhdl'); ?></legend>
+                                    <div class="hhdl-field">
+                                        <label class="hhdl-inline-toggle">
+                                            <input type="checkbox"
+                                                   name="locations[<?php echo $location_id; ?>][task_departments_enabled]"
+                                                   value="1"
+                                                   <?php checked($task_depts_enabled, true); ?>>
+                                            <strong><?php _e('Show recurring tasks on room cards and modals', 'hhdl'); ?></strong>
+                                        </label>
+                                        <p class="description"><?php _e('Display task counts and details from Management Tasks module.', 'hhdl'); ?></p>
+                                    </div>
+
+                                    <?php if (!empty($task_departments)): ?>
+                                        <div class="hhdl-field" style="margin-top: 16px;">
+                                            <label><?php _e('Default departments to display:', 'hhdl'); ?></label>
+                                            <p class="description"><?php _e('Tasks from selected departments always show. Users can expand to see all departments.', 'hhdl'); ?></p>
+                                            <div class="hhdl-checkbox-list" style="margin-top: 8px;">
+                                                <?php foreach ($task_departments as $dept): ?>
+                                                    <label>
+                                                        <input type="checkbox"
+                                                               name="locations[<?php echo $location_id; ?>][task_departments_default][]"
+                                                               value="<?php echo esc_attr($dept['id']); ?>"
+                                                               <?php checked(in_array((int)$dept['id'], $task_depts_default)); ?>>
+                                                        <span class="material-symbols-outlined" style="color: <?php echo esc_attr($dept['color_hex']); ?>;">
+                                                            <?php echo esc_html($dept['icon_name']); ?>
+                                                        </span>
+                                                        <span><?php echo esc_html($dept['dept_name']); ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="hhdl-empty" style="margin-top: 12px;">
+                                            <em><?php _e('No task departments configured. Configure departments in the Tasks module settings.', 'hhdl'); ?></em>
+                                        </p>
+                                    <?php endif; ?>
+                                </fieldset>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <?php endforeach; ?>
