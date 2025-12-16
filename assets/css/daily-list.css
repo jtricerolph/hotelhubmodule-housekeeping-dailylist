@@ -1444,6 +1444,15 @@
     color: #3b82f6;
 }
 
+/* Completed tasks (green) - from Management Tasks module */
+.hhdl-stat-content.hhdl-tasks-completed {
+    border-color: #22c55e;
+}
+
+.hhdl-stat-content.hhdl-tasks-completed .material-symbols-outlined {
+    color: #22c55e;
+}
+
 /* Management Tasks badge background colors */
 .hhdl-tasks-overdue .hhdl-task-count-badge {
     background: #ef4444;
@@ -1455,6 +1464,10 @@
 
 .hhdl-tasks-pending .hhdl-task-count-badge {
     background: #3b82f6;
+}
+
+.hhdl-tasks-completed .hhdl-task-count-badge {
+    background: #22c55e;
 }
 
 .hhdl-tasks-none .hhdl-task-count-badge {

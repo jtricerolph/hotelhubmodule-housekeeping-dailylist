@@ -1074,6 +1074,8 @@ class HHDL_Display {
                 $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
                 $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
                 $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+                $has_completed = isset($module_tasks['completed_today']) && $module_tasks['completed_today'] > 0;
+                $incomplete_count = ($module_tasks['overdue'] ?? 0) + ($module_tasks['due_today'] ?? 0);
 
                 if ($task_count > 0 && $has_overdue) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
@@ -1081,6 +1083,9 @@ class HHDL_Display {
                 } elseif ($task_count > 0 && $has_due) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-due';
                     $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0 && $has_completed && $incomplete_count === 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-completed';
+                    $future_title = sprintf(_n('%d task completed today', '%d tasks completed today', $module_tasks['completed_today'], 'hhdl'), $module_tasks['completed_today']);
                 } elseif ($task_count > 0) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
                     $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
@@ -1266,6 +1271,8 @@ class HHDL_Display {
                 $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
                 $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
                 $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+                $has_completed = isset($module_tasks['completed_today']) && $module_tasks['completed_today'] > 0;
+                $incomplete_count = ($module_tasks['overdue'] ?? 0) + ($module_tasks['due_today'] ?? 0);
 
                 if ($task_count > 0 && $has_overdue) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
@@ -1273,6 +1280,9 @@ class HHDL_Display {
                 } elseif ($task_count > 0 && $has_due) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-due';
                     $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0 && $has_completed && $incomplete_count === 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-completed';
+                    $future_title = sprintf(_n('%d task completed today', '%d tasks completed today', $module_tasks['completed_today'], 'hhdl'), $module_tasks['completed_today']);
                 } elseif ($task_count > 0) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
                     $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
@@ -1562,6 +1572,8 @@ class HHDL_Display {
                 $task_count = isset($module_tasks['total']) ? (int)$module_tasks['total'] : 0;
                 $has_overdue = isset($module_tasks['overdue']) && $module_tasks['overdue'] > 0;
                 $has_due = isset($module_tasks['due_today']) && $module_tasks['due_today'] > 0;
+                $has_completed = isset($module_tasks['completed_today']) && $module_tasks['completed_today'] > 0;
+                $incomplete_count = ($module_tasks['overdue'] ?? 0) + ($module_tasks['due_today'] ?? 0);
 
                 if ($task_count > 0 && $has_overdue) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-overdue';
@@ -1569,6 +1581,9 @@ class HHDL_Display {
                 } elseif ($task_count > 0 && $has_due) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-due';
                     $future_title = sprintf(_n('%d task due today', '%d tasks due today', $module_tasks['due_today'], 'hhdl'), $module_tasks['due_today']);
+                } elseif ($task_count > 0 && $has_completed && $incomplete_count === 0) {
+                    $future_class = 'hhdl-future-tasks hhdl-tasks-completed';
+                    $future_title = sprintf(_n('%d task completed today', '%d tasks completed today', $module_tasks['completed_today'], 'hhdl'), $module_tasks['completed_today']);
                 } elseif ($task_count > 0) {
                     $future_class = 'hhdl-future-tasks hhdl-tasks-pending';
                     $future_title = sprintf(_n('%d pending task', '%d pending tasks', $task_count, 'hhdl'), $task_count);
